@@ -9,15 +9,27 @@ import Foundation
 import os.log
 
 public actor VTMockAPIClient: VTAPIClientProtocol {
+    func getConsumables() async throws -> [VTConsumableStateAttribute] {
+        []
+    }
     
-    func getStateAttributes() async throws -> VTStateAttributes {
+    func getPropertiesForConsumables() async throws -> [VTConsumableStateAttributeProperties] {
+        []
+    }
+    
+    func resetConsumable(type: VTConsumableType) async throws {}
+    
+    func resetConsumable(type: VTConsumableType, subtype: VTConsumableSubType) async throws {}
+    
+    
+    func getStateAttributes() async throws -> VTStateAttributeList {
         let data = jsonStateAttributesDuringCleaning.data(using: .utf8)!
-        return try JSONDecoder().decode(VTStateAttributes.self, from: data)
+        return try JSONDecoder().decode(VTStateAttributeList.self, from: data)
     }
     
     private var i = 0
     
-    static var shared: VTMockAPIClient? = VTMockAPIClient()
+    static let shared: VTMockAPIClient? = VTMockAPIClient()
 
     public func getMap() async throws -> VTMapData {
         let data = if (i % 2) == 0 {
@@ -34,11 +46,23 @@ public actor VTMockAPIClient: VTAPIClientProtocol {
         return try JSONDecoder().decode(VTRobotInfo.self, from: data)
     }
     
+    func getRobotProperties() async throws -> VTRobotProperties {
+        fatalError("Not implemented")
+    }
+    
     public func getCurrentStatisticsCapability() async throws -> [VTValetudoDataPoint] {
         let data = jsonCurrentStatisticsCapabilities.data(using: .utf8)!
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601Flexible
         return try decoder.decode([VTValetudoDataPoint].self, from: data)
+    }
+    
+    func getHostInfo() async throws -> VTHostInfo {
+        fatalError("Not implemented")
+    }
+    
+    func getRuntimeInfo() async throws -> VTRuntimeInfo {
+        fatalError("Not implemented")
     }
     
     public func start() async throws {}
@@ -65,4 +89,16 @@ public actor VTMockAPIClient: VTAPIClientProtocol {
     }
     
     func setPreset(_ preset: VTPresetValue, forType type: VTPresetType) async throws { }
+    
+    // MARK: - 3. Valetudo
+    
+    func getBasicValetudoInfo() async throws -> VTBasicValetudoInfo {
+        fatalError("Not implemented")
+    }
+    
+    // MARK: - 3.1 Version
+    
+    func getValetudoVersionInfo() async throws -> VTValetudoVersionInfo {
+        fatalError("Not implemented")
+    }
 }

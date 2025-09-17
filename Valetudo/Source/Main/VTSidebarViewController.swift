@@ -4,40 +4,85 @@
 //
 //  Created by David Klopp on 15.05.25.
 //
+import Foundation
 import UIKit
 
+enum VTSidebarSection: Int, CaseIterable {
+    case main = 0
+    case robot = 1
+    case options = 2
+    case misc = 3
+    
+    var title: String? {
+        switch (self) {
+        case .main:     return nil
+        case .robot:    return "ROBOT".localizedCapitalized()
+        case .options:  return "OPTIONS".localizedCapitalized()
+        case .misc:     return "MISC".localizedCapitalized()
+        }
+    }
+}
+
+enum VTSidebarItem: Hashable {
+    case home
+    case map
+    case consumables
+    case robot
+    case timers
+    case log
+    case systemInformation
+    case updater
+    case manualControl
+
+    var title: String {
+        switch self {
+        case .home:                 return "HOME".localizedCapitalized()
+        case .map:                  return "MAP".localizedCapitalized()
+        case .consumables:          return "CONSUMABLES".localizedCapitalized()
+        case .robot:                return "ROBOT".localizedCapitalized()
+        case .timers:               return "TIMERS".localizedCapitalized()
+        case .log:                  return "LOG".localizedCapitalized()
+        case .systemInformation:    return "SYSTEM_INFORMATION".localizedCapitalized()
+        case .updater:              return "UPDATER".localizedCapitalized()
+        case .manualControl:        return "MANUAL_CONTROL".localizedCapitalized()
+        }
+    }
+
+    var icon: UIImage? {
+        switch self {
+        case .home:              return UIImage(systemName: "house.fill")
+        case .map:               return UIImage(systemName: "map.fill")
+        case .consumables:       return UIImage(systemName: "chart.line.text.clipboard.fill")
+        case .robot:             return UIImage(systemName: "robotic.vacuum.fill")
+        case .timers:            return UIImage(systemName: "clock.fill")
+        case .log:               return UIImage(systemName: "text.page.fill")
+        case .systemInformation: return UIImage(systemName: "info.circle.fill")
+        case .updater:           return UIImage(systemName: "square.and.arrow.down.fill")
+        case .manualControl:     return UIImage(systemName: "arrow.up.and.down.and.arrow.left.and.right")
+        }
+    }
+}
+
+
 class VTSidebarViewController: UICollectionViewController {
-    enum Section {
-        case main
-    }
+    typealias VTSidebarDataSource = UICollectionViewDiffableDataSource<VTSidebarSection, VTSidebarItem>
+    typealias VTSidebarDatasourceSnapshot = NSDiffableDataSourceSnapshot<VTSidebarSection, VTSidebarItem>
+    
+    private var dataSource: VTSidebarDataSource!
+    private let items: [VTSidebarSection: [VTSidebarItem]] = [
+        .main:      [.home],
+        .robot:     [.consumables, .manualControl],
+        .options:   [.map, .robot],
+        .misc:      [.timers, .log, .updater, .systemInformation]
+    ]
+    
+    var didSelectItem: ((VTSidebarItem) -> Void)?
 
-    enum Item: Hashable {
-        case map
-        case settings
-
-        var title: String {
-            switch self {
-            case .map:      return "Map"
-            case .settings: return "Settings"
-            }
-        }
-
-        var icon: UIImage? {
-            switch self {
-            case .map:      return UIImage(systemName: "map.fill")
-            case .settings: return UIImage(systemName: "gearshape.fill")
-            }
-        }
-    }
-
-    private var dataSource: UICollectionViewDiffableDataSource<Section, Item>!
-
-    var didSelectItem: ((Int) -> Void)?
-
-    let items: [Item] = [.map, .settings]
 
     init() {
-        let layout = UICollectionViewCompositionalLayout.list(using: UICollectionLayoutListConfiguration(appearance: .sidebar))
+        var listConfig = UICollectionLayoutListConfiguration(appearance: .sidebar)
+        listConfig.headerMode = .supplementary
+        let layout = UICollectionViewCompositionalLayout.list(using: listConfig)
         super.init(collectionViewLayout: layout)
         self.clearsSelectionOnViewWillAppear = true
     }
@@ -71,30 +116,49 @@ class VTSidebarViewController: UICollectionViewController {
     }
 
     private func configureCollectionView() {
-        collectionView.backgroundColor = .systemGroupedBackground
+        //collectionView.backgroundColor = .systemGroupedBackground
+        collectionView.register(
+            VTSidebarHeaderView.self,
+            forSupplementaryViewOfKind: UICollectionView.elementKindSectionHeader,
+            withReuseIdentifier: VTSidebarHeaderView.reuseIdentifier
+        )
     }
 
     private func configureDataSource() {
-        let cellRegistration = UICollectionView.CellRegistration<UICollectionViewListCell, Item> { cell, _, item in
+        let cellRegistration = UICollectionView.CellRegistration<UICollectionViewListCell, VTSidebarItem> { cell, _, item in
             var content = cell.defaultContentConfiguration()
             content.text = item.title
             content.image = item.icon
             cell.contentConfiguration = content
         }
 
-        dataSource = UICollectionViewDiffableDataSource<Section, Item>(collectionView: collectionView) { collectionView, indexPath, item in
+        dataSource = VTSidebarDataSource(collectionView: collectionView) { collectionView, indexPath, item in
             return collectionView.dequeueConfiguredReusableCell(using: cellRegistration, for: indexPath, item: item)
         }
 
-        var snapshot = NSDiffableDataSourceSnapshot<Section, Item>()
-        snapshot.appendSections([.main])
-        snapshot.appendItems(items)
+        dataSource.supplementaryViewProvider = { collectionView, kind, indexPath in
+            guard kind == UICollectionView.elementKindSectionHeader else { return nil }
+            let header = collectionView.dequeueReusableSupplementaryView(
+                ofKind: kind,
+                withReuseIdentifier: VTSidebarHeaderView.reuseIdentifier,
+                for: indexPath
+            ) as? VTSidebarHeaderView
+            header?.configure(text: VTSidebarSection(rawValue: indexPath.section)?.title ?? "")
+            return header
+        }
+        
+        var snapshot = VTSidebarDatasourceSnapshot()
+        VTSidebarSection.allCases.forEach { section in
+            snapshot.appendSections([section])
+            snapshot.appendItems(items[section] ?? [], toSection: section)
+        }
         dataSource.apply(snapshot, animatingDifferences: false)
     }
 
     // MARK: - UICollectionViewDelegate
 
     override func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        didSelectItem?(indexPath.item)
+        guard let identifier = dataSource.itemIdentifier(for: indexPath) else { return }
+        didSelectItem?(identifier)
     }
 }

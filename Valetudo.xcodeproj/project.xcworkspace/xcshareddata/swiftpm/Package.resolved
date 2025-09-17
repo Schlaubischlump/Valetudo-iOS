@@ -1,0 +1,15 @@
+{
+  "originHash" : "984c864fdacdffbc73f345aa496228b8322e4d3ea9052b404f8a8b88d3e15dce",
+  "pins" : [
+    {
+      "identity" : "markdownkit",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/bmoliveira/MarkdownKit.git",
+      "state" : {
+        "revision" : "39ea7a3fc7e65bcafe55152592b834859be574a5",
+        "version" : "1.7.3"
+      }
+    }
+  ],
+  "version" : 3
+}

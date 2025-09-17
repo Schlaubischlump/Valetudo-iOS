@@ -11,14 +11,13 @@ protocol VTSegmentedItem: Equatable {
     var icon: UIImage? { get }
 }
 
-class VTSegmentedControlRow<T: VTSegmentedItem>: VTControlRow<UISegmentedControl> {
-        
+final class VTSegmentedControlRow<T: VTSegmentedItem>: VTControlRow<UISegmentedControl> {
     var values: [T] = [] {
         didSet { refresh() }
     }
         
     private var allowsValueChange: Bool = true
-    
+
     var selectedValue: T? {
         get {
             let index = content.selectedSegmentIndex
@@ -38,7 +37,7 @@ class VTSegmentedControlRow<T: VTSegmentedItem>: VTControlRow<UISegmentedControl
     var onValueChanged: ((T?, T) -> Void)?
     
     init(title: String, titleIcon: UIImage?) {
-        let segmentedControl = RoundedSegmentedControl()
+        let segmentedControl = UISegmentedControl() //RoundedSegmentedControl()
         segmentedControl.selectedSegmentTintColor = .tintColor
         segmentedControl.setTitleTextAttributes([.foregroundColor: UIColor.white], for: .selected)
         super.init(title: title, titleIcon: titleIcon, content: segmentedControl)

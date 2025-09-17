@@ -4,12 +4,13 @@
 //
 //  Created by David Klopp on 07.06.25.
 //
+import Foundation
 
 actor SerialTaskQueue {
     private var operations: [() async -> Void] = []
     private var isProcessing = false
 
-    func enqueue(_ operation: @escaping () async -> Void) {
+    func enqueue(_ operation: @Sendable @escaping () async -> Void) async {
         operations.append(operation)
         if !isProcessing {
             isProcessing = true
@@ -26,5 +27,9 @@ actor SerialTaskQueue {
         }
         isProcessing = false
     }
+}
+
+func printCurrentQueue() {
+    print("Queue label: \(String(cString: __dispatch_queue_get_label(nil), encoding: .utf8) ?? "unknown")")
 }
 

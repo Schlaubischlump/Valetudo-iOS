@@ -17,7 +17,6 @@ class VTSceneDelegate: UIResponder, UIWindowSceneDelegate {
 		}
 		window = UIWindow(windowScene: windowScene)
 
-        // TODO: Remove the mock client once you are done
         // TODO: Show MDNS selection to find robots
         let apiClient = VTAPIClient.shared
         guard let apiClient else {
@@ -43,4 +42,8 @@ class VTSceneDelegate: UIResponder, UIWindowSceneDelegate {
 			window.makeKeyAndVisible()
 		}
 	}
+    
+    func sceneWillEnterForeground(_ scene: UIScene) {
+        // TODO: Update the state of all controls + map
+    }
 }

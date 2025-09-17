@@ -10,7 +10,7 @@ import Foundation
 
 public typealias VTListenerToken = UUID
 
-internal protocol VTSSESocketProtocol: NSObjectProtocol {
+internal protocol VTSSESocketProtocol: Actor {
     associatedtype E: Decodable & Equatable
     associatedtype Action
     
@@ -19,39 +19,28 @@ internal protocol VTSSESocketProtocol: NSObjectProtocol {
 }
 
 
-internal final class VTSSESocket<E: Decodable & Equatable>: NSObject, VTSSESocketProtocol, URLSessionDataDelegate {
-    
+internal final actor VTSSESocket<E: Decodable & Equatable & Sendable>: VTSSESocketProtocol {
     typealias Action = VTEventAction<E>
     
     private var continuations: [VTListenerToken: AsyncStream<Action>.Continuation] = [:]
+    private var listeners: Set<VTListenerToken> = []
+    private var task: Task<Void, Never>?   // async SSE listening task
     
-    private var dataTask: URLSessionDataTask?
-    private var isListening: Bool = false
-    private lazy var session: URLSession = {
-        let config = URLSessionConfiguration.default
-        config.timeoutIntervalForRequest = TimeInterval(INT_MAX)
-        config.timeoutIntervalForResource = TimeInterval(INT_MAX)
-        return URLSession(configuration: config, delegate: self, delegateQueue: nil)
-    }()
-    private var buffer: NSMutableData = NSMutableData()
-    private let maxNumberOfRetries: Int = 5
-    private var numberOfRetries: Int = 0
+    private let endpoint: VTEventEndpoint<E>
+    private let maxNumberOfRetries = 5
+    private var numberOfRetries = 0
     
-    let endpoint: VTEventEndpoint<E>
-    private var listener: Set<VTListenerToken> = Set()
-
     init(endpoint: VTEventEndpoint<E>) {
         self.endpoint = endpoint
-        super.init()
     }
     
     func register(at url: URL) -> (VTListenerToken, AsyncStream<Action>) {
         let token = UUID()
         let stream = AsyncStream<Action> { continuation in
             continuations[token] = continuation
-            listener.insert(token)
+            listeners.insert(token)
             
-            if !isListening {
+            if task == nil {
                 startSSE(at: url)
             }
         }
@@ -59,36 +48,15 @@ internal final class VTSSESocket<E: Decodable & Equatable>: NSObject, VTSSESocke
     }
     
     func remove(token: VTListenerToken) {
-        listener.remove(token)
-        if listener.isEmpty {
-            dataTask?.cancel()
-            dataTask = nil
-            isListening = false
+        continuations[token] = nil
+        listeners.remove(token)
+        
+        if listeners.isEmpty {
+            stopSSE()
         }
     }
     
-    private func startSSE(at url: URL) {
-        var request = URLRequest(url: url)
-        request.setValue("text/event-stream", forHTTPHeaderField: "Accept")
-
-        dataTask = session.dataTask(with: request)
-        isListening = true
-        dataTask?.resume()
-        
-        continuations.values.forEach { $0.yield(.didConnect) }
-    }
-
-    private func completeSSE(at url: URL, reconnect: Bool) {
-        isListening = false
-        dataTask = nil
-        
-        guard !listener.isEmpty, reconnect else {
-            continuations.values.forEach { $0.yield(.didDisconnect) }
-            return
-        }
-        continuations.values.forEach { $0.yield(.didAttemptReconnect) }
-        self.startSSE(at: url)
-    }
+    // MARK: - SSE Lifecycle
     
     private func process(eventPayload: String) {
         guard !eventPayload.starts(with: ":") else { return } // skip : sse-keep-alive
@@ -118,38 +86,66 @@ internal final class VTSSESocket<E: Decodable & Equatable>: NSObject, VTSSESocke
         }
         return nil
     }
+    
+    private func startSSE(at url: URL) {
+        task = Task {
+            for c in continuations.values { c.yield(.didConnect) }
 
-    public func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive data: Data) {
-        buffer.append(data)
-                
-        var events: [String] = []
-        var searchRange =  NSRange(location: 0, length: buffer.length)
-        while let foundRange = searchForEvent(inBuffer: buffer, searchRange: searchRange) {
-            let dataLengthBeforeDelimiter = foundRange.location - searchRange.location
-            if dataLengthBeforeDelimiter > 0 {
-                let dataRange = NSRange(location: searchRange.location, length: dataLengthBeforeDelimiter)
-                let eventPayload = String(bytes: buffer.subdata(with: dataRange), encoding: .utf8)
-                if let eventPayload {
-                    events.append(eventPayload)
+            let buffer = NSMutableData() // accumulate partial SSE data
+
+            repeat {
+                do {
+                    let (bytes, _) = try await URLSession.shared.bytes(from: url)
+                    
+                    for try await byte in bytes {
+                        var byte = UInt8(byte)
+                        buffer.append(&byte, length: 1)
+
+                        var events: [String] = []
+                        var searchRange =  NSRange(location: 0, length: buffer.length)
+                        while let foundRange = searchForEvent(inBuffer: buffer, searchRange: searchRange) {
+                            let dataLengthBeforeDelimiter = foundRange.location - searchRange.location
+                            if dataLengthBeforeDelimiter > 0 {
+                                let dataRange = NSRange(location: searchRange.location, length: dataLengthBeforeDelimiter)
+                                let eventPayload = String(bytes: buffer.subdata(with: dataRange), encoding: .utf8)
+                                if let eventPayload {
+                                    events.append(eventPayload)
+                                }
+                            }
+                            searchRange.location = foundRange.location + foundRange.length
+                            searchRange.length = buffer.length - searchRange.location
+                        }
+                        
+                        buffer.replaceBytes(in: NSRange(location: 0, length: searchRange.location), withBytes: nil, length: 0)
+                        events.forEach { process(eventPayload: $0) }
+                    }
+
+                    // Connection closed normally
+                    for c in continuations.values { c.yield(.didDisconnect) }
+                    break
+                } catch {
+                    numberOfRetries += 1
+                    let shouldRetry = numberOfRetries <= maxNumberOfRetries && !listeners.isEmpty
+
+                    if shouldRetry {
+                        for c in continuations.values { c.yield(.didAttemptReconnect) }
+                        try? await Task.sleep(nanoseconds: 1_000_000_000)
+                        continue
+                    } else {
+                        for c in continuations.values { c.yield(.didDisconnect) }
+                        break
+                    }
                 }
-            }
-            searchRange.location = foundRange.location + foundRange.length
-            searchRange.length = buffer.length - searchRange.location
+            } while true
         }
-        
-        buffer.replaceBytes(in: NSRange(location: 0, length: searchRange.location), withBytes: nil, length: 0)
-        events.forEach { process(eventPayload: $0) }
     }
 
-    public func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
-        guard let url = task.originalRequest?.url else { return }
-        
-        if error != nil {
-            numberOfRetries += 1
-            let retry = numberOfRetries <= maxNumberOfRetries
-            completeSSE(at: url, reconnect: retry)
-        } else {
-            completeSSE(at: url, reconnect: false)
+    
+    private func stopSSE() {
+        task?.cancel()
+        task = nil
+        for continuation in continuations.values {
+            continuation.yield(.didDisconnect)
         }
     }
 }

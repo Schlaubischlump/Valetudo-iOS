@@ -20,7 +20,8 @@ class VTRobotStatusView: UIView {
             size: imageViewSize,
             strokeColor: UIColor(cgColor: robotType.borderColor!),
             fillColor: UIColor(cgColor: robotType.color!),
-            lineWidth: robotType.borderWidth
+            lineWidth: robotType.borderWidth,
+            scale: UIScreen.current?.scale ?? kDefaultScale
         )
         
         imageView.image = robotIcon
@@ -32,7 +33,7 @@ class VTRobotStatusView: UIView {
     
     private let titleLabel: UILabel = {
         let label = UILabel()
-        label.text = "ROBOT".localizedCapitalized
+        label.text = "ROBOT".localizedCapitalized()
         label.font = UIFont.systemFont(ofSize: 16, weight: .semibold)
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
@@ -132,7 +133,7 @@ class VTRobotStatusView: UIView {
     func update(forStatus status: String, batteryLevel: Double) {
         statusLabel.text = status.uppercased()
         let batteryPercent = Int(batteryLevel)
-        batteryLabel.text = "BATTERY".localizedUppercase + ": \(batteryPercent)%"
+        batteryLabel.text = "BATTERY".localizedUppercase() + ": \(batteryPercent)%"
         batteryProgressView.setProgress(CGFloat(batteryLevel/100), animated: true)
     }
 }

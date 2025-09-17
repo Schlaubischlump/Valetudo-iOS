@@ -20,7 +20,7 @@ class VTMapView: UIView {
     init(frame: CGRect, data: VTMapData) {
         self.data = data
         
-        let scale = UIScreen.main.scale
+        let scale = UIScreen.current?.scale ?? kDefaultScale
         mapLayer = data.toLayer(fitting: frame.size.insetBy(dx: pad, dy: pad), screenScale: scale)
 
         // use the size of the mapLayer to get a fitting size for the parent
@@ -47,7 +47,7 @@ class VTMapView: UIView {
     
     @MainActor
     public func updateData(data: VTMapData) async {
-        let scale = UIScreen.main.scale
+        let scale = UIScreen.current?.scale ?? kDefaultScale
         let newMapLayer = data.toLayer(fitting: frame.size.insetBy(dx: pad, dy: pad), screenScale: scale)
         newMapLayer.position = mapLayer.position
         let transform = mapLayer.transform

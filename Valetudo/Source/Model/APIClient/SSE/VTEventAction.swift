@@ -5,7 +5,7 @@
 //  Created by David Klopp on 07.06.25.
 //
 
-public enum VTEventAction<E: Decodable & Equatable>: Equatable {
+public enum VTEventAction<E: Decodable & Equatable & Sendable>: Equatable, Sendable {
     case didConnect
     case didAttemptReconnect
     case didDisconnect

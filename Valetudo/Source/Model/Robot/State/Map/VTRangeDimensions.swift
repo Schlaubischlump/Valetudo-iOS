@@ -6,7 +6,7 @@
 //
 import Foundation
 
-public struct VTRangeDimension: Decodable {
+public struct VTRangeDimension: Decodable, Sendable {
     public let min: Int
     public let max: Int
     public let mid: Int

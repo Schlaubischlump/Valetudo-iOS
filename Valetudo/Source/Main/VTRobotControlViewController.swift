@@ -56,6 +56,19 @@ struct VTOperationModeItem: VTSegmentedItem {
     }
 }
 
+struct VTRepeatItem: CaseIterable, VTSegmentedItem {
+    static let allCases: [VTRepeatItem] = [
+        VTRepeatItem(iterations: 1),
+        VTRepeatItem(iterations: 2),
+        VTRepeatItem(iterations: 3),
+        VTRepeatItem(iterations: 5),
+    ]
+    
+    let iterations: Int
+    var title: String { "× \(iterations)" }
+    var icon: UIImage? { .textImage("× \(iterations)") }
+}
+
 
 class VTRobotControlViewController: UIViewController {
     
@@ -63,12 +76,35 @@ class VTRobotControlViewController: UIViewController {
         case none
         case segments(ids: [String], customOrder: Bool, iterations: Int)
         
+        fileprivate var canChangeIterations: Bool {
+            switch (self) {
+            case .none: false
+            case .segments(ids: _, customOrder: _, iterations: _): true
+            }
+        }
+        
+        fileprivate var iterations: Int {
+            switch (self) {
+            case .none: 1
+            case .segments(ids: _, customOrder: _, iterations: let iter): iter
+            }
+        }
+        
         public func appending(segmentId: String) -> CleaningConfiguration {
             switch (self) {
             case .none:
-                return .segments(ids: [segmentId], customOrder: false, iterations: 1)
+                .segments(ids: [segmentId], customOrder: false, iterations: 1)
             case .segments(ids: let ids, customOrder: let order, iterations: let iters):
-                return .segments(ids: ids + [segmentId], customOrder: order, iterations: iters)
+                .segments(ids: ids + [segmentId], customOrder: order, iterations: iters)
+            }
+        }
+        
+        fileprivate func updated(iterations: Int) -> CleaningConfiguration {
+            switch (self) {
+            case .none:
+                .none
+            case .segments(ids: let ids, customOrder: let order, iterations: _):
+                .segments(ids: ids, customOrder: order, iterations: iterations)
             }
         }
         
@@ -89,7 +125,9 @@ class VTRobotControlViewController: UIViewController {
     }
     
     /// Cleaning configuration to use when the start button is clicked.
-    var currentConfiguration: CleaningConfiguration = .none
+    var currentConfiguration: CleaningConfiguration = .none {
+        didSet { self.updateIterations() }
+    }
     
     private let client: VTAPIClientProtocol
     private var observerToken: VTListenerToken?
@@ -100,8 +138,6 @@ class VTRobotControlViewController: UIViewController {
     private let scrollView = UIScrollView()
     private let contentStackView = UIStackView()
     private let startPauseStopControl = VTStartPauseStopControlRow()
-
-    // TODO: Add cleaning times?
     
     let modeRow = VTSegmentedControlRow<VTOperationModeItem>(
         title: VTPresetType.operationMode.description.capitalized,
@@ -116,10 +152,14 @@ class VTRobotControlViewController: UIViewController {
         title: VTPresetType.waterGrade.description.capitalized,
         titleIcon: UIImage(systemName: "drop.fill"),
     )
+    private let iterationsRow = VTSegmentedControlRow<VTRepeatItem>(
+        title: "ITERATIONS".localizedCapitalized(),
+        titleIcon: UIImage(systemName: "repeat"),
+    )
 
     private let dockControls = {
         let dockControls = VTStackedControlRow<VTControlButton>(
-            title: "CHARGER".localizedCapitalized,
+            title: "CHARGER".localizedCapitalized(),
             titleIcon: UIImage(systemName: "dock.arrow.down.rectangle")
         )
         dockControls.translatesAutoresizingMaskIntoConstraints = false
@@ -127,15 +167,15 @@ class VTRobotControlViewController: UIViewController {
         
         // TODO: Conditionally add these items based on the Capability of the robot
         let cleanButton = VTToggleControlButton(
-            title: "CLEAN".localizedUppercase,
+            title: "CLEAN".localizedUppercase(),
             icon: UIImage(systemName: "water.waves")
         )
         let dryButton = VTToggleControlButton(
-            title: "DRY".localizedUppercase,
+            title: "DRY".localizedUppercase(),
             icon: UIImage(systemName: "heat.waves.and.fan")
         )
         let emptyButton = VTControlButton(
-            title: "EMPTY".localizedUppercase,
+            title: "EMPTY".localizedUppercase(),
             icon: UIImage(systemName: "arrow.up.trash.fill")
         )
 
@@ -159,7 +199,7 @@ class VTRobotControlViewController: UIViewController {
     
     private let attachmentsControls = {
         let attachmentsControls = VTStackedControlRow<VTControlButton>(
-            title: "ATTACHMENTS".localizedCapitalized,
+            title: "ATTACHMENTS".localizedCapitalized(),
             titleIcon: UIImage(systemName: "puzzlepiece.extension.fill")
         )
         attachmentsControls.axis = .vertical
@@ -169,7 +209,7 @@ class VTRobotControlViewController: UIViewController {
     
     private let statisticsControls = {
         let statisticsControls = VTStackedControlRow<VTControlLabel>(
-            title: "CURRENT_STATISTICS".localizedCapitalized,
+            title: "CURRENT_STATISTICS".localizedCapitalized(),
             titleIcon: UIImage(systemName: "chart.bar.fill")
         )
         statisticsControls.axis = .horizontal
@@ -188,13 +228,13 @@ class VTRobotControlViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = .systemBackground
+        //view.backgroundColor = .systemBackground
         setupControls()
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        
+                
         Task {
             do {
                 try await loadInitialData()
@@ -213,13 +253,13 @@ class VTRobotControlViewController: UIViewController {
                         }
                     case .didReceiveError(let msg):
                         print("Received error message: \(msg)")
-                        // TODO: Handle error
+                        // TODO: Show error
                     default:
                         break
                     }
                 }
             } catch {
-                // TODO: Do something with the error
+                // TODO: Show error
                 print("Failed to update data: \(error)")
             }
         }
@@ -239,6 +279,9 @@ class VTRobotControlViewController: UIViewController {
     func loadInitialData() async throws {
         try await collecting { [weak self] run in
             guard let self else { return }
+            self.iterationsRow.values = VTRepeatItem.allCases
+            self.updateIterations()
+            
             await run {
                 self.fanRow.values = try await self.client.getPresets(forType: .fanSpeed)
                     .map(VTFanItem.init)
@@ -269,6 +312,15 @@ class VTRobotControlViewController: UIViewController {
     }
     
     @MainActor
+    private func updateIterations() {
+        let config = currentConfiguration
+        iterationsRow.isEnabled = true // allow changes to the current value
+        iterationsRow.subtitle = "x \(config.iterations)"
+        iterationsRow.selectedValue = VTRepeatItem(iterations: config.iterations)
+        iterationsRow.isEnabled = config.canChangeIterations
+    }
+    
+    @MainActor
     private func updateStatistics() async throws {
         let currentStatistics = try await client.getCurrentStatisticsCapability()
         await self.updateStatistics(currentStatistics)
@@ -288,7 +340,7 @@ class VTRobotControlViewController: UIViewController {
     }
     
     @MainActor
-    private func updateButtonStates(_ state: VTStateAttributes) async {
+    private func updateButtonStates(_ state: VTStateAttributeList) async {
         startPauseStopControl.isStopEnabled = state.isStoppable
         startPauseStopControl.isHomeEnabled = state.canReturnHome
         if state.isStarted {
@@ -308,9 +360,7 @@ class VTRobotControlViewController: UIViewController {
         let dockIsReady        = state.dockIsReady
         let isDryingMopPads    = state.isDryingMopPads
         let isCleaningMopPads  = state.isCleaningMopPads
-        
-        print("Dry mop pads: \(isDryingMopPads) \(state.isDocked) \(String(describing: state.statusStateAttributes.first!.value))")
-        
+                
         dryButton?.isEnabled = robotIsDocked && mopPadsAreAttached && (dockIsReady || isDryingMopPads)
         dryButton?.isToggled = isDryingMopPads
         
@@ -333,7 +383,7 @@ class VTRobotControlViewController: UIViewController {
     }
     
     @MainActor
-    private func updateAttachments(_ state: VTStateAttributes) async {
+    private func updateAttachments(_ state: VTStateAttributeList) async {
         // update all attachments
         attachmentsControls.items = state.attachmendTypes.map { attachmentType in
             let button = VTControlButton(
@@ -488,6 +538,10 @@ class VTRobotControlViewController: UIViewController {
             self?.modeRow.isEnabled = false
             Task { await self?.changeOperationMode(old: old?.presetValue, new: new.presetValue) }
         }
+        iterationsRow.onValueChanged = { [weak self]  (old, new) in
+            let config = self?.currentConfiguration ?? .none
+            self?.currentConfiguration = config.updated(iterations: new.iterations)
+        }
         
         scrollView.delaysContentTouches = false
         scrollView.translatesAutoresizingMaskIntoConstraints = false
@@ -505,7 +559,7 @@ class VTRobotControlViewController: UIViewController {
             scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
 
             contentStackView.topAnchor.constraint(
-                equalTo: scrollView.contentLayoutGuide.topAnchor, constant: 30
+                equalTo: scrollView.contentLayoutGuide.topAnchor, constant: 16
             ),
             contentStackView.leadingAnchor.constraint(
                 equalTo: scrollView.frameLayoutGuide.leadingAnchor, constant: 16
@@ -525,6 +579,7 @@ class VTRobotControlViewController: UIViewController {
         contentStackView.addArrangedSubview(modeRow)
         contentStackView.addArrangedSubview(fanRow)
         contentStackView.addArrangedSubview(waterRow)
+        contentStackView.addArrangedSubview(iterationsRow)
         contentStackView.addArrangedSubview(dockControls)
         contentStackView.addArrangedSubview(attachmentsControls)
         contentStackView.addArrangedSubview(statisticsControls)

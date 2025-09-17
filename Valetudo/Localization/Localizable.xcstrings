@@ -1,6 +1,28 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "ALL" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "all"
+          }
+        }
+      }
+    },
+    "ARCH" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "arch"
+          }
+        }
+      }
+    },
     "AREA" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -8,6 +30,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "area"
+          }
+        }
+      }
+    },
+    "ARGV" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "argv"
           }
         }
       }
@@ -30,6 +63,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "battery"
+          }
+        }
+      }
+    },
+    "BRUSH" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "brush"
           }
         }
       }
@@ -67,6 +111,39 @@
         }
       }
     },
+    "COMMIT" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "commit"
+          }
+        }
+      }
+    },
+    "CONSUMABLE_FOOTER_DESCRIPTION" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Consumables are components of the robot that need periodic cleaning, replacement or other maintenance work.\n\nThey come in two flavours, which are basically the same\n- operating hours left\n- percent left\nAt some point, they will become depleted, requiring you to do maintenance and reset them in the Valetudo UI. This will restore them to either their manufacturer-dependent design operating hours or 100%.\n\nNot maintaining your consumables may lead to performance degradation.\nStill, Valetudo recommends manual inspection of the part in question. You may be able to use it longer than the manufacturer recommends.\n\n###Types of consumables\n\nThere are various types of consumables that require different treatment.\n\n###Brushes\n\nBrushes come in different types such as main or side. At some point, they are worn out and have to be replaced.\n\nThey often also require removal of tangled hair or similar for optimal performance, so you should keep an eye on them.\n\n###Filters\n\nVacuum-robots usually have some kind of filter, which needs periodic cleaning and replacing when it is worn out.\n\n###Sensors\n\nYour robot has a few sensors such as cliff- or wall-distance-sensors, which are used for navigation and might get obstructed by dirt, debris, cobwebs or similar. Cleaning them can usually be done with a soft cloth. Make sure to not scratch the sensors as they are vital to the robot's operation.\n\n###Wheels\n\nSimilarly to the sensors, it also makes sense to check the wheels from time to time and remove any dirt and debris.\n\n###Mops\n\nWhile replacing mop pads might not always be necessary, it is strongly recommended to properly wash them from time to time."
+          }
+        }
+      }
+    },
+    "CONSUMABLES" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "consumables"
+          }
+        }
+      }
+    },
     "COUNT" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -74,6 +151,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "count"
+          }
+        }
+      }
+    },
+    "CPU_USAGE" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CPU usage"
           }
         }
       }
@@ -96,6 +184,39 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "custom"
+          }
+        }
+      }
+    },
+    "DEPENDENCIES" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "dependencies"
+          }
+        }
+      }
+    },
+    "DETERGENT" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "detergent"
+          }
+        }
+      }
+    },
+    "DOCK" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "dock"
           }
         }
       }
@@ -144,6 +265,17 @@
         }
       }
     },
+    "EMBEDDED" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "embedded"
+          }
+        }
+      }
+    },
     "EMPTY" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -166,6 +298,17 @@
         }
       }
     },
+    "ENVIRONMENT" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "environment"
+          }
+        }
+      }
+    },
     "ERROR" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -173,6 +316,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "error"
+          }
+        }
+      }
+    },
+    "EXEC_ARGV" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "exec argv"
+          }
+        }
+      }
+    },
+    "EXEC_PATH" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "exec path"
           }
         }
       }
@@ -188,6 +353,50 @@
         }
       }
     },
+    "FILTER" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "filter"
+          }
+        }
+      }
+    },
+    "FIRMWARE" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "firmware"
+          }
+        }
+      }
+    },
+    "FREE" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "free"
+          }
+        }
+      }
+    },
+    "GID" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "gid"
+          }
+        }
+      }
+    },
     "HIGH" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -195,6 +404,39 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "high"
+          }
+        }
+      }
+    },
+    "HOME" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "home"
+          }
+        }
+      }
+    },
+    "HOST" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "host"
+          }
+        }
+      }
+    },
+    "HOSTNAME" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "hostname"
           }
         }
       }
@@ -210,6 +452,39 @@
         }
       }
     },
+    "IRQ" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "irq"
+          }
+        }
+      }
+    },
+    "ITERATIONS" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iterations"
+          }
+        }
+      }
+    },
+    "KEYS" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "keys"
+          }
+        }
+      }
+    },
     "LEGEND" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -217,6 +492,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "legend"
+          }
+        }
+      }
+    },
+    "LOG" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "log"
           }
         }
       }
@@ -232,6 +518,17 @@
         }
       }
     },
+    "MAIN" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "main"
+          }
+        }
+      }
+    },
     "MANUAL_CONTROL" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -243,13 +540,24 @@
         }
       }
     },
+    "MANUFACTURER" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "manufacturer"
+          }
+        }
+      }
+    },
     "MAP" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Map"
+            "value" : "map"
           }
         }
       }
@@ -287,6 +595,39 @@
         }
       }
     },
+    "MISC" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "misc"
+          }
+        }
+      }
+    },
+    "MODEL" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "model"
+          }
+        }
+      }
+    },
+    "MONITORE_AND_RESET_CONSUMABLE_STATES" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Monitore and reset consumable states"
+          }
+        }
+      }
+    },
     "MOP" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -305,6 +646,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "moving"
+          }
+        }
+      }
+    },
+    "NICE" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "nice"
           }
         }
       }
@@ -331,6 +683,17 @@
         }
       }
     },
+    "OPTIONS" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "options"
+          }
+        }
+      }
+    },
     "PAUSE" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -353,6 +716,50 @@
         }
       }
     },
+    "PID" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "pid"
+          }
+        }
+      }
+    },
+    "READ_LESS" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "read less"
+          }
+        }
+      }
+    },
+    "READ_MORE" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "read more"
+          }
+        }
+      }
+    },
+    "RELEASE" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "release"
+          }
+        }
+      }
+    },
     "RETURNING" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -360,6 +767,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "returning"
+          }
+        }
+      }
+    },
+    "RIGHT" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "right"
           }
         }
       }
@@ -375,6 +793,83 @@
         }
       }
     },
+    "RUNTIME" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "runtime"
+          }
+        }
+      }
+    },
+    "SENSOR" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "sensor"
+          }
+        }
+      }
+    },
+    "SYS" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "sys"
+          }
+        }
+      }
+    },
+    "SYSTEM" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "system"
+          }
+        }
+      }
+    },
+    "SYSTEM_ID" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "system id"
+          }
+        }
+      }
+    },
+    "SYSTEM_INFORMATION" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "system information"
+          }
+        }
+      }
+    },
+    "SYSTEM_MEMORY" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "system memory (RAM)"
+          }
+        }
+      }
+    },
     "TIME" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -386,6 +881,17 @@
         }
       }
     },
+    "TIMERS" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "timers"
+          }
+        }
+      }
+    },
     "TURBO" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -393,6 +899,61 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "turbo"
+          }
+        }
+      }
+    },
+    "UID" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "uid"
+          }
+        }
+      }
+    },
+    "UNKNOWN" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "unknown"
+          }
+        }
+      }
+    },
+    "UPDATER" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "updater"
+          }
+        }
+      }
+    },
+    "UPTIME" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "uptime"
+          }
+        }
+      }
+    },
+    "USER" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "user"
           }
         }
       }
@@ -426,6 +987,61 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "vacuum then mop"
+          }
+        }
+      }
+    },
+    "VALETUDO" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Valetudo"
+          }
+        }
+      }
+    },
+    "VALETUDO_IMPLEMENTATION" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Valetudo Implementation"
+          }
+        }
+      }
+    },
+    "VALETUDO_MAX" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Valetudo (Max)"
+          }
+        }
+      }
+    },
+    "VALETUDO_SUBTITLE" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Free your vacuum from the cloud"
+          }
+        }
+      }
+    },
+    "VALETUDO_UPTIME" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Valetudo uptime"
           }
         }
       }

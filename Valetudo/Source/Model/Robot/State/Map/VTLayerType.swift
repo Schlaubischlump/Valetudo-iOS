@@ -6,7 +6,7 @@
 //
 
 
-public enum VTLayerType: String, Decodable {
+public enum VTLayerType: String, Decodable, Sendable {
     case floor
     case wall
     case segment

@@ -15,13 +15,14 @@ extension UISheetPresentationController.Detent.Identifier {
         UISheetPresentationController.Detent.Identifier("Detent.Middle")
     }
     
+    @MainActor
     static var top: UISheetPresentationController.Detent.Identifier = .large
 }
 
 extension UISheetPresentationController.Detent {
     static var bottomHeight: CGFloat = 80
     static var middleHeight: CGFloat = 200
-        
+    
     static func bottom() -> UISheetPresentationController.Detent {
         .custom(identifier: .bottom) { _ in bottomHeight }
     }

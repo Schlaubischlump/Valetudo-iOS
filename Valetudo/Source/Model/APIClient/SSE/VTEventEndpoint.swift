@@ -6,13 +6,13 @@
 //
 import Foundation
 
-public enum VTEventEndpoint<E: Decodable & Equatable> {
+public enum VTEventEndpoint<E: Decodable & Equatable & Sendable>: Sendable {
     typealias T = E
     
     case endpoint(E.Type)
     
     // Convenience static cases to avoid `.endpoint(...)` boilerplate
-    public static var stateAttributes: VTEventEndpoint<VTStateAttributes> { .endpoint(VTStateAttributes.self) }
+    public static var stateAttributes: VTEventEndpoint<VTStateAttributeList> { .endpoint(VTStateAttributeList.self) }
     public static var map: VTEventEndpoint<VTMapData> { .endpoint(VTMapData.self) }
     
     internal var decodableType: E.Type {
@@ -22,7 +22,7 @@ public enum VTEventEndpoint<E: Decodable & Equatable> {
     
     internal var eventID: String {
         if case let .endpoint(ty) = self {
-            if (ty == VTStateAttributes.self) { return "StateAttributesUpdated" }
+            if (ty == VTStateAttributeList.self) { return "StateAttributesUpdated" }
             if (ty == VTMapData.self)         { return "MapUpdated"             }
             fatalError("Unknown endpoint for type: \(ty)")
         }

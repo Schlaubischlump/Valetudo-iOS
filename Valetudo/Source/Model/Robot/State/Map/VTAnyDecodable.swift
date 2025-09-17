@@ -6,8 +6,8 @@
 //
 import Foundation
 
-public struct VTAnyDecodable: Decodable {
-    public let value: Any
+public struct VTAnyDecodable: Decodable, Sendable {
+    public let value: any Sendable
 
     public var boolValue: Bool? { value as? Bool }
 
@@ -25,20 +25,20 @@ public struct VTAnyDecodable: Decodable {
     }
 
     public var arrayValue: [VTAnyDecodable]? {
-        if let array = value as? [Any] {
+        if let array = value as? [any Sendable] {
             return array.map { VTAnyDecodable(wrapping: $0) }
         }
         return nil
     }
 
     public var dictionaryValue: [String: VTAnyDecodable]? {
-        if let dict = value as? [String: Any] {
+        if let dict = value as? [String: any Sendable] {
             return dict.mapValues { VTAnyDecodable(wrapping: $0) }
         }
         return nil
     }
 
-    private init(wrapping value: Any) {
+    private init(wrapping value: any Sendable) {
         self.value = value
     }
 
@@ -65,11 +65,12 @@ public struct VTAnyDecodable: Decodable {
 
 extension VTAnyDecodable: Equatable {
     public static func == (lhs: VTAnyDecodable, rhs: VTAnyDecodable) -> Bool {
-        return lhs.intValue == rhs.intValue
-            || lhs.stringValue == rhs.stringValue
-            || lhs.boolValue == rhs.boolValue
-            || lhs.doubleValue == rhs.doubleValue
-            || lhs.arrayValue == rhs.arrayValue
-            || lhs.dictionaryValue == rhs.dictionaryValue
+        return ((lhs.value as? NSObject == NSNull()) && (rhs.value as? NSObject == NSNull()))
+            || ((lhs.intValue != nil) && (lhs.intValue == rhs.intValue))
+            || ((lhs.stringValue != nil) && (lhs.stringValue == rhs.stringValue))
+            || ((lhs.boolValue != nil) && (lhs.boolValue == rhs.boolValue))
+            || ((lhs.doubleValue != nil) && (lhs.doubleValue == rhs.doubleValue))
+            || ((lhs.arrayValue != nil) && (lhs.arrayValue == rhs.arrayValue))
+            || ((lhs.dictionaryValue != nil) && (lhs.dictionaryValue == rhs.dictionaryValue))
     }
 }

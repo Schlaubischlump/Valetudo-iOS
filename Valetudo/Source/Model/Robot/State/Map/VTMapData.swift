@@ -6,7 +6,7 @@
 //
 import Foundation
 
-public struct VTMapData: Decodable {
+public struct VTMapData: Decodable, Sendable {
     public let size: VTSize
     public let pixelSize: Int
     public let layers: [VTLayer]

@@ -23,7 +23,7 @@ extension CGPath {
             strokeColor: UIColor = .black,
             fillColor: UIColor = .clear,
             lineWidth: CGFloat = 1.0,
-            scale: CGFloat = UIScreen.main.scale
+            scale: CGFloat
         ) -> UIImage {
             let rendererFormat = UIGraphicsImageRendererFormat.default()
             rendererFormat.scale = scale

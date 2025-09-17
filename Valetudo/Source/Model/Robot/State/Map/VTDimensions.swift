@@ -7,7 +7,7 @@
 import Foundation
 import CoreGraphics
 
-public struct VTDimensions: Decodable {
+public struct VTDimensions: Decodable, Sendable {
     public let x: VTRangeDimension
     public let y: VTRangeDimension
     public let pixelCount: Int

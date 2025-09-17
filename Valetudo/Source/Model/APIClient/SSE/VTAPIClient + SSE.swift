@@ -34,7 +34,7 @@ extension VTAPIClient {
                 .appendingPathComponent("map")
                 .appendingPathComponent("sse")
         }
-        if E.self == VTStateAttributes.self {
+        if E.self == VTStateAttributeList.self {
             return self.stateURL
                 .appendingPathComponent("attributes")
                 .appendingPathComponent("sse")
@@ -42,16 +42,18 @@ extension VTAPIClient {
         fatalError("Unsupported endpoint \(endpoint)")
     }
     
+    // MARK: - 1.1.3 SSE
+    
     @discardableResult
-    func registerEventObserver<E: Decodable & Equatable>(for endpoint: VTEventEndpoint<E>) async
+    func registerEventObserver<E: Decodable & Equatable & Sendable>(for endpoint: VTEventEndpoint<E>) async
     -> (VTListenerToken, AsyncStream<VTEventAction<E>>) {
         let url = sseURL(forEndpoint: endpoint)
         let socket = socket(forEndpoint: endpoint, createIfNeeded: true)
-        return socket!.register(at: url)
+        return await socket!.register(at: url)
     }
 
-    public func removeEventObserver<E: Decodable & Equatable>(token: VTListenerToken, for endpoint: VTEventEndpoint<E>) async {
+    public func removeEventObserver<E: Decodable & Equatable & Sendable>(token: VTListenerToken, for endpoint: VTEventEndpoint<E>) async {
         let socket = socket(forEndpoint: endpoint, createIfNeeded: false)
-        socket?.remove(token: token)
+        await socket?.remove(token: token)
     }
 }

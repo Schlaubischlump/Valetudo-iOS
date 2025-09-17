@@ -7,37 +7,43 @@
 import UIKit
 
 public extension UIImage {
+    static func textImage(_ text: String, font: UIFont = .boldSystemFont(ofSize: 24), color: UIColor = .black) -> UIImage {
+        .combine(op: text, opFont: font, opColor: color, spacing: 0)
+    }
+    
     static func combine(
-        left lhs: UIImage,
-        right rhs: UIImage,
-        text: String = "➕",
-        textFont: UIFont = .systemFont(ofSize: 12, weight: .regular),
-        textColor: UIColor = .black,
+        left lhs: UIImage? = nil,
+        right rhs: UIImage? = nil,
+        op: String = "➕",
+        opFont: UIFont = .systemFont(ofSize: 12, weight: .regular),
+        opColor: UIColor = .black,
         spacing: CGFloat = 0
     ) -> UIImage {
         // Attributes for plus string
         let attributes: [NSAttributedString.Key: Any] = [
-            .font: textFont,
-            .foregroundColor: textColor
+            .font: opFont,
+            .foregroundColor: opColor
         ]
-        let plusSize = (text as NSString).size(withAttributes: attributes)
-        let totalWidth = lhs.size.width + spacing + plusSize.width + spacing + rhs.size.width
-        let maxHeight = max(lhs.size.height, textFont.lineHeight, rhs.size.height)
+        let lhsSize = lhs?.size ?? .zero
+        let rhsSize = rhs?.size ?? .zero
+        let opSize = (op as NSString).size(withAttributes: attributes)
+        let totalWidth = lhsSize.width + spacing + opSize.width + spacing + rhsSize.width
+        let maxHeight = max(lhsSize.height, opFont.lineHeight, rhsSize.height)
         let finalSize = CGSize(width: totalWidth, height: maxHeight)
 
         let renderer = UIGraphicsImageRenderer(size: finalSize, format: .default())
         return renderer.image { ctx in
-            let lhsOrigin = CGPoint(x: 0, y: (maxHeight - lhs.size.height) / 2)
-            lhs.draw(in: CGRect(origin: lhsOrigin, size: lhs.size))
+            let lhsOrigin = CGPoint(x: 0, y: (maxHeight - lhsSize.height) / 2)
+            lhs?.draw(in: CGRect(origin: lhsOrigin, size: lhsSize))
 
-            let plusX = lhs.size.width + spacing
-            let plusY = (maxHeight - textFont.lineHeight) / 2
-            let plusRect = CGRect(x: plusX, y: plusY, width: plusSize.width, height: textFont.lineHeight)
-            (text as NSString).draw(in: plusRect, withAttributes: attributes)
+            let opX = lhsSize.width + spacing
+            let opY = (maxHeight - opFont.lineHeight) / 2
+            let opRect = CGRect(x: opX, y: opY, width: opSize.width, height: opFont.lineHeight)
+            (op as NSString).draw(in: opRect, withAttributes: attributes)
 
-            let rhsX = plusX + plusSize.width + spacing
-            let rhsOrigin = CGPoint(x: rhsX, y: (maxHeight - rhs.size.height) / 2)
-            rhs.draw(in: CGRect(origin: rhsOrigin, size: rhs.size))
+            let rhsX = opX + opSize.width + spacing
+            let rhsOrigin = CGPoint(x: rhsX, y: (maxHeight - rhsSize.height) / 2)
+            rhs?.draw(in: CGRect(origin: rhsOrigin, size: rhsSize))
         }
     }
 

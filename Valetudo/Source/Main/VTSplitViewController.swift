@@ -9,11 +9,13 @@ import UIKit
 class VTSplitViewController: UISplitViewController, UISplitViewControllerDelegate {
     let client: VTAPIClientProtocol
 
-    let sidebar = VTSidebarViewController()
-    let detail = UINavigationController(rootViewController: UIViewController())
+    let sidebar: VTSidebarViewController = VTSidebarViewController()
+    let detail: UINavigationController = UINavigationController(rootViewController: UIViewController())
+    let inspector: UIViewController
     
     init(client: VTAPIClientProtocol, style: UISplitViewController.Style) {
         self.client = client
+        inspector = VTRobotControlViewController(client: client)
         super.init(style: style)
     }
 
@@ -29,28 +31,34 @@ class VTSplitViewController: UISplitViewController, UISplitViewControllerDelegat
         preferredDisplayMode = .oneBesideSecondary
         preferredPrimaryColumnWidth = 250
 
-        sidebar.didSelectItem = { [weak self] index in
+        sidebar.didSelectItem = { [weak self] item in
             guard let self else { return }
-            self.updateDetail(for: index, animated: self.isCompact)
+            self.updateDetail(for: item, animated: self.isCompact)
         }
+        sidebar.navigationItem.titleView = VTNavigationTitleView(
+            image: UIImage(named: "Logo"),
+            title: "VALETUDO".localizedCapitalized(),
+            subtitle: "VALETUDO_SUBTITLE".localizedCapitalized()
+        )
 
         let sidebarNavController = UINavigationController(rootViewController: sidebar)
         setViewController(sidebarNavController, for: .primary)
         setViewController(detail, for: .secondary)
+        setViewController(inspector, for: .inspector)
 
-        updateDetail(for: 0, animated: false) // Select default
+        updateDetail(for: .home, animated: false) // Select default
     }
 
-    func updateDetail(for index: Int, animated: Bool) {
-        let vc: UIViewController
-        switch index {
-        case 0:
-            vc = VTMapViewController(client: client)
-        default:
-            vc = UIViewController()
+    func updateDetail(for item: VTSidebarItem, animated: Bool) {
+        let vc: UIViewController = switch item {
+        case .home:                 VTHomeViewController(client: client)
+        case .consumables:          VTConsumablesViewController(client: client)
+        case .systemInformation:    VTSystemInformationViewController(client: client)
+        default:            UIViewController()
         }
-        vc.title = sidebar.items[index].title
+        vc.title = item.title
         detail.setViewControllers([vc], animated: animated)
+        
         if (isCompact) {
             showDetailViewController(detail, sender: self)
         }

@@ -6,7 +6,7 @@
 //
 import Foundation
 
-public enum VTEntityType: String, Decodable {
+public enum VTEntityType: String, Decodable, Sendable {
     case charger_location
     case robot_position
     case go_to_target

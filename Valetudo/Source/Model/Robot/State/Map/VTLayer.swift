@@ -6,7 +6,7 @@
 //
 import Foundation
 
-public struct VTLayer: Decodable {
+public struct VTLayer: Decodable, Sendable {
     public let __class: String
     public let metaData: [String: VTAnyDecodable]
     public let type: VTLayerType

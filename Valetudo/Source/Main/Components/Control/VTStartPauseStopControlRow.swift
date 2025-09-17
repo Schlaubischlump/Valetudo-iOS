@@ -6,7 +6,7 @@
 //
 import UIKit
 
-class VTStartPauseStopControlRow: UIStackView {
+final class VTStartPauseStopControlRow: UIStackView {
     
     var onStartPauseCliked: ((_ isStarted: Bool) -> Void)?
     var onStopClicked: (() -> Void)?
@@ -46,9 +46,9 @@ class VTStartPauseStopControlRow: UIStackView {
         }
     }
         
-    private let startPauseButton = VTControlButton(title: nil, icon: UIImage(systemName: "play.fill"))
-    private let stopButton = VTControlButton(title: nil, icon: UIImage(systemName: "stop.fill"))
-    private let homeButton = VTControlButton(title: nil, icon: UIImage(systemName: "house.fill"))
+    private var startPauseButton = VTControlButton(title: nil, icon: UIImage(systemName: "play.fill"))
+    private var stopButton = VTControlButton(title: nil, icon: UIImage(systemName: "stop.fill"))
+    private var homeButton = VTControlButton(title: nil, icon: UIImage(systemName: "house.fill"))
     
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -63,17 +63,13 @@ class VTStartPauseStopControlRow: UIStackView {
     private func setup() {
         axis = .horizontal
         distribution = .fillEqually
-        spacing = -1
+        spacing = 0
         translatesAutoresizingMaskIntoConstraints = false
         heightAnchor.constraint(equalToConstant: 50).isActive = true
         
         setupButton(startPauseButton)
         setupButton(stopButton)
         setupButton(homeButton)
-
-        applySegmentedStyle(to: startPauseButton, position: .left)
-        applySegmentedStyle(to: stopButton, position: .middle)
-        applySegmentedStyle(to: homeButton, position: .right)
         
         startPauseButton.onTap = startPauseTapped
         stopButton.onTap = stopTapped
@@ -97,24 +93,32 @@ class VTStartPauseStopControlRow: UIStackView {
     private enum SegmentPosition {
         case left, middle, right
     }
+    
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        applySegmentedStyle(to: startPauseButton, position: .left)
+        applySegmentedStyle(to: stopButton, position: .middle)
+        applySegmentedStyle(to: homeButton, position: .right)
+    }
 
     private func applySegmentedStyle(to button: UIButton, position: SegmentPosition) {
-        button.layer.borderWidth = 1
-        button.layer.borderColor = UIColor.opaqueSeparator.cgColor
-        button.layer.masksToBounds = true
-        let radius: CGFloat = 8
-        
-        switch position {
-        case .left:
-            button.layer.cornerRadius = radius
-            button.layer.maskedCorners = [.layerMinXMinYCorner, .layerMinXMaxYCorner]
-        case .middle:
-            button.layer.cornerRadius = 0
-            button.layer.maskedCorners = []
-        case .right:
-            button.layer.cornerRadius = radius
-            button.layer.maskedCorners = [.layerMaxXMinYCorner, .layerMaxXMaxYCorner]
-        }
+        let radius: CGFloat = button.frame.height / 2
+        let (roundedCorners, borderEdge): (UIRectCorner, UIRectEdge) = switch position {
+            case .left:     ([.topLeft, .bottomLeft], [.right])
+            case .middle:   ([], [])
+            case .right:    ([.topRight, .bottomRight], [.left])
+            }
+
+        let path = UIBezierPath(
+            roundedRect: button.bounds,
+            byRoundingCorners: roundedCorners,
+            cornerRadii: CGSize(width: radius, height: radius)
+        )
+
+        let mask = CAShapeLayer()
+        mask.path = path.cgPath
+        button.layer.mask = mask
+        button.updateBorder(edge: borderEdge, color: .opaqueSeparator.withAlphaComponent(0.5), thickness: 1.0)
     }
 
     // MARK: - Actions

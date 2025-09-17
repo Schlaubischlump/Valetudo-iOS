@@ -6,7 +6,7 @@
 //
 import Foundation
 
-public struct VTMetaData: Decodable {
+public struct VTMetaData: Decodable, Sendable {
     public let version: Double
 }
 

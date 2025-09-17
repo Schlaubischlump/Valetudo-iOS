@@ -29,20 +29,27 @@ func collecting<T>(_ block: (_ run: (_ f: () throws -> Void) -> Void) throws -> 
     return result
 }
 
-func collecting<T>(
-    _ block: @escaping (_ run: (_ f: () async throws -> Void) async -> Void) async throws -> T
-) async throws -> T {
-    var errors: [Error] = []
+fileprivate actor ErrorCollector {
+    private(set) var errors: [Error] = []
 
-    func run(_ f: () async throws -> Void) async {
-        do {
-            try await f()
-        } catch {
-            errors.append(error)
-        }
+    func append(_ error: Error) {
+        errors.append(error)
+    }
+}
+
+
+func collecting<T: Sendable>(
+    _ block: @MainActor (_ run: (_ f: @MainActor () async throws -> Void) async -> Void) async throws -> T
+) async throws -> T {
+    let collector = ErrorCollector()
+
+    func run(_ f: @MainActor () async throws -> Void) async {
+        do { try await f() }
+        catch { await collector.append(error) }
     }
 
     let result = try await block(run)
+    let errors = await collector.errors
 
     if !errors.isEmpty {
         throw CollectedErrors.multiple(errors)
@@ -50,3 +57,4 @@ func collecting<T>(
 
     return result
 }
+

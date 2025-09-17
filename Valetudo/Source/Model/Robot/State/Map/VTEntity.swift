@@ -6,7 +6,7 @@
 //
 import Foundation
 
-public struct VTEntity: Decodable {
+public struct VTEntity: Decodable, Sendable {
     public let __class: String
     public let metaData: [String: VTAnyDecodable]
     public let type: VTEntityType

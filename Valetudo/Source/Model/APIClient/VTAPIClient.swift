@@ -27,18 +27,22 @@ enum VTAPIError: Error, LocalizedError {
     }
 }
 
-public actor VTAPIClient: NSObject, VTAPIClientProtocol {    
-    
-    static var shared: VTAPIClient? = {
+public actor VTAPIClient: VTAPIClientProtocol {
+
+    static let shared: VTAPIClient? = {
         guard let robotURL = URL(string: "http://dreame-vacuum-r2228o.fritz.box") else { return nil }
         return VTAPIClient(baseURL: robotURL)
     }()
 
     // MARK: - URLs
     let baseURL: URL
+    let valetudoURL: URL
     let robotURL: URL
     let stateURL: URL
     let capabilitiesURL: URL
+    let systemURL: URL
+    let hostURL: URL
+    let runtimeURL: URL
 
     // MARK: - (SSE) Server side events
     lazy var sseSockets: [String: any VTSSESocketProtocol] = [:]
@@ -61,7 +65,15 @@ public actor VTAPIClient: NSObject, VTAPIClientProtocol {
             .appendingPathComponent("state")
         self.capabilitiesURL = self.robotURL
             .appendingPathComponent("capabilities")
-
+        self.systemURL = self.baseURL
+            .appendingPathComponent("system")
+        self.hostURL = self.systemURL
+            .appendingPathComponent("host")
+        self.runtimeURL = self.systemURL
+            .appendingPathComponent("runtime")
+        self.valetudoURL = self.baseURL
+            .appendingPathComponent("valetudo")
+        
         self.session = URLSession(configuration: configuration)
     }
     
@@ -81,8 +93,8 @@ public actor VTAPIClient: NSObject, VTAPIClientProtocol {
     
     // MARK: - 1.1.1 Attributes
     
-    public func getStateAttributes() async throws -> VTStateAttributes {
-        let stateAttributesRequest = VTRequest<VTStateAttributes>(
+    public func getStateAttributes() async throws -> VTStateAttributeList {
+        let stateAttributesRequest = VTRequest<VTStateAttributeList>(
             method: .GET,
             url: self.stateURL.appendingPathComponent("attributes"),
             query: nil,
@@ -170,19 +182,19 @@ public actor VTAPIClient: NSObject, VTAPIClientProtocol {
             method: .PUT,
             url: self.capabilitiesURL.appendingPathComponent("AutoEmptyDockManualTriggerCapability"),
             query: nil,
-            body: VTTriggerManualCapability()
+            body: VTManualTriggerCapability()
         )
         try await send(request)
     }
     
     // MARK: - 1.2.5 MopDockCleanManualTriggerCapability
     
-    private func toggleCapability(action: VTToggleManualTriggerCapabilityType, at url: URL) async throws {
+    private func toggleCapability(action: VTToggleStartStopCapabilityType, at url: URL) async throws {
         let request = VTRequest<Void>(
             method: .PUT,
             url: url,
             query: nil,
-            body: VTToggleManualTriggerCapability(action: action)
+            body: VTToggleStartStopCapability(action: action)
         )
         try await send(request)
     }
@@ -213,11 +225,13 @@ public actor VTAPIClient: NSObject, VTAPIClientProtocol {
     
     private func capabilityPath(forType type: VTPresetType) -> String {
         switch type {
-        case .fanSpeed: "FanSpeedControlCapability"
-        case .waterGrade: "WaterUsageControlCapability"
-        case .operationMode: "OperationModeControlCapability"
+        case .fanSpeed:         "FanSpeedControlCapability"
+        case .waterGrade:       "WaterUsageControlCapability"
+        case .operationMode:    "OperationModeControlCapability"
         }
     }
+    
+    private let consumableMonitoringCapabilityPath: String = "ConsumableMonitoringCapability"
     
     func getPresets(forType type: VTPresetType) async throws -> [VTPresetValue] {
         let url = self.capabilitiesURL
@@ -244,6 +258,125 @@ public actor VTAPIClient: NSObject, VTAPIClientProtocol {
             body: data
         )
         try await send(request)
+    }
+    
+    // MARK: - 1.2.8 ConsumableMonitoringCapability
+    
+    func getConsumables() async throws -> [VTConsumableStateAttribute] {
+        let url = self.capabilitiesURL
+            .appendingPathComponent(consumableMonitoringCapabilityPath)
+        let request = VTRequest<VTStateAttributeList>(
+            method: .GET,
+            url: url,
+            query: nil
+        )
+        return try await send(request).attributes.compactMap {
+            $0 as? VTConsumableStateAttribute
+        }
+    }
+    
+    func getPropertiesForConsumables() async throws -> [VTConsumableStateAttributeProperties] {
+        let url = self.capabilitiesURL
+            .appendingPathComponent(consumableMonitoringCapabilityPath)
+            .appendingPathComponent("properties")
+        let request = VTRequest<VTConsumableStateAttributePropertiesList>(
+            method: .GET,
+            url: url,
+            query: nil
+        )
+        return try await send(request).availableConsumables
+    }
+    
+    func resetConsumable(type: VTConsumableType) async throws {
+        let url = self.capabilitiesURL
+            .appendingPathComponent(consumableMonitoringCapabilityPath)
+            .appendingPathComponent(type.rawValue)
+        let request = VTRequest<Void>(
+            method: .PUT,
+            url: url,
+            query: nil,
+            body: VTResetCapability()
+        )
+        try await send(request)
+    }
+    
+    func resetConsumable(type: VTConsumableType, subtype: VTConsumableSubType) async throws {
+        let url = self.capabilitiesURL
+            .appendingPathComponent(consumableMonitoringCapabilityPath)
+            .appendingPathComponent(type.rawValue)
+            .appendingPathComponent(subtype.rawValue)
+        let request = VTRequest<Void>(
+            method: .PUT,
+            url: url,
+            query: nil,
+            body: VTResetCapability()
+        )
+        try await send(request)
+    }
+    
+    // MARK: - 1.3 Properties
+    
+    func getRobotProperties() async throws -> VTRobotProperties {
+        let url = self.robotURL
+            .appendingPathComponent("properties")
+        let request = VTRequest<VTRobotProperties>(
+            method: .GET,
+            url: url,
+            query: nil
+        )
+        return try await send(request)
+    }
+    
+    
+    // MARK: - 2. System
+    
+    // MARK: - 2.1. Host
+    func getHostInfo() async throws -> VTHostInfo {
+        let url = self.hostURL
+            .appendingPathComponent("info")
+        let request = VTRequest<VTHostInfo>(
+            method: .GET,
+            url: url,
+            query: nil
+        )
+        return try await send(request)
+    }
+    
+    // MARK: - 2.2. Runtime
+    func getRuntimeInfo() async throws -> VTRuntimeInfo {
+        let url = self.runtimeURL
+            .appendingPathComponent("info")
+        let request = VTRequest<VTRuntimeInfo>(
+            method: .GET,
+            url: url,
+            query: nil
+        )
+        return try await send(request)
+    }
+    
+    // MARK: - 3. Valetudo
+    
+    func getBasicValetudoInfo() async throws -> VTBasicValetudoInfo {
+        let url = self.valetudoURL
+        let request = VTRequest<VTBasicValetudoInfo>(
+            method: .GET,
+            url: url,
+            query: nil
+        )
+        return try await send(request)
+    }
+    
+    // MARK: - 3.1 Version
+    
+    func getValetudoVersionInfo() async throws -> VTValetudoVersionInfo {
+        let url = self.valetudoURL
+            .appendingPathComponent("version")
+        let request = VTRequest<VTValetudoVersionInfo>(
+            method: .GET,
+            url: url,
+            query: nil
+        )
+        return try await send(request)
     }
     
     // MARK: - Internal

@@ -6,7 +6,7 @@
 //
 import Foundation
 
-public struct VTSize: Decodable {
+public struct VTSize: Decodable, Sendable {
     public let x: Int
     public let y: Int
 }
