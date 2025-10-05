@@ -1,0 +1,21 @@
+//
+//  Untitled.swift
+//  Valetudo
+//
+//  Created by David Klopp on 20.09.25.
+//
+import UIKit
+
+struct VTUpdateStateCellContentConfiguration: UIContentConfiguration, Hashable {
+    var message: String
+    var image: UIImage?
+    var tintColor: UIColor
+
+    func makeContentView() -> UIView & UIContentView {
+        VTNoUpdateAvailableCellView(configuration: self)
+    }
+
+    func updated(for state: UIConfigurationState) -> VTUpdateStateCellContentConfiguration {
+        self
+    }
+}
