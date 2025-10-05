@@ -6,7 +6,7 @@
 //
 import Foundation
 
-public enum VTValetudoDataPointType: String, Decodable, Sendable {
+public enum VTValetudoDataPointType: String, Decodable, Sendable, Describable {
     case time
     case area
     case count
@@ -20,7 +20,7 @@ public enum VTValetudoDataPointType: String, Decodable, Sendable {
     }
 }
 
-public struct VTValetudoDataPoint: Decodable, Sendable {
+public struct VTValetudoDataPoint: Decodable, Sendable, Describable {
     let __class: String
     let metaData: [String: VTAnyDecodable]
     let timestamp: Date

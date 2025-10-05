@@ -7,7 +7,7 @@
 
 import Foundation
 
-public enum VTPresetType: String, Codable, Sendable {
+public enum VTPresetType: String, Codable, Sendable, Describable {
     case fanSpeed = "fan_speed"
     case waterGrade = "water_grade"
     case operationMode = "operation_mode"
@@ -21,7 +21,7 @@ public enum VTPresetType: String, Codable, Sendable {
     }
 }
 
-public enum VTPresetValue: String, Codable, Sendable {
+public enum VTPresetValue: String, Codable, Sendable, Describable {
     case off, min, low, medium, high, max, turbo, custom
     case vacuum, mop, vacuumAndMop = "vacuum_and_mop", vacuumThenMop = "vacuum_then_mop"
     
@@ -43,7 +43,7 @@ public enum VTPresetValue: String, Codable, Sendable {
     }
 }
 
-public enum VTStatusValue: String, Codable, Sendable {
+public enum VTStatusValue: String, Codable, Sendable, Describable {
     case docked, error, idle, returning, cleaning, paused, manualControl = "manual_control", moving
     
     var description: String {
@@ -85,7 +85,7 @@ public enum VTStatusFlag: String, Codable, Sendable {
     case none, zone, segment, spot, target, resumable, mapping
 }
 
-public enum VTDockStatusValue: String, Codable, Sendable {
+public enum VTDockStatusValue: String, Codable, Sendable, Describable {
     case error, idle, pause, emptying, cleaning, drying
     
     var description: String {
@@ -104,7 +104,7 @@ public enum VTConsumableUnit: String, Codable, Sendable {
     case percent, minutes
 }
 
-public enum VTConsumableType: String, Codable, Sendable {
+public enum VTConsumableType: String, Codable, Sendable, Describable {
     case brush, filter, cleaning, mop, detergent
     
     var description: String {
@@ -118,7 +118,7 @@ public enum VTConsumableType: String, Codable, Sendable {
     }
 }
 
-public enum VTConsumableSubType: String, Codable, Sendable {
+public enum VTConsumableSubType: String, Codable, Sendable, Describable {
     case main, sideRight = "side_right", sensor, all, dock
     
     var description: String {
@@ -132,7 +132,7 @@ public enum VTConsumableSubType: String, Codable, Sendable {
     }
 }
 
-public enum VTAttachmentType: String, Codable, Sendable {
+public enum VTAttachmentType: String, Codable, Sendable, Describable {
     case dustbin, watertank, mop
     
     var description: String {
@@ -205,7 +205,7 @@ public struct VTStatusStateAttribute: VTStateAttribute {
 
 extension VTStatusStateAttribute: Equatable {}
 
-public struct VTConsumableRemaining: Codable, Sendable {
+public struct VTConsumableRemaining: Codable, Sendable, Describable {
     public let value: Double
     public let unit: VTConsumableUnit
     
@@ -300,6 +300,8 @@ public struct VTStateAttributeList: Decodable, Sendable {
         }
     }
     
+    /*
+    // Valetudo 2025.10.0: Consumables are no longer state attributes
     public var consumableStateAttributes: [VTConsumableStateAttribute] {
         attributes.compactMap {
             if ($0.__class == "ConsumableStateAttribute") {
@@ -309,6 +311,7 @@ public struct VTStateAttributeList: Decodable, Sendable {
             }
         }
     }
+    */
     
     // MARK: - AttachmentStateAttributes
     
@@ -421,7 +424,7 @@ public struct VTStateAttributeList: Decodable, Sendable {
                 decodedAttributes.append(try jsonDecoder.decode(VTBatteryStateAttribute.self, from: jsonData))
             case "StatusStateAttribute":
                 decodedAttributes.append(try jsonDecoder.decode(VTStatusStateAttribute.self, from: jsonData))
-            case "ConsumableStateAttribute":
+            case "ConsumableStateAttribute", "ValetudoConsumable":
                 decodedAttributes.append(try jsonDecoder.decode(VTConsumableStateAttribute.self, from: jsonData))
             default:
                 print("Unknown __class: \(className)")

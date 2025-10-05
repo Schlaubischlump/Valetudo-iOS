@@ -42,7 +42,7 @@ class VTSystemInformationViewControllerBase: UICollectionViewController {
         }
     }
     
-    private func configureCollectionView() {
+    func configureCollectionView() {
         //collectionView.backgroundColor = .systemGroupedBackground
         collectionView.register(
             VTHeaderView.self,
@@ -51,7 +51,7 @@ class VTSystemInformationViewControllerBase: UICollectionViewController {
         )
     }
     
-    private func configureDataSource() {
+    func configureDataSource() {
         let linkCellRegistration = UICollectionView.CellRegistration<UICollectionViewListCell, VTSystemInformationItem> { cell, _, item in
             switch (item) {
             case .link(let title, _):

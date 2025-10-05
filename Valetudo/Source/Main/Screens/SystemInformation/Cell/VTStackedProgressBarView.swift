@@ -81,7 +81,6 @@ final class VTStackedProgressBarView: UIView, UIContentView {
     // MARK: Subviews
     private lazy var titleLabel: UILabel = {
         let label = UILabel()
-        //label.font = .preferredFont(forTextStyle: .label)
         label.textColor = .label
         label.textAlignment = .left
         return label

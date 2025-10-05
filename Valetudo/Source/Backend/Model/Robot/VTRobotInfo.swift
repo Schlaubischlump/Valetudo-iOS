@@ -16,7 +16,7 @@ struct VTModelDetails: Decodable, Sendable {
     let supportedAttachments: [VTAttachment]
 }
 
-public struct VTRobotInfo: Decodable, Sendable {
+public struct VTRobotInfo: Decodable, Sendable, Describable {
     let manufacturer: String
     let modelName: String
     let modelDetails: VTModelDetails

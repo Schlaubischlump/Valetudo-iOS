@@ -13,6 +13,8 @@ final class VTSystemInformationViewController: VTSystemInformationViewController
     private var pollingTimer: Timer?
     private let pollingInterval: TimeInterval = 5.0
     
+    private let refreshControl = UIRefreshControl()
+    
     private var sections: [VTSystemInformationSection] = [.robot, .valetudo, .host, .runtime]
     
     override func viewDidAppear(_ animated: Bool) {
@@ -25,6 +27,21 @@ final class VTSystemInformationViewController: VTSystemInformationViewController
         stopPolling()
     }
 
+    override func configureCollectionView() {
+        super.configureCollectionView()
+        
+        collectionView.refreshControl = refreshControl
+        refreshControl.addTarget(self, action: #selector(didPullToRefresh), for: .valueChanged)
+    }
+    
+    @objc private func didPullToRefresh() {
+        Task {
+            stopPolling()
+            await self.reloadData(animated: true)
+            startPolling()
+        }
+    }
+    
     private func stopPolling() {
         pollingTimer?.invalidate()
         pollingTimer = nil
@@ -203,6 +220,10 @@ final class VTSystemInformationViewController: VTSystemInformationViewController
             }
         }
         await dataSource.apply(snapshot, animatingDifferences: animated)
+        
+        if self.refreshControl.isRefreshing {
+            self.refreshControl.endRefreshing()
+        }
     }
 }
 

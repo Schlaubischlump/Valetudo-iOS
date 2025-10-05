@@ -6,9 +6,16 @@
 //
 import Foundation
 
-enum VTUpdaterProvider: String, Codable, Sendable {
+enum VTUpdaterProvider: String, Codable, Sendable, CaseIterable, Describable {
     case github = "github"
     case githubNightly = "github_nightly"
+    
+    var description: String {
+        switch (self) {
+        case .github:        "RELEASE".localizedCapitalized()
+        case .githubNightly: "NIGHTLY".localizedCapitalized()
+        }
+    }
 }
 
 struct VTUpdaterConfig: Codable, Sendable {

@@ -12,6 +12,17 @@
         }
       }
     },
+    "APPLY_UPDATE" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "installing update…"
+          }
+        }
+      }
+    },
     "ARCH" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -89,6 +100,17 @@
         }
       }
     },
+    "CHECKING_FOR_UPDATES" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "checking for updates..."
+          }
+        }
+      }
+    },
     "CLEAN" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -144,6 +166,28 @@
         }
       }
     },
+    "CONSUMABLES_SUBTITLE" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Monitore and reset consumable states"
+          }
+        }
+      }
+    },
+    "COPY" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "copy"
+          }
+        }
+      }
+    },
     "COUNT" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -162,6 +206,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "CPU usage"
+          }
+        }
+      }
+    },
+    "CURRENT" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "current"
           }
         }
       }
@@ -232,6 +287,28 @@
         }
       }
     },
+    "DOWNLOAD" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "download"
+          }
+        }
+      }
+    },
+    "DOWNLOADING_UPDATE" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "downloading update…"
+          }
+        }
+      }
+    },
     "DRY" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -294,6 +371,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "emptying"
+          }
+        }
+      }
+    },
+    "ENABLE_MANUAL_CONTROL" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "enable manual control"
           }
         }
       }
@@ -452,6 +540,28 @@
         }
       }
     },
+    "INSTALL" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "install Valetudo"
+          }
+        }
+      }
+    },
+    "INSTALL_WARNING" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Please keep in mind that each update can require troubleshooting post-update. Make sure that you've thoroughly read the changelog to be aware of possible breaking changes."
+          }
+        }
+      }
+    },
     "IRQ" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -496,6 +606,17 @@
         }
       }
     },
+    "LEVEL" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "level"
+          }
+        }
+      }
+    },
     "LOG" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -536,6 +657,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "manual control"
+          }
+        }
+      }
+    },
+    "MANUAL_CONTROL_SUBTITLE" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Manually control your robot"
           }
         }
       }
@@ -617,17 +749,6 @@
         }
       }
     },
-    "MONITORE_AND_RESET_CONSUMABLE_STATES" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Monitore and reset consumable states"
-          }
-        }
-      }
-    },
     "MOP" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -635,6 +756,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "mop"
+          }
+        }
+      }
+    },
+    "MORE_DETAILS" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "more details"
           }
         }
       }
@@ -657,6 +789,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "nice"
+          }
+        }
+      }
+    },
+    "NIGHTLY" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "nightly"
           }
         }
       }
@@ -925,13 +1068,101 @@
         }
       }
     },
+    "UP_TO_DATE" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Valetudo is up to date"
+          }
+        }
+      }
+    },
+    "UPDATE" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "update"
+          }
+        }
+      }
+    },
+    "UPDATE_AVAILABLE" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "update available"
+          }
+        }
+      }
+    },
+    "UPDATE_CHANNEL" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "update channel"
+          }
+        }
+      }
+    },
+    "UPDATE_DISABLED" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Valetudo updates are disabled"
+          }
+        }
+      }
+    },
+    "UPDATE_ERROR" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "error updating valetudo"
+          }
+        }
+      }
+    },
+    "UPDATE_UNKNOWN" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "unknown update state"
+          }
+        }
+      }
+    },
     "UPDATER" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "updater"
+            "value" : "software update"
+          }
+        }
+      }
+    },
+    "UPDATER_FOOTER_DESCRIPTION" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The Valetudo updater is a convenience feature aiming to make life with Valetudo a bit easier.    \n\nAs it is built with privacy in mind, no daily update checks are performed. This means, no daily pings to some external server.    \n\nBy default, it's polling the GitHub API, meaning that I am not able to collect any data about you.    \n\n**Note: The updater will always try to update you to the next chronological release. If you're multiple releases behind, you will have to update multiple times in a row.**    \n\nAs the updater is just a convenience feature, there might be situations in which it doesn't work. In those situations, you will have to do a manual update, which usually involves SSH access to the robot.    \n\nSometimes, a configuration change might enable you to use the updater. In other instances, your model of robot might not be able to use the updater at all as there's not enough storage built in. This is not a bug. That's just how it is.    \n\nIt is also worth noting that the updater won't update the robots firmware. It only updates the Valetudo binary.    "
           }
         }
       }
@@ -1042,6 +1273,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Valetudo uptime"
+          }
+        }
+      }
+    },
+    "VERSION" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "version"
           }
         }
       }

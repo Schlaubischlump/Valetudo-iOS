@@ -160,6 +160,7 @@
 				GCC_WARN_PEDANTIC = deep;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "$(PRODUCT_NAME)/Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = Staubi;
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -200,6 +201,7 @@
 				GCC_WARN_PEDANTIC = deep;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "$(PRODUCT_NAME)/Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = Staubi;
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;

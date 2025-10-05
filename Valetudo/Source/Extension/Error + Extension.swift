@@ -1,3 +1,5 @@
+import Foundation
+
 enum CollectedErrors: Error, CustomStringConvertible {
     case multiple([Error])
 
@@ -57,4 +59,39 @@ func collecting<T: Sendable>(
 
     return result
 }
+
+/// Retries an async throwing operation up to `maxRetries` times.
+/// - Parameters:
+///   - maxRetries: Maximum number of attempts (≥ 1).
+///   - delay: Optional delay between retries (in seconds).
+///   - operation: The async closure to execute, which may throw.
+/// - Returns: The successful result of the operation.
+/// - Throws: The last thrown error if all retries fail.
+func retry<T>(
+    maxRetries: Int,
+    delay: TimeInterval? = nil,
+    operation: @Sendable @escaping () async throws -> T
+) async throws -> T {
+    precondition(maxRetries > 0, "maxRetries must be at least 1")
+    
+    var lastError: Error?
+    
+    for attempt in 1...maxRetries {
+        do {
+            return try await operation()
+        } catch {
+            lastError = error
+            
+            // If not the last attempt, wait before retrying
+            if attempt < maxRetries, let delay = delay {
+                try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
+            } else if attempt == maxRetries {
+                throw error
+            }
+        }
+    }
+    
+    throw lastError!
+}
+
 

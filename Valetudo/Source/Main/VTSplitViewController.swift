@@ -9,7 +9,9 @@ import UIKit
 class VTSplitViewController: UISplitViewController, UISplitViewControllerDelegate {
     let client: VTAPIClientProtocol
 
-    let sidebar: VTSidebarViewController = VTSidebarViewController()
+    lazy var sidebar: VTSidebarViewController = {
+        VTSidebarViewController(client: client)
+    }()
     let detail: UINavigationController = UINavigationController(rootViewController: UIViewController())
     let inspector: UIViewController
     
@@ -51,9 +53,13 @@ class VTSplitViewController: UISplitViewController, UISplitViewControllerDelegat
 
     func updateDetail(for item: VTSidebarItem, animated: Bool) {
         let vc: UIViewController = switch item {
-        case .home:                 VTHomeViewController(client: client)
-        case .consumables:          VTConsumablesViewController(client: client)
-        case .systemInformation:    VTSystemInformationViewController(client: client)
+        case .home:                         VTHomeViewController(client: client)
+        case .consumables:                  VTConsumablesViewController(client: client)
+        case .systemInformation:            VTSystemInformationViewController(client: client)
+        case .manualControl:                VTManualControlViewController(client: client)
+        case .highResolutionManualControl:  VTHighResolutionManualControlViewController(client: client)
+        case .updater:                      VTUpdaterViewController(client: client)
+        case .log:                          VTLogViewController(client: client)
         default:            UIViewController()
         }
         vc.title = item.title

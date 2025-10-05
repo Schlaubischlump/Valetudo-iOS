@@ -7,7 +7,7 @@
 import UIKit
 
 final class VTUpdateDetailCellView: UIView, UIContentView {
-    private var currentConfiguration: VTUpdateAvailableCellContentConfiguration!
+    private var currentConfiguration: VTUpdateDetailCellContentConfiguration!
 
     private let iconImageView: UIImageView = {
         let iv = UIImageView()
@@ -48,12 +48,12 @@ final class VTUpdateDetailCellView: UIView, UIContentView {
     var configuration: UIContentConfiguration {
         get { currentConfiguration }
         set {
-            guard let newConfig = newValue as? VTUpdateAvailableCellContentConfiguration else { return }
+            guard let newConfig = newValue as? VTUpdateDetailCellContentConfiguration else { return }
             apply(configuration: newConfig)
         }
     }
 
-    init(configuration: VTUpdateAvailableCellContentConfiguration) {
+    init(configuration: VTUpdateDetailCellContentConfiguration) {
         self.currentConfiguration = configuration
         super.init(frame: .zero)
         setupViews()
@@ -99,7 +99,7 @@ final class VTUpdateDetailCellView: UIView, UIContentView {
     }
 
     private func apply(configuration: UIContentConfiguration) {
-        guard let config = configuration as? VTUpdateAvailableCellContentConfiguration else { return }
+        guard let config = configuration as? VTUpdateDetailCellContentConfiguration else { return }
 
         currentConfiguration = config
         titleLabel.text = config.title
@@ -107,8 +107,8 @@ final class VTUpdateDetailCellView: UIView, UIContentView {
         iconImageView.image = config.image
 
         textView.configure(with: config.attributedMessage)
-        textView.baseFont = .systemFont(ofSize: UIFont.labelFontSize)
-        textView.baseTextColor = .label
+        textView.baseFont = config.baseFont
+        textView.baseTextColor = config.baseTextColor
         textView.reloadHandler = { [weak self] in
             let collectionView = self?.enclosingCollectionView as? UICollectionView
             let layout = collectionView?.collectionViewLayout

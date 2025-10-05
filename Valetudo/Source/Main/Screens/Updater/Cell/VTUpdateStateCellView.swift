@@ -48,7 +48,10 @@ final class VTUpdateStateCellView: UIView, UIContentView {
             stack.topAnchor.constraint(equalTo: topAnchor, constant: 16),
             stack.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -16),
             stack.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 16),
-            stack.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -16)
+            stack.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -16),
+            
+            checkmarkImageView.widthAnchor.constraint(equalToConstant: 40),
+            checkmarkImageView.heightAnchor.constraint(equalToConstant: 40)
         ])
     }
 
@@ -59,4 +62,3 @@ final class VTUpdateStateCellView: UIView, UIContentView {
         checkmarkImageView.tintColor = config.tintColor
     }
 }
-

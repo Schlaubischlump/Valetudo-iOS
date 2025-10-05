@@ -6,14 +6,14 @@
 //
 import Foundation
 
-enum VTUpdaterSection: Int, CaseIterable {
+enum VTLogSection: Int, CaseIterable {
     case main
-    case update
+    case log
     
     var title: String? {
         switch (self) {
         case .main:    nil
-        case .update:  "UPDATE".localizedCapitalized()
+        case .log:  "LOG".localizedCapitalized()
         }
     }
 }

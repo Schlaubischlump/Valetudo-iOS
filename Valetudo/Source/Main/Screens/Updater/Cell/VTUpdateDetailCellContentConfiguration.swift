@@ -11,6 +11,8 @@ struct VTUpdateDetailCellContentConfiguration: UIContentConfiguration, Hashable 
     var subtitle: String
     var image: UIImage?
     var attributedMessage: NSAttributedString
+    var baseFont: UIFont = .systemFont(ofSize: UIFont.labelFontSize)
+    var baseTextColor: UIColor = .label
     var buttonTitle: String
     var buttonAction: (UIButton) -> Void
     

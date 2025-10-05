@@ -33,53 +33,61 @@ enum VTSidebarItem: Hashable {
     case systemInformation
     case updater
     case manualControl
+    case highResolutionManualControl
 
     var title: String {
         switch self {
-        case .home:                 return "HOME".localizedCapitalized()
-        case .map:                  return "MAP".localizedCapitalized()
-        case .consumables:          return "CONSUMABLES".localizedCapitalized()
-        case .robot:                return "ROBOT".localizedCapitalized()
-        case .timers:               return "TIMERS".localizedCapitalized()
-        case .log:                  return "LOG".localizedCapitalized()
-        case .systemInformation:    return "SYSTEM_INFORMATION".localizedCapitalized()
-        case .updater:              return "UPDATER".localizedCapitalized()
-        case .manualControl:        return "MANUAL_CONTROL".localizedCapitalized()
+        case .home:                                        return "HOME".localizedCapitalized()
+        case .map:                                         return "MAP".localizedCapitalized()
+        case .consumables:                                 return "CONSUMABLES".localizedCapitalized()
+        case .robot:                                       return "ROBOT".localizedCapitalized()
+        case .timers:                                      return "TIMERS".localizedCapitalized()
+        case .log:                                         return "LOG".localizedCapitalized()
+        case .systemInformation:                           return "SYSTEM_INFORMATION".localizedCapitalized()
+        case .updater:                                     return "UPDATER".localizedCapitalized()
+        case .manualControl, .highResolutionManualControl: return "MANUAL_CONTROL".localizedCapitalized()
         }
     }
 
     var icon: UIImage? {
         switch self {
-        case .home:              return UIImage(systemName: "house.fill")
-        case .map:               return UIImage(systemName: "map.fill")
-        case .consumables:       return UIImage(systemName: "chart.line.text.clipboard.fill")
-        case .robot:             return UIImage(systemName: "robotic.vacuum.fill")
-        case .timers:            return UIImage(systemName: "clock.fill")
-        case .log:               return UIImage(systemName: "text.page.fill")
-        case .systemInformation: return UIImage(systemName: "info.circle.fill")
-        case .updater:           return UIImage(systemName: "square.and.arrow.down.fill")
-        case .manualControl:     return UIImage(systemName: "arrow.up.and.down.and.arrow.left.and.right")
+        case .home:                                        return UIImage(systemName: "house.fill")
+        case .map:                                         return UIImage(systemName: "map.fill")
+        case .consumables:                                 return UIImage(systemName: "chart.line.text.clipboard.fill")
+        case .robot:                                       return UIImage(systemName: "robotic.vacuum.fill")
+        case .timers:                                      return UIImage(systemName: "clock.fill")
+        case .log:                                         return UIImage(systemName: "text.page.fill")
+        case .systemInformation:                           return UIImage(systemName: "info.circle.fill")
+        case .updater:                                     return UIImage(systemName: "square.and.arrow.down.fill")
+        case .manualControl, .highResolutionManualControl: return UIImage(systemName: "arrow.up.and.down.and.arrow.left.and.right")
         }
     }
 }
 
+fileprivate typealias VTSidebarData = [(VTSidebarSection, [VTSidebarItem])]
+
+fileprivate extension VTSidebarData {
+    func section(at: Int) -> VTSidebarSection? { self[safe: at]?.0 }
+}
 
 class VTSidebarViewController: UICollectionViewController {
     typealias VTSidebarDataSource = UICollectionViewDiffableDataSource<VTSidebarSection, VTSidebarItem>
     typealias VTSidebarDatasourceSnapshot = NSDiffableDataSourceSnapshot<VTSidebarSection, VTSidebarItem>
     
     private var dataSource: VTSidebarDataSource!
-    private let items: [VTSidebarSection: [VTSidebarItem]] = [
-        .main:      [.home],
-        .robot:     [.consumables, .manualControl],
-        .options:   [.map, .robot],
-        .misc:      [.timers, .log, .updater, .systemInformation]
+    private var data: VTSidebarData = [
+        .main    => [.home],
+        .robot   => [.consumables, .manualControl, .highResolutionManualControl],
+        .options => [.map, .robot],
+        .misc    => [.timers, .log, .updater, .systemInformation]
     ]
     
     var didSelectItem: ((VTSidebarItem) -> Void)?
 
+    private var client: VTAPIClientProtocol
 
-    init() {
+    init(client: VTAPIClientProtocol) {
+        self.client = client
         var listConfig = UICollectionLayoutListConfiguration(appearance: .sidebar)
         listConfig.headerMode = .supplementary
         let layout = UICollectionViewCompositionalLayout.list(using: listConfig)
@@ -93,8 +101,11 @@ class VTSidebarViewController: UICollectionViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        
         configureCollectionView()
         configureDataSource()
+        
+        Task { await loadInitialData() }
     }
     
     override func viewDidAppear(_ animated: Bool) {
@@ -123,6 +134,31 @@ class VTSidebarViewController: UICollectionViewController {
             withReuseIdentifier: VTSidebarHeaderView.reuseIdentifier
         )
     }
+    
+    @MainActor
+    private func loadInitialData() async {
+        let capabilities = Set((try? await client.getCapabilities()) ?? [])
+        let supportsHighResolutionManualControl = capabilities.contains(.highResolutionManualControl)
+        // filter the data, such that all unavailable features are remove
+        data = data.compactMap { (sec, its) in
+            let tmpItems = its.filter { item in
+                switch (item) {
+                case .home, .log, .robot, .map, .systemInformation, .timers, .updater: true
+                case .consumables:   capabilities.contains(.consumableMonitoring)
+                case .manualControl: capabilities.contains(.manualControl) && !supportsHighResolutionManualControl
+                case .highResolutionManualControl: supportsHighResolutionManualControl
+                }
+            }
+            return tmpItems.isEmpty ? nil : (sec, tmpItems)
+        }
+        
+        var snapshot = VTSidebarDatasourceSnapshot()
+        for (section, items) in data {
+            snapshot.appendSections([section])
+            snapshot.appendItems(items, toSection: section)
+        }
+        await dataSource.apply(snapshot, animatingDifferences: false)
+    }
 
     private func configureDataSource() {
         let cellRegistration = UICollectionView.CellRegistration<UICollectionViewListCell, VTSidebarItem> { cell, _, item in
@@ -136,23 +172,16 @@ class VTSidebarViewController: UICollectionViewController {
             return collectionView.dequeueConfiguredReusableCell(using: cellRegistration, for: indexPath, item: item)
         }
 
-        dataSource.supplementaryViewProvider = { collectionView, kind, indexPath in
+        dataSource.supplementaryViewProvider = { [weak self] collectionView, kind, indexPath in
             guard kind == UICollectionView.elementKindSectionHeader else { return nil }
             let header = collectionView.dequeueReusableSupplementaryView(
                 ofKind: kind,
                 withReuseIdentifier: VTSidebarHeaderView.reuseIdentifier,
                 for: indexPath
             ) as? VTSidebarHeaderView
-            header?.configure(text: VTSidebarSection(rawValue: indexPath.section)?.title ?? "")
+            header?.configure(text: self?.data.section(at: indexPath.section)?.title ?? "")
             return header
         }
-        
-        var snapshot = VTSidebarDatasourceSnapshot()
-        VTSidebarSection.allCases.forEach { section in
-            snapshot.appendSections([section])
-            snapshot.appendItems(items[section] ?? [], toSection: section)
-        }
-        dataSource.apply(snapshot, animatingDifferences: false)
     }
 
     // MARK: - UICollectionViewDelegate

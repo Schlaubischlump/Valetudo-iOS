@@ -6,12 +6,14 @@
 //
 import UIKit
 
-struct VTLoadingCellConfiguration: UIContentConfiguration, Hashable {
+struct VTLoadingCellContentConfiguration: UIContentConfiguration, Hashable {
+    var message: String
+    
     func makeContentView() -> UIView & UIContentView {
-        return VTLoadingCellContentView(configuration: self)
+        VTLoadingCellView(configuration: self)
     }
 
-    func updated(for state: UIConfigurationState) -> VTLoadingCellConfiguration {
-        return self
+    func updated(for state: UIConfigurationState) -> VTLoadingCellContentConfiguration {
+        self
     }
 }

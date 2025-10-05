@@ -19,10 +19,175 @@ enum VTUpdaterErrorType: String, Decodable, Sendable {
     case invalid_checksum
 }
 
-struct VTUpdaterState: Decodable, Sendable {
+protocol VTUpdaterState: Equatable, Sendable {
+    var className: String { get }
+    var timestamp: Date { get }
+    var busy: Bool { get }
+    var metaData: [String: VTAnyDecodable] { get }
+}
+
+struct VTUpdaterNoUpdateRequiredState: VTUpdaterState, Equatable, Sendable {
     let className: String
-    let metaData: [String: String]?
     let timestamp: Date
+    let busy: Bool
+    let metaData: [String: VTAnyDecodable]
+    
+    let currentVersion: String
+    let changelog: String
+}
+
+struct VTUpdaterIdleState: VTUpdaterState, Equatable, Sendable {
+    let className: String
+    let timestamp: Date
+    let busy: Bool
+    let metaData: [String: VTAnyDecodable]
+    
+    let currentVersion: String
+}
+
+struct VTUpdaterErrorState: VTUpdaterState, Equatable, Sendable {
+    let className: String
+    let timestamp: Date
+    let busy: Bool
+    let metaData: [String: VTAnyDecodable]
+    
+    let type: VTUpdaterErrorType
+    let message: String
+}
+
+struct VTUpdaterDownloadingState: VTUpdaterState, Equatable, Sendable {
+    let className: String
+    let timestamp: Date
+    let busy: Bool
+    let metaData: [String: VTAnyDecodable]
+    
+    let version: String
+    let releaseTimestamp: Date
+    let downloadUrl: String
+    let expectedHash: String
+    let downloadPath: String
+    
+    var progress: Double? {
+        if let progress = self.metaData["progress"] {
+            return progress.doubleValue
+        }
+        return nil
+    }
+}
+
+struct VTUpdaterDisabledState: VTUpdaterState, Equatable, Sendable {
+    let className: String
+    let timestamp: Date
+    let busy: Bool
+    let metaData: [String: VTAnyDecodable]
+}
+
+struct VTUpdaterApprovalPendingState: VTUpdaterState, Equatable, Sendable {
+    let className: String
+    let timestamp: Date
+    let busy: Bool
+    let metaData: [String: VTAnyDecodable]
+    
+    let version: String
+    let releaseTimestamp: Date
+    let changelog: String
+    let downloadUrl: String
+    let expectedHash: String
+    let downloadPath: String
+}
+
+struct VTUpdaterApplyPendingState: VTUpdaterState, Equatable, Sendable {
+    let className: String
+    let timestamp: Date
+    let busy: Bool
+    let metaData: [String: VTAnyDecodable]
+    
+    let version: String
+    let releaseTimestamp: Date
+    let downloadPath: String
+}
+
+internal struct VTUpdaterStateDecoder: Decodable, Sendable, Equatable {
+    let className: String
+    let metaData: [String: VTAnyDecodable]?
+    let timestamp: Date
+    var busy: Bool
+    
+    var stateObject: any VTUpdaterState {
+        let metaData = metaData ?? [:]
+        switch (self.className) {
+        case "ValetudoUpdaterNoUpdateRequiredState":
+            return VTUpdaterNoUpdateRequiredState(
+                className: className,
+                timestamp: timestamp,
+                busy: busy,
+                metaData: metaData,
+                currentVersion: currentVersion ?? "",
+                changelog: changelog ?? ""
+            )
+        case "ValetudoUpdaterIdleState":
+            return VTUpdaterIdleState(
+                className: className,
+                timestamp: timestamp,
+                busy: busy,
+                metaData: metaData,
+                currentVersion: currentVersion ?? ""
+            )
+        case "ValetudoUpdaterErrorState":
+            return VTUpdaterErrorState(
+                className: className,
+                timestamp: timestamp,
+                busy: busy,
+                metaData: metaData,
+                type: type ?? .unknown,
+                message: message ?? ""
+            )
+        case "ValetudoUpdaterDownloadingState":
+            return VTUpdaterDownloadingState(
+                className: className,
+                timestamp: timestamp,
+                busy: busy,
+                metaData: metaData,
+                version: version ?? "",
+                releaseTimestamp: releaseTimestamp ?? .distantPast,
+                downloadUrl: downloadUrl ?? "",
+                expectedHash: expectedHash ?? "",
+                downloadPath: downloadPath ?? ""
+            )
+        case "ValetudoUpdaterDisabledState":
+            return VTUpdaterDisabledState(
+                className: className,
+                timestamp: timestamp,
+                busy: busy,
+                metaData: metaData
+            )
+        case "ValetudoUpdaterApprovalPendingState":
+            return VTUpdaterApprovalPendingState(
+                className: className,
+                timestamp: timestamp,
+                busy: busy,
+                metaData: metaData,
+                version: version ?? "",
+                releaseTimestamp: releaseTimestamp ?? .distantPast,
+                changelog: changelog ?? "",
+                downloadUrl: downloadUrl ?? "",
+                expectedHash: expectedHash ?? "",
+                downloadPath: downloadPath ?? ""
+            )
+        case "ValetudoUpdaterApplyPendingState":
+            return VTUpdaterApplyPendingState(
+                className: className,
+                timestamp: timestamp,
+                busy: busy,
+                metaData: metaData,
+                version: version ?? "",
+                releaseTimestamp: releaseTimestamp ?? .distantPast,
+                downloadPath: downloadPath ?? ""
+            )
+        default:
+            fatalError("Unhandeled updater object.")
+        }
+    }
     
     // Common fields
     let currentVersion: String?
@@ -52,5 +217,6 @@ struct VTUpdaterState: Decodable, Sendable {
         case downloadUrl
         case expectedHash
         case downloadPath
+        case busy
     }
 }

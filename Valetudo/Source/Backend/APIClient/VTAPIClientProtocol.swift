@@ -7,6 +7,12 @@
 
 import Foundation
 
+struct VTLogLine {
+    let timestamp: Date
+    let level: String
+    let message: String
+}
+
 protocol VTAPIClientProtocol: Actor {
     static var shared: Self? { get }
         
@@ -84,6 +90,14 @@ protocol VTAPIClientProtocol: Actor {
     func disableManualControl() async throws
     func manualControlMove(direction: VTMoveDirection) async throws
     
+    // MARK: - 1.2.10 ManualControlCapability
+    
+    func getHighResolutionManualControlIsEnabled() async throws -> Bool
+    func enableHighResolutionManualControl() async throws
+    func disableHighResolutionManualControl() async throws
+    // angle: +- 180.0 and velocity: +-1.0
+    func highResolutionManualControlMove(angle: CGFloat, velocity: CGFloat) async throws
+    
     // MARK: - 1.3 Properties
     
     func getRobotProperties() async throws -> VTRobotProperties
@@ -105,17 +119,23 @@ protocol VTAPIClientProtocol: Actor {
     
     func getValetudoVersionInfo() async throws -> VTValetudoVersionInfo
     
+    // MARK: - 3.2 Log
+    
+    func getLogProperties() async throws -> VTLogLevel
+    func setLogLevel(_ level: String) async throws
+    func getLog() async throws -> [VTLogLine]
+    
     // MARK: - 4. Updater
     
     func checkForUpdate() async throws
     
     func downloadUpdate() async throws
     
-    func performUpdate() async throws
+    func applyUpdate() async throws
     
     // MARK: 4.1 State
     
-    func getUpdaterState() async throws -> VTUpdaterState
+    func getUpdaterState() async throws -> any VTUpdaterState
     
     // MARK: 4.2 State
     

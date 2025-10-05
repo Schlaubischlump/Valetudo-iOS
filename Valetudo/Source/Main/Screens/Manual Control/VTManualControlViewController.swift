@@ -6,15 +6,7 @@
 //
 import UIKit
 
-final class VTManualControlViewController: UIViewController {
-    private let client: VTAPIClientProtocol
-    
-    private let enableSwitch: UISwitch = {
-        let toggle = UISwitch()
-        toggle.isOn = false
-        return toggle
-    }()
-    
+final class VTManualControlViewController: VTManualControlViewControllerBase {
     private func makeButton(systemName: String, action: Selector) -> UIButton {
         var config = UIButton.Configuration.filled()
         config.baseBackgroundColor = .secondarySystemBackground
@@ -65,18 +57,16 @@ final class VTManualControlViewController: UIViewController {
         return grid
     }()
     
-    init(client: VTAPIClientProtocol) {
-        self.client = client
-        super.init(nibName: nil, bundle: nil)
+    override func disableAllButtons() {
+        upButton.isEnabled    = false
+        downButton.isEnabled  = false
+        leftButton.isEnabled  = false
+        rightButton.isEnabled = false
+        super.disableAllButtons()
     }
     
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-    
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        view.backgroundColor = .systemBackground
+    override func setupView() {
+        super.setupView()
         
         // Add grid
         view.addSubview(gridStack)
@@ -94,50 +84,70 @@ final class VTManualControlViewController: UIViewController {
             $0.widthAnchor.constraint(equalToConstant: 80).isActive = true
             $0.heightAnchor.constraint(equalToConstant: 80).isActive = true
         }
-        
-        navigationItem.title = "MANUAL_CONTROL".localizedCapitalized()
-        navigationItem.subtitle = "MANUAL_CONTROL_SUBTITLE".localizedCapitalized()
-        
-        enableSwitch.addTarget(self, action: #selector(didToggleManualControl(_:)), for: .valueChanged)
-        navigationItem.rightBarButtonItem = UIBarButtonItem(customView: enableSwitch)
-        navigationItem.rightBarButtonItem?.isEnabled = false
-        navigationItem.rightBarButtonItem?.hidesSharedBackground = true
-    }
-    
-    override func viewWillAppear(_ animated: Bool) {
-        super.viewWillAppear(animated)
-        
-        Task { await loadInitialData() }
     }
     
     @MainActor
-    func loadInitialData() async {
-        // TODO: load stuff
+    override func loadInitialData() async {        
+        let isEnabled = (try? await client.getManualControlIsEnabled()) ?? false
         
-        enableSwitch.isOn = true
-        navigationItem.rightBarButtonItem?.isEnabled = true
+        if (isEnabled) {
+            let supportedMovementDirections = (try? await client.getManualControlSupportedMovementDirections()) ?? []
+            supportedMovementDirections.forEach {
+                switch ($0) {
+                case .forward:                downButton.isEnabled  = true
+                case .backward:               upButton.isEnabled    = true
+                case .rotateClockwise:        rightButton.isEnabled = true
+                case .rotateCounterclockwise: leftButton.isEnabled  = true
+                }
+            }
+        }
+        finalizeLoading(manualControlIsEnabled: isEnabled)
     }
     
     // MARK: - Actions
     
+    override func enableManualControl() async throws {
+        try await client.enableManualControl()
+    }
+    
+    override func disableManualControl() async throws {
+        try await client.disableManualControl()
+    }
+    
     @objc private func didTapUp() {
-        print("Up button tapped")
+        guard !ignoreInput else { return }
+        Task {
+            try await withIgnoreInputs { [weak self] in
+                try await self?.client.manualControlMove(direction: .forward)
+            }
+        }
     }
     
     @objc private func didTapDown() {
-        print("Down button tapped")
+        guard !ignoreInput else { return }
+        Task {
+            try await withIgnoreInputs { [weak self] in
+                try await self?.client.manualControlMove(direction: .backward)
+            }
+        }
     }
     
     @objc private func didTapLeft() {
-        print("Left rotate tapped")
+        guard !ignoreInput else { return }
+        Task {
+            try await withIgnoreInputs { [weak self] in
+                try await self?.client.manualControlMove(direction: .rotateCounterclockwise)
+            }
+        }
     }
     
     @objc private func didTapRight() {
-        print("Right rotate tapped")
-    }
-    
-    @objc private func didToggleManualControl(_ sender: UISwitch) {
-        print("Manual control \(sender.isOn ? "enabled" : "disabled")")
+        guard !ignoreInput else { return }
+        Task {
+            try await withIgnoreInputs { [weak self] in
+                try await self?.client.manualControlMove(direction: .rotateClockwise)
+            }
+        }
     }
 }
 

@@ -7,12 +7,7 @@
     },
     {
       "appearance" : "dark",
-      "value" : {
-        "linear-gradient" : [
-          "display-p3:0.57459,0.57459,0.57459,1.00000",
-          "display-p3:0.44949,0.44949,0.44949,1.00000"
-        ]
-      }
+      "value" : "system-dark"
     }
   ],
   "groups" : [
@@ -23,7 +18,7 @@
             {
               "appearance" : "dark",
               "value" : {
-                "solid" : "extended-gray:0.00000,1.00000"
+                "solid" : "display-p3:0.45891,0.45891,0.45891,1.00000"
               }
             },
             {

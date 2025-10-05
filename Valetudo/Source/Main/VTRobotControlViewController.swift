@@ -125,8 +125,14 @@ class VTRobotControlViewController: UIViewController {
     }
     
     /// Cleaning configuration to use when the start button is clicked.
-    var currentConfiguration: CleaningConfiguration = .none {
-        didSet { self.updateIterations() }
+    private var supportsSegmentation: Bool = false
+    private var _currentConfiguration: CleaningConfiguration = .none
+    var currentConfiguration: CleaningConfiguration {
+        get { _currentConfiguration }
+        set {
+            _currentConfiguration = supportsSegmentation ? newValue : .none
+            self.updateIterations()
+        }
     }
     
     private let client: VTAPIClientProtocol
@@ -283,6 +289,20 @@ class VTRobotControlViewController: UIViewController {
             self.updateIterations()
             
             await run {
+                let capibilities = Set((try? await client.getCapabilities()) ?? [])
+                self.supportsSegmentation           = capibilities.contains(.mapSegmentation)
+                self.startPauseStopControl.isHidden = !capibilities.contains(.basicControl)
+                self.statisticsControls.isHidden    = !capibilities.contains(.currentStatistics)
+                self.iterationsRow.isHidden         = !capibilities.contains(.mapSegmentation)
+                self.emptyButton?.isHidden          = !capibilities.contains(.autoEmptyDockManualTrigger)
+                self.cleanButton?.isHidden          = !capibilities.contains(.mopDockCleanManualTrigger)
+                self.dryButton?.isHidden            = !capibilities.contains(.mopDockDryManualTrigger)
+                self.fanRow.isHidden                = !capibilities.contains(.fanSpeedControl)
+                self.waterRow.isHidden              = !capibilities.contains(.waterUsageControl)
+                self.modeRow.isHidden               = !capibilities.contains(.operationModeControl)
+            }
+            
+            await run {
                 self.fanRow.values = try await self.client.getPresets(forType: .fanSpeed)
                     .map(VTFanItem.init)
                 self.waterRow.values = try await self.client.getPresets(forType: .waterGrade)
@@ -314,7 +334,7 @@ class VTRobotControlViewController: UIViewController {
     @MainActor
     private func updateIterations() {
         let config = currentConfiguration
-        iterationsRow.isEnabled = true // allow changes to the current value
+        iterationsRow.isEnabled = true // allow changes to `selectedValue`
         iterationsRow.subtitle = "x \(config.iterations)"
         iterationsRow.selectedValue = VTRepeatItem(iterations: config.iterations)
         iterationsRow.isEnabled = config.canChangeIterations

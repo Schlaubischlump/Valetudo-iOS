@@ -25,6 +25,8 @@ class VTConsumablesViewController: UICollectionViewController {
     private let client: VTAPIClientProtocol
     private var observerToken: VTListenerToken?
     
+    private let refreshControl = UIRefreshControl()
+    
     init(client: VTAPIClientProtocol) {
         self.client = client
         var listConfig = UICollectionLayoutListConfiguration(appearance: .insetGrouped)
@@ -35,7 +37,7 @@ class VTConsumablesViewController: UICollectionViewController {
         super.init(collectionViewLayout: layout)
         
         collectionView.delaysContentTouches = false
-        navigationItem.subtitle = "MONITORE_AND_RESET_CONSUMABLE_STATES".localized()
+        navigationItem.subtitle = "CONSUMABLES_SUBTITLE".localized()
     }
 
     required init?(coder: NSCoder) {
@@ -55,6 +57,15 @@ class VTConsumablesViewController: UICollectionViewController {
             withReuseIdentifier: VTFooterView.reuseIdentifier
         )
         collectionView.backgroundColor = .systemBackground
+        
+        collectionView.refreshControl = refreshControl
+        refreshControl.addTarget(self, action: #selector(didPullToRefresh), for: .valueChanged)
+    }
+    
+    @objc private func didPullToRefresh() {
+        Task {
+            await self.reloadData(animated: true)
+        }
     }
     
     private func configureDataSource() {
@@ -66,10 +77,12 @@ class VTConsumablesViewController: UICollectionViewController {
                 remaining: item.subtitle,
                 progress: Float(item.progress),
                 showsReset: true
-            ) {
+            ) { [weak self] in
                 Task {
                     do {
                         try await client.resetConsumable(type: item.type, subtype: item.subType)
+                        let attrs = try? await client.getConsumables()
+                        self?.updateItems(with: attrs ?? [], animated: false)
                     } catch {
                         // TODO: Show error
                         print("Received error: \(error)")
@@ -99,31 +112,29 @@ class VTConsumablesViewController: UICollectionViewController {
         super.viewWillAppear(animated)
         
         Task {
-            do {
-                try await loadInitialData()
-                
-                let (token, stream) = await client.registerEventObserver(for: .stateAttributes)
-                observerToken = token
-                
-                for await event in stream {
-                    switch event {
-                    case .didReceiveData(let stateAttributes):
-                        updateItems(with: stateAttributes.consumableStateAttributes, animated: true)
-                    case .didReceiveError(let msg):
-                        print("Received error message: \(msg)")
-                        // TODO: Show error
-                    default:
-                        break
-                    }
+            await reloadData(animated: false)
+            
+            /*
+             // Valetudo 2025.10.0: Consumables are no longer state attributes
+            let (token, stream) = await client.registerEventObserver(for: .stateAttributes)
+            observerToken = token
+            
+            for await event in stream {
+                switch event {
+                case .didReceiveData(let stateAttributes):
+                    print("State attributes: \(stateAttributes.consumableStateAttributes)")
+                    updateItems(with: stateAttributes.consumableStateAttributes, animated: true)
+                case .didReceiveError(let msg):
+                    print("Received error message: \(msg)")
+                    // TODO: Show error
+                default:
+                    break
                 }
-            } catch {
-                // TODO: Show error
-                print("Failed to load map data: \(error)")
-            }
+            }*/
         }
     }
 
-    func loadInitialData() async throws {
+    func reloadData(animated: Bool) async {
         let metaData = (try? await client.getPropertiesForConsumables()) ?? []
         itemProperties = Dictionary(uniqueKeysWithValues: metaData.compactMap { prop in
             if prop.maxValue != nil {
@@ -133,7 +144,11 @@ class VTConsumablesViewController: UICollectionViewController {
             }
         })
         let attrs = try? await client.getConsumables()
-        updateItems(with: attrs ?? [], animated: false)
+        
+        if self.refreshControl.isRefreshing {
+            self.refreshControl.endRefreshing()
+        }
+        updateItems(with: attrs ?? [], animated: animated)
     }
     
     private func updateItems(with attributes: [VTConsumableStateAttribute], animated: Bool) {

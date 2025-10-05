@@ -6,7 +6,6 @@
 //
 import Foundation
 
-final class VTLogLevel: Codable, Sendable {
-    let current: String
-    let presets: [String]
+struct VTLogLevelAction: Encodable, Sendable {
+    let level: String
 }

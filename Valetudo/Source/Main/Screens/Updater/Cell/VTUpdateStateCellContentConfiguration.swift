@@ -12,7 +12,7 @@ struct VTUpdateStateCellContentConfiguration: UIContentConfiguration, Hashable {
     var tintColor: UIColor
 
     func makeContentView() -> UIView & UIContentView {
-        VTNoUpdateAvailableCellView(configuration: self)
+        VTUpdateStateCellView(configuration: self)
     }
 
     func updated(for state: UIConfigurationState) -> VTUpdateStateCellContentConfiguration {

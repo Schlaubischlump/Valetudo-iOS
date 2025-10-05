@@ -24,7 +24,7 @@ internal final actor VTSSESocket<E: Decodable & Equatable & Sendable>: VTSSESock
     
     private var continuations: [VTListenerToken: AsyncStream<Action>.Continuation] = [:]
     private var listeners: Set<VTListenerToken> = []
-    private var task: Task<Void, Never>?   // async SSE listening task
+    private var task: Task<Void, Never>?
     
     private let endpoint: VTEventEndpoint<E>
     private let maxNumberOfRetries = 5

@@ -38,4 +38,18 @@ extension UIView {
             layer.addSublayer(border)
         }
     }
+    
+
+    /// Recursively searches the superview hierarchy for a UICollectionView
+    var enclosingCollectionView: UICollectionView? {
+        var view: UIView? = self
+        while let current = view {
+            if let collectionView = current as? UICollectionView {
+                return collectionView
+            }
+            view = current.superview
+        }
+        return nil
+    }
+
 }

@@ -1,5 +1,5 @@
 //
-//  VTUpdaterViewController.swift
+//  VTLogViewController.swift
 //  Valetudo
 //
 //  Created by David Klopp on 20.09.25.
@@ -7,34 +7,51 @@
 import UIKit
 import MarkdownKit
 
-// TODO: Test: After successfull install the check for update spins forever
+// TODO: We could add sse events in the future
 
 fileprivate let unknownString = "UNKNOWN".localizedUppercase()
 
-class VTUpdaterViewController: UICollectionViewController {
-    typealias VTUpdaterDataSource = UICollectionViewDiffableDataSource<VTUpdaterSection, VTUpdaterItem>
-    typealias VTUpdaterSnapshot = NSDiffableDataSourceSnapshot<VTUpdaterSection, VTUpdaterItem>
+class VTLogViewController: UICollectionViewController, UISearchResultsUpdating {
+    typealias VTLogDataSource = UICollectionViewDiffableDataSource<VTLogSection, VTLogItem>
+    typealias VTLogSnapshot = NSDiffableDataSourceSnapshot<VTLogSection, VTLogItem>
     
     let client: VTAPIClientProtocol
-    var dataSource: VTUpdaterDataSource!
+    var dataSource: VTLogDataSource!
     
     private let refreshControl = UIRefreshControl()
     
-    private var sections: [VTUpdaterSection] = [.main, .update]
-    
-    private var selectedProvider: VTUpdaterProvider?
-    private var needsVersionCheck: Bool = true
+    private let sections: [VTLogSection] = [.main, .log]
+    // cached data
+    private var currentLogLevel: String?
+    private var allLogLineItems: [VTLogItem] = []
     
     init(client: VTAPIClientProtocol) {
         self.client = client
         var listConfig = UICollectionLayoutListConfiguration(appearance: .insetGrouped)
         listConfig.showsSeparators = true
         listConfig.headerMode = .supplementary
-        listConfig.footerMode = .supplementary
         let layout = UICollectionViewCompositionalLayout.list(using: listConfig)
         super.init(collectionViewLayout: layout)
         
-        navigationItem.title = "UPDATER".localizedCapitalized()
+        navigationItem.title = "LOG".localizedCapitalized()
+        navigationItem.rightBarButtonItems = [
+            UIBarButtonItem(
+                barButtonSystemItem: .refresh,
+                target: self,
+                action: #selector(animatePullToRefresh)
+            ),
+            UIBarButtonItem(
+                barButtonSystemItem: .action,
+                target: self,
+                action: #selector(shareLogFile)
+            ),
+        ]
+        
+        let searchController = UISearchController(searchResultsController: nil)
+        searchController.obscuresBackgroundDuringPresentation = false
+        searchController.searchResultsUpdater = self
+        navigationItem.searchController = searchController
+        definesPresentationContext = true
     }
     
     required init?(coder: NSCoder) {
@@ -65,14 +82,57 @@ class VTUpdaterViewController: UICollectionViewController {
             withReuseIdentifier: VTHeaderView.reuseIdentifier
         )
         
-        collectionView.register(
-            VTFooterView.self,
-            forSupplementaryViewOfKind: UICollectionView.elementKindSectionFooter,
-            withReuseIdentifier: VTFooterView.reuseIdentifier
-        )
-        
         collectionView.refreshControl = refreshControl
         refreshControl.addTarget(self, action: #selector(didPullToRefresh), for: .valueChanged)
+    }
+    
+    @objc private func shareLogFile() {
+        // Convert all log lines to a single string
+        let isoFormatter = DateFormatter()
+        isoFormatter.locale = Locale(identifier: "en_US_POSIX")
+        isoFormatter.timeZone = TimeZone(secondsFromGMT: 0) // UTC
+        isoFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
+        
+        let logText = allLogLineItems.compactMap { item -> String? in
+            switch item {
+            case .logLine(let date, let level, let message):
+                return "[\(isoFormatter.string(from: date))] [\(level)] \(message)"
+            default:
+                return nil
+            }
+        }.joined(separator: "\n")
+        
+        // Save the log to a temporary file
+        let tempDir = FileManager.default.temporaryDirectory
+        let fileURL = tempDir.appendingPathComponent("logs.txt")
+        
+        do {
+            try logText.write(to: fileURL, atomically: true, encoding: .utf8)
+        } catch {
+            // TODO: Show error
+            print("Failed to write log file: \(error)")
+            return
+        }
+        
+        // Present the share sheet
+        let activityVC = UIActivityViewController(activityItems: [fileURL], applicationActivities: nil)
+        activityVC.popoverPresentationController?.barButtonItem = navigationItem.rightBarButtonItems?.last
+        present(activityVC, animated: true)
+    }
+
+    
+    
+    @objc private func animatePullToRefresh() {
+        guard !refreshControl.isRefreshing else { return }
+        self.refreshControl.beginRefreshing()
+        collectionView.setContentOffset(
+            CGPoint(x: 0, y: collectionView.contentOffset.y - refreshControl.frame.size.height),
+            animated: true
+        )
+        // Give it some time to do a proper animation of the refresh control
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { [weak self] in
+            self?.didPullToRefresh()
+        }
     }
     
     @objc private func didPullToRefresh() {
@@ -82,42 +142,19 @@ class VTUpdaterViewController: UICollectionViewController {
     }
     
     private func configureDataSource() {
-        let currentVersionRegistration = UICollectionView.CellRegistration<UICollectionViewListCell, VTUpdaterItem> { cell, _, item in
+        let updateLogLevel = UICollectionView.CellRegistration<UICollectionViewListCell, VTLogItem> { [weak self] cell, _, item in
             switch (item) {
-            case .currentVersion(let version):
-                var listContent = cell.defaultContentConfiguration()
-                listContent.text = "VERSION".localizedCapitalized()
-                listContent.secondaryText = version
-                cell.contentConfiguration = listContent
-            case .currentCommit(let commit):
-                var listContent = cell.defaultContentConfiguration()
-                listContent.text = "COMMIT".localizedCapitalized()
-                listContent.secondaryText = commit
-                cell.contentConfiguration = listContent
-            default:
-                break
-            }
-        }
-        
-        let updateProviderRegistration = UICollectionView.CellRegistration<UICollectionViewListCell, VTUpdaterItem> { [weak self] cell, _, item in
-            switch (item) {
-            case .updaterProvider(let provider):
-                let config = VTProviderSelectionCellContentConfiguration(
-                    title: "UPDATE_CHANNEL".localizedCapitalized(),
-                    provider: provider,
-                    selectedProvider: (self?.selectedProvider ?? provider.last!),
-                ) { newProvider in
+            case .updateLogLevel(let presets):
+                let config = VTSelectionCellContentConfiguration<String>(
+                    title: "LEVEL".localizedCapitalized(),
+                    options: presets,
+                    selection: self?.currentLogLevel ?? presets.last ?? ""
+                ) { newLevel in
                     Task {
                         do {
-                            try await self?.client.setUpdaterConfiguration(VTUpdaterConfig(updateProvider: newProvider))
-                            self?.selectedProvider = newProvider
-                            
-                            let updaterState = try? await self?.client.getUpdaterState()
-                            self?.needsVersionCheck = true
-                            await self?.checkForUpdateIfNeeded(updaterState)
-                        } catch {
-                            /* nothing */
-                        }
+                            try await self?.client.setLogLevel(newLevel)
+                            self?.currentLogLevel = newLevel
+                        } catch { /* nothing */ }
                         
                         var snapshot = self?.dataSource.snapshot()
                         snapshot?.reconfigureItems([item])
@@ -127,111 +164,28 @@ class VTUpdaterViewController: UICollectionViewController {
                     }
                 }
                 cell.contentConfiguration = config
+                
             default:
                 break
             }
         }
         
-        let loadingUpdateCellRegistration = UICollectionView.CellRegistration<UICollectionViewListCell, VTUpdaterItem> { cell, _, item in
+        let logContent = UICollectionView.CellRegistration<UICollectionViewListCell, VTLogItem> { cell, _, item in
             switch (item) {
-            case .loading(let title):
-                cell.contentConfiguration = VTLoadingCellContentConfiguration(message: title)
+            case .logLine(let date, let level, let message):
+                let config = VTLogLineCellContentConfiguration(timestamp: date, level: level, message: message)
+                cell.contentConfiguration = config
             default:
                 break
             }
         }
         
-        let updateStateCellRegistration = UICollectionView.CellRegistration<UICollectionViewListCell, VTUpdaterItem> { cell, _, item in
+        dataSource = VTLogDataSource(collectionView: collectionView) { collectionView, indexPath, item in
             switch (item) {
-            case .updateState(let title, let image, let color):
-                cell.contentConfiguration = VTUpdateStateCellContentConfiguration(
-                    message: title,
-                    image: image,
-                    tintColor: color
-                )
-            default:
-                break
-            }
-        }
-        
-        let updateProgressCellRegistration = UICollectionView.CellRegistration<UICollectionViewListCell, VTUpdaterItem> { cell, _, item in
-            switch (item) {
-            case .progress(let title, let progress):
-                cell.contentConfiguration = VTProgressCellContentConfiguration(
-                    message: title,
-                    progress: progress
-                )
-            default:
-                break
-            }
-        }
-        
-        let updateDetailCellRegistration = UICollectionView.CellRegistration<UICollectionViewListCell, VTUpdaterItem> { cell, _, item in
-            switch (item) {
-            case .updateAvailable(let title, let image, let version, let changelog):
-                let markdownString = if let range = changelog.range(of: "</div>") {
-                    String(changelog[range.upperBound...]).trimmingCharacters(in: .whitespacesAndNewlines)
-                } else {
-                    changelog
-                }
-                let markdownParser = MarkdownParser(
-                    font: .systemFont(ofSize: UIFont.labelFontSize),
-                    color: .label
-                )
-                let attributedText = markdownParser.parse(markdownString)
-                cell.contentConfiguration = VTUpdateDetailCellContentConfiguration(
-                    title: title,
-                    subtitle: version,
-                    image: image,
-                    attributedMessage: attributedText,
-                    baseTextColor: .label,
-                    buttonTitle: "DOWNLOAD".localizedCapitalized(),
-                    buttonAction: { [weak self] button in
-                        button.isEnabled = false
-                        Task {
-                            let updaterState = try? await self?.client.getUpdaterState()
-                            await self?.downloadUpdateIfNeeded(updaterState)
-                        }
-                    }
-                )
-            case .installUpdate(let title, let image, let version):
-                cell.contentConfiguration = VTUpdateDetailCellContentConfiguration(
-                    title: title,
-                    subtitle: version,
-                    image: image,
-                    attributedMessage: NSAttributedString(
-                        string: "INSTALL_WARNING".localized(),
-                        attributes: [.foregroundColor: UIColor.systemRed]
-                    ),
-                    baseTextColor: .systemRed,
-                    buttonTitle: "INSTALL".localizedCapitalized(),
-                    buttonAction: { [weak self] button in
-                        button.isEnabled = false
-                        Task {
-                            let updaterState = try? await self?.client.getUpdaterState()
-                            await self?.installUpdateIfNeeded(updaterState)
-                        }
-                    }
-                )
-            default:
-                break
-            }
-        }
-        
-        dataSource = VTUpdaterDataSource(collectionView: collectionView) { collectionView, indexPath, item in
-            switch (item) {
-            case .currentVersion(_), .currentCommit(_):
-                collectionView.dequeueConfiguredReusableCell(using: currentVersionRegistration, for: indexPath, item: item)
-            case .updaterProvider(_):
-                collectionView.dequeueConfiguredReusableCell(using: updateProviderRegistration, for: indexPath, item: item)
-            case .loading(_):
-                collectionView.dequeueConfiguredReusableCell(using: loadingUpdateCellRegistration, for: indexPath, item: item)
-            case .updateState(_, _, _):
-                collectionView.dequeueConfiguredReusableCell(using: updateStateCellRegistration, for: indexPath, item: item)
-            case .progress(_, _):
-                collectionView.dequeueConfiguredReusableCell(using: updateProgressCellRegistration, for: indexPath, item: item)
-            case .updateAvailable(_, _, _, _), .installUpdate(_, _, _):
-                collectionView.dequeueConfiguredReusableCell(using: updateDetailCellRegistration, for: indexPath, item: item)
+            case .updateLogLevel(_):
+                collectionView.dequeueConfiguredReusableCell(using: updateLogLevel, for: indexPath, item: item)
+            case .logLine(_, _, _):
+                collectionView.dequeueConfiguredReusableCell(using: logContent, for: indexPath, item: item)
             }
         }
         
@@ -246,195 +200,72 @@ class VTUpdaterViewController: UICollectionViewController {
                 ) as? VTHeaderView
                 header?.configure(text: self.section(for: indexPath).title ?? "")
                 return header
-            case (UICollectionView.elementKindSectionFooter, .update):
-                let footer = collectionView.dequeueReusableSupplementaryView(
-                    ofKind: kind,
-                    withReuseIdentifier: VTFooterView.reuseIdentifier,
-                    for: indexPath
-                ) as? VTFooterView
-                footer?.isHidden = false
-                footer?.configure(attributedText: "UPDATER_FOOTER_DESCRIPTION".localizedMarkdown())
-                return footer
-            case (UICollectionView.elementKindSectionFooter, _):
-                let footer = collectionView.dequeueReusableSupplementaryView(
-                    ofKind: kind,
-                    withReuseIdentifier: VTFooterView.reuseIdentifier,
-                    for: indexPath
-                ) as? VTFooterView
-                //footer?.configure(attributedText: NSAttributedString(string: ""))
-                footer?.isHidden = true
-                return footer
             default:
                 fatalError("Unexpected element kind: \(kind)!")
             }
         }
     }
     
-    func section(for indexPath: IndexPath) -> VTUpdaterSection {
-        sections[indexPath.section] 
+    func section(for indexPath: IndexPath) -> VTLogSection {
+        sections[indexPath.section]
     }
-    
-    private func item(forState state: (any VTUpdaterState)?) -> VTUpdaterItem {
-        let unknownState: VTUpdaterItem = .updateState(
-            title: "UPDATE_UNKNOWN".localizedCapitalized(),
-            image: UIImage(systemName: "questionmark.circle.fill"),
-            tintColor: .secondaryLabel
-        )
-        guard let state else { return unknownState }        
-        switch (state) {
-        case _ as VTUpdaterNoUpdateRequiredState:
-            return .updateState(
-                title: "UP_TO_DATE".localizedCapitalized(),
-                image: UIImage(systemName: "checkmark.circle.fill"),
-                tintColor: .systemGreen
-            )
-        case _ as VTUpdaterIdleState:
-            return .loading(title: "CHECKING_FOR_UPDATES".localizedCapitalized())
-        case _ as VTUpdaterErrorState:
-            return .updateState(
-                title: "UPDATE_ERROR".localizedCapitalized(),
-                image: UIImage(systemName: "xmark.circle.fill"),
-                tintColor: .systemRed
-            )
-        case let downloadingState as VTUpdaterDownloadingState:
-            if let progress = downloadingState.progress {
-                let formattedProgress = String(format: "%.0f", progress)
-                return .progress(
-                    title: "\(formattedProgress)% " + "DOWNLOADING_UPDATE".localizedCapitalized(),
-                    progress: progress
-                )
-            } else {
-                return .loading(title: "DOWNLOADING_UPDATE".localizedCapitalized())
-            }
-        case _ as VTUpdaterDisabledState:
-            return .updateState(
-                title: "UPDATE_DISABLED".localizedCapitalized(),
-                image: UIImage(systemName: "circle.slash.fill"),
-                tintColor: .secondaryLabel
-            )
-        case let approvalPendingState as VTUpdaterApprovalPendingState:
-            return .updateAvailable(
-                title: "VALETUDO".localizedCapitalized(),
-                image: UIImage(named: "Logo"),
-                version: approvalPendingState.version,
-                changelog: approvalPendingState.changelog
-            )
-        case let applyPendingState as VTUpdaterApplyPendingState:
-            if applyPendingState.busy {
-                return .loading(title: "APPLY_UPDATE".localizedCapitalized())
-            } else {
-                return .installUpdate(
-                    title: "INSTALL".localizedCapitalized(),
-                    image: UIImage(systemName: "arrow.trianglehead.2.counterclockwise"),
-                    version: applyPendingState.version
-                )
-            }
-        default:
-            return unknownState
-        }
-    }
-    
-    private func checkForUpdateIfNeeded(_ state: (any VTUpdaterState)?) async {
-        guard needsVersionCheck, let state, let _ = state as? VTUpdaterIdleState else { return }
-        let client = self.client
-        do {
-            try await client.checkForUpdate()
-            needsVersionCheck = false
-            await scheduleRefresh(continuous: true)
-        } catch {
-            /* nothing, handeled by state change */
-        }
-    }
-    
-    private func downloadUpdateIfNeeded(_ state: (any VTUpdaterState)?) async {
-        guard let state, let _ = state as? VTUpdaterApprovalPendingState else { return }
-        do {
-            try await client.downloadUpdate()
-            await scheduleRefresh(continuous: true)
-        } catch { /* nothing, handeled by state change */}
-    }
-    
-    private func installUpdateIfNeeded(_ state: (any VTUpdaterState)?) async {
-        guard let state, let _ = state as? VTUpdaterApplyPendingState else { return }
-        do {
-            try await client.applyUpdate()
-            needsVersionCheck = true
-            await scheduleRefresh(continuous: true)
-        } catch { /* nothing, handeled by state change */}
-    }
-    
-    /**
-     * As long as the state is busy, we busy wait and fetch the state again.
-     * Only if the state is not busy anymore we refresh the UI.
-     * Set continuous to true to update the UI every single time we make a request.
-     */
-    @MainActor
-    private func scheduleRefresh(continuous: Bool = false, retries: Int = 120) async {
-        var state: (any VTUpdaterState)? = nil
-        var isBusy = true
-        var i = 0
-        while (isBusy && i < retries) {
-            state = try? await client.getUpdaterState()
-            // after a successfull install, we need to check for new updates
-            await checkForUpdateIfNeeded(state)
-            
-            if let state, continuous {
-                await refreshUpdateCell(state, animated: true)
-            } else {
-                i += 1
-            }
-            
-            // true as default to continue in case of an error
-            isBusy = state?.busy ?? true
-            if (!isBusy) { break }
-            
-            try? await Task.sleep(nanoseconds: 1_000_000_000) // wait 1 second
-        }
-        guard let state, !continuous else { return }
-        await refreshUpdateCell(state, animated: true)
-    }
-    
-    @MainActor
-    private func refreshUpdateCell(_ state: any VTUpdaterState, animated: Bool) async {
-        var snapshot = dataSource.snapshot()
-        let identifiers = snapshot.itemIdentifiers(inSection: .update)
-        snapshot.deleteItems(identifiers)
-        snapshot.appendItems([item(forState: state)], toSection: .update)
-        await dataSource.apply(snapshot, animatingDifferences: animated)
-    }
-    
+
     @MainActor
     func reloadData(animated: Bool) async {
-        let valetudoVersion = try? await client.getValetudoVersionInfo()
-        let updaterConfig = try? await client.getUpdaterConfiguration()
-        let updaterState = try? await client.getUpdaterState()
+        let logProperties = try? await client.getLogProperties()
+        let logEntries = (try? await client.getLog()) ?? []
+        allLogLineItems = logEntries.map { VTLogItem.logLine(date: $0.timestamp, level: $0.level, message: $0.message) }
                 
-        selectedProvider = updaterConfig?.updateProvider
+        currentLogLevel = logProperties?.current
         
-        var snapshot = VTUpdaterSnapshot()
+        var snapshot = VTLogSnapshot()
         snapshot.appendSections([.main])
         snapshot.appendItems([
-            .currentVersion(valetudoVersion?.release ?? unknownString),
-            .currentCommit(valetudoVersion?.commit ?? unknownString),
-            .updaterProvider(VTUpdaterProvider.allCases),
+            .updateLogLevel(presets: logProperties?.presets ?? [])
         ], toSection: .main)
-        snapshot.appendSections([.update])
-        snapshot.appendItems([
-            item(forState: updaterState)
-        ], toSection: .update)
+        snapshot.appendSections([.log])
+        snapshot.appendItems(allLogLineItems, toSection: .log)
 
         await dataSource.apply(snapshot, animatingDifferences: animated)
         
         if self.refreshControl.isRefreshing {
             self.refreshControl.endRefreshing()
         }
+    }
+
+    // MARK: - UISearchResultsUpdating
+    
+    private var searchTask: Task<Void, Never>?
+    
+    func updateSearchResults(for searchController: UISearchController) {
+        searchTask?.cancel()
+        searchTask = Task { [weak self] in
+            try? await Task.sleep(nanoseconds: 200_000_000) // 0.2s debounce, might help for large logs
+            await MainActor.run {
+                self?.applySearch(query: searchController.searchBar.text)
+            }
+        }
+    }
+    
+    private func applySearch(query: String?) {
+        let lowerQuery = query?.lowercased() ?? ""
+        let filteredLogs: [VTLogItem] = lowerQuery.isEmpty ? allLogLineItems : allLogLineItems.filter {
+            switch $0 {
+            case .logLine(_, let level, let message):
+                return level.lowercased().contains(lowerQuery) || message.lowercased().contains(lowerQuery)
+            default:
+                return false
+            }
+        }
         
-        needsVersionCheck = true
-        await checkForUpdateIfNeeded(updaterState)
+        var snapshot = dataSource.snapshot()
+        snapshot.deleteItems(snapshot.itemIdentifiers(inSection: .log))
+        snapshot.appendItems(filteredLogs, toSection: .log)
+        dataSource.apply(snapshot, animatingDifferences: true)
     }
 
     
-    // MARK: UICollectionViewDelegate
+    // MARK: - UICollectionViewDelegate
     
     override func collectionView(_ collectionView: UICollectionView, shouldSelectItemAt indexPath: IndexPath) -> Bool {
         guard let item = dataSource.itemIdentifier(for: indexPath) else { return false }
@@ -445,10 +276,8 @@ class VTUpdaterViewController: UICollectionViewController {
     
     override func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         guard let item = dataSource.itemIdentifier(for: indexPath) else { return }
-        
         switch item {
-        default:
-            break
+        default: break
         }
     }
     

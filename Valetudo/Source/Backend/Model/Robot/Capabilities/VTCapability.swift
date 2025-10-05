@@ -24,6 +24,7 @@ enum VTCapability: Equatable, Hashable, Sendable, Decodable {
     case currentStatistics
     case voicePackManagement
     case manualControl
+    case highResolutionManualControl
     case doNotDisturb
     case mappingPass
     case waterUsageControl
@@ -65,6 +66,7 @@ enum VTCapability: Equatable, Hashable, Sendable, Decodable {
         case .currentStatistics: "CurrentStatisticsCapability"
         case .voicePackManagement: "VoicePackManagementCapability"
         case .manualControl: "ManualControlCapability"
+        case .highResolutionManualControl: "HighResolutionManualControlCapability"
         case .doNotDisturb: "DoNotDisturbCapability"
         case .mappingPass: "MappingPassCapability"
         case .waterUsageControl: "WaterUsageControlCapability"
@@ -108,6 +110,7 @@ enum VTCapability: Equatable, Hashable, Sendable, Decodable {
         case "CurrentStatisticsCapability": self = .currentStatistics
         case "VoicePackManagementCapability": self = .voicePackManagement
         case "ManualControlCapability": self = .manualControl
+        case "HighResolutionManualControlCapability": self = .highResolutionManualControl
         case "DoNotDisturbCapability": self = .doNotDisturb
         case "MappingPassCapability": self = .mappingPass
         case "WaterUsageControlCapability": self = .waterUsageControl
