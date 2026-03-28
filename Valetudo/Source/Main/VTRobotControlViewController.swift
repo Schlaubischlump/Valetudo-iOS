@@ -70,7 +70,7 @@ struct VTRepeatItem: CaseIterable, VTSegmentedItem {
 }
 
 
-class VTRobotControlViewController: UIViewController {
+class VTRobotControlViewController: VTViewController {
     
     enum CleaningConfiguration {
         case none
@@ -137,7 +137,8 @@ class VTRobotControlViewController: UIViewController {
     
     private let client: VTAPIClientProtocol
     private var observerToken: VTListenerToken?
-    
+    private var sseTask: Task<Void, Never>?
+        
     // Make sure that we process manual UI updates and SSE based UI updates in the right order
     private let serialTaskQueue: SerialTaskQueue = SerialTaskQueue()
     
@@ -240,8 +241,26 @@ class VTRobotControlViewController: UIViewController {
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-                
-        Task {
+        
+        startSSEObservation()
+    }
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        
+        stopSSEObservation()
+    }
+    
+    override func reconnectAndRefresh() {
+        // Cancel existing SSE task and reconnect
+        stopSSEObservation()
+        startSSEObservation()
+    }
+    
+    private func startSSEObservation() {
+        guard sseTask == nil else { return }
+        
+        sseTask = Task {
             do {
                 try await loadInitialData()
                 
@@ -271,13 +290,14 @@ class VTRobotControlViewController: UIViewController {
         }
     }
     
-    override func viewWillDisappear(_ animated: Bool) {
-        super.viewWillDisappear(animated)
+    private func stopSSEObservation() {
+        sseTask?.cancel()
+        sseTask = nil
         
         if let token = observerToken {
-            // capture a strong reference, since we know the client will outlive self
             let client = self.client
-            Task { await client.removeEventObserver(token: token, for: .map) }
+            Task { await client.removeEventObserver(token: token, for: .stateAttributes) }
+            observerToken = nil
         }
     }
     

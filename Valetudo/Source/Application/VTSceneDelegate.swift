@@ -44,6 +44,6 @@ class VTSceneDelegate: UIResponder, UIWindowSceneDelegate {
 	}
     
     func sceneWillEnterForeground(_ scene: UIScene) {
-        // TODO: Update the state of all controls + map
+        NotificationCenter.default.post(name: .sceneWillEnterForeground, object: nil)
     }
 }

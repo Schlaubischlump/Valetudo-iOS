@@ -13,7 +13,7 @@ fileprivate let legendHeight: CGFloat = 45.0
 fileprivate let sheetCornerRadius: CGFloat = 39.0
 
 // TODO: Fix map resize when window size changes
-class VTHomeViewController: UIViewController {
+class VTHomeViewController: VTViewController {
     private let client: VTAPIClientProtocol
 
     var mapInteractionEnabled: Bool = true
@@ -23,7 +23,8 @@ class VTHomeViewController: UIViewController {
     private var legendView: VTLegendView!
     private var robotStatusView: VTRobotStatusView!
     private var observerToken: VTListenerToken?
-    
+    private var sseTask: Task<Void, Never>?
+        
     private lazy var robotControlViewController: VTRobotControlViewController? = {
         VTRobotControlViewController(client: self.client)
     }()
@@ -138,7 +139,25 @@ class VTHomeViewController: UIViewController {
         
         super.viewWillAppear(animated)
         
-        Task {
+        startSSEObservation()
+    }
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        
+        stopSSEObservation()
+    }
+    
+    override func reconnectAndRefresh() {
+        // Cancel existing SSE task and reconnect
+        stopSSEObservation()
+        startSSEObservation()
+    }
+    
+    private func startSSEObservation() {
+        guard sseTask == nil else { return }
+        
+        sseTask = Task {
             do {
                 try await loadInitialData()
                 
@@ -164,13 +183,14 @@ class VTHomeViewController: UIViewController {
         }
     }
     
-    override func viewWillDisappear(_ animated: Bool) {
-        super.viewWillDisappear(animated)
+    private func stopSSEObservation() {
+        sseTask?.cancel()
+        sseTask = nil
         
         if let token = observerToken {
-            // capture a strong reference, since we know the client will outlive self
             let client = self.client
             Task { await client.removeEventObserver(token: token, for: .map) }
+            observerToken = nil
         }
     }
     
