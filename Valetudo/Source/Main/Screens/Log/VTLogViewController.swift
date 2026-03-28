@@ -261,8 +261,10 @@ class VTLogViewController: UICollectionViewController, UISearchResultsUpdating {
         }
         
         var snapshot = dataSource.snapshot()
-        snapshot.deleteItems(snapshot.itemIdentifiers(inSection: .log))
-        snapshot.appendItems(filteredLogs, toSection: .log)
+        if snapshot.sectionIdentifiers.contains(.log) {
+            snapshot.deleteItems(snapshot.itemIdentifiers(inSection: .log))
+            snapshot.appendItems(filteredLogs, toSection: .log)
+        }
         dataSource.apply(snapshot, animatingDifferences: true)
     }
 

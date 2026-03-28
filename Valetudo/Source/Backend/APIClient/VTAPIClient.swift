@@ -14,7 +14,6 @@ fileprivate struct VTRequest<Response> {
     var body: Encodable?
 }
 
-
 enum VTAPIError: Error, LocalizedError {
     case clientUnavailable
     case unknown(Error)
@@ -396,69 +395,13 @@ public actor VTAPIClient: VTAPIClientProtocol {
         try await send(request)
     }
     
-    private func parseLogEntries(from text: String) -> [VTLogLine] {
-        let lines = text.split(separator: "\n", omittingEmptySubsequences: false)
-        var entries: [String] = []
-        var currentEntry = ""
-        let dateFormatter = ISO8601DateFormatter()
-        dateFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-
-        func lineStartsNewEntry(_ line: String) -> Bool {
-            guard line.hasPrefix("[") else { return false }
-            guard let closing = line.firstIndex(of: "]") else { return false }
-
-            let timestampString = String(line[line.index(after: line.startIndex)..<closing])
-            return dateFormatter.date(from: timestampString) != nil
-        }
-
-        // Merge continuation lines
-        for rawLine in lines {
-            let line = String(rawLine)
-            if lineStartsNewEntry(line) {
-                if !currentEntry.isEmpty {
-                    entries.append(currentEntry.trimmingCharacters(in: .whitespacesAndNewlines))
-                }
-                currentEntry = line
-            } else {
-                currentEntry += " " + line.trimmingCharacters(in: .whitespaces)
-            }
-        }
-
-        if !currentEntry.isEmpty {
-            entries.append(currentEntry.trimmingCharacters(in: .whitespacesAndNewlines))
-        }
-
-        // Parse structured VTLogLine entries
-        return entries.compactMap { entry in
-            guard let tsEnd = entry.firstIndex(of: "]") else { return nil }
-            let timestampPart = String(entry[entry.index(after: entry.startIndex)..<tsEnd])
-
-            guard let timestamp = dateFormatter.date(from: timestampPart) else { return nil }
-
-            let restStart = entry.index(after: tsEnd)
-            let rest = entry[restStart...].trimmingCharacters(in: .whitespaces)
-
-            var level = ""
-            var message = rest
-
-            if rest.hasPrefix("["), let levelEnd = rest.firstIndex(of: "]") {
-                let start = rest.index(after: rest.startIndex)
-                level = String(rest[start..<levelEnd])
-                let msgStart = rest.index(after: levelEnd)
-                message = rest[msgStart...].trimmingCharacters(in: .whitespaces)
-            }
-            return VTLogLine(timestamp: timestamp, level: level, message: message)
-        }.reversed()
-    }
-    
     func getLog() async throws -> [VTLogLine] {
         let url = self.logURL.appendingPathComponent("content")
         let request = VTRequest<String>(method: .GET, url: url, query: nil)
         let urlRequest = try await makeURLRequest(for: request)
         let (data, response) = try await send(urlRequest)
         try validate(response: response, data: data)
-        let content = String(data: data, encoding: .utf8) ?? ""
-        return parseLogEntries(from: content)
+        return VTLogParser.parse(data: data)
     }
     
     // MARK: - 4 Updater
