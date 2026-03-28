@@ -125,12 +125,14 @@ class VTLogViewController: UICollectionViewController, UISearchResultsUpdating {
     @objc private func animatePullToRefresh() {
         guard !refreshControl.isRefreshing else { return }
         self.refreshControl.beginRefreshing()
+        
+        // Make sure the refresh control is visible
         collectionView.setContentOffset(
-            CGPoint(x: 0, y: collectionView.contentOffset.y - refreshControl.frame.size.height),
+            CGPoint(x: 0, y: -collectionView.adjustedContentInset.top - refreshControl.frame.size.height),
             animated: true
         )
         // Give it some time to do a proper animation of the refresh control
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { [weak self] in
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
             self?.didPullToRefresh()
         }
     }
@@ -147,12 +149,12 @@ class VTLogViewController: UICollectionViewController, UISearchResultsUpdating {
             case .updateLogLevel(let presets):
                 let config = VTSelectionCellContentConfiguration<String>(
                     title: "LEVEL".localizedCapitalized(),
-                    options: presets,
+                    options: presets.map { $0.capitalized },
                     selection: self?.currentLogLevel ?? presets.last ?? ""
                 ) { newLevel in
                     Task {
                         do {
-                            try await self?.client.setLogLevel(newLevel)
+                            try await self?.client.setLogLevel(newLevel.lowercased())
                             self?.currentLogLevel = newLevel
                         } catch { /* nothing */ }
                         
@@ -216,7 +218,7 @@ class VTLogViewController: UICollectionViewController, UISearchResultsUpdating {
         let logEntries = (try? await client.getLog()) ?? []
         allLogLineItems = logEntries.map { VTLogItem.logLine(date: $0.timestamp, level: $0.level, message: $0.message) }
                 
-        currentLogLevel = logProperties?.current
+        currentLogLevel = logProperties?.current.capitalized
         
         var snapshot = VTLogSnapshot()
         snapshot.appendSections([.main])

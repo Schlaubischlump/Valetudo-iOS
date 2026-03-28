@@ -17,4 +17,5 @@ public enum VTEntityType: String, Decodable, Sendable {
     case no_go_area
     case no_mop_area
     case obstacle
+    case carpet
 }

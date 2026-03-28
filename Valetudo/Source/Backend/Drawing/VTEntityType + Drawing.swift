@@ -21,6 +21,7 @@ extension VTEntityType {
         case .go_to_target: 7
         case .path: 8
         case .predicted_path: 9
+        case .carpet: 10 
         }
     }
     
