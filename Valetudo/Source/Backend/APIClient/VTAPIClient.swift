@@ -5,6 +5,7 @@ fileprivate enum VTHTTPMethod: String {
     case GET = "GET"
     case POST = "POST"
     case PUT = "PUT"
+    case DELETE = "DELETE"
 }
 
 fileprivate struct VTRequest<Response> {
@@ -17,12 +18,14 @@ fileprivate struct VTRequest<Response> {
 enum VTAPIError: Error, LocalizedError {
     case clientUnavailable
     case unknown(Error)
+    case missingID(String)
     case manualControlStateUnavailable
     
     var errorDescription: String? {
         return switch self {
         case .clientUnavailable: "The API client is not available."
         case .manualControlStateUnavailable: "Could not read the manual control state."
+        case .missingID(let domain): "Missing id for \(domain)."
         case .unknown(let error): error.localizedDescription
         }
     }
@@ -47,6 +50,7 @@ public actor VTAPIClient: VTAPIClientProtocol {
     let runtimeURL: URL
     let updaterURL: URL
     let logURL: URL
+    let timersURL: URL
 
     // MARK: - (SSE) Server side events
     lazy var sseSockets: [String: any VTSSESocketProtocol] = [:]
@@ -81,6 +85,8 @@ public actor VTAPIClient: VTAPIClientProtocol {
             .appendingPathComponent("updater")
         self.logURL = self.valetudoURL
             .appendingPathComponent("log")
+        self.timersURL = self.baseURL
+            .appendingPathComponent("timers")
         
         self.session = URLSession(configuration: configuration)
     }
@@ -432,7 +438,7 @@ public actor VTAPIClient: VTAPIClientProtocol {
         return try await send(request).stateObject
     }
     
-    // MARK: 4.2 State
+    // MARK: 4.2 Config
     
     func getUpdaterConfiguration() async throws -> VTUpdaterConfig {
         let url = self.updaterURL.appendingPathComponent("config")
@@ -444,6 +450,58 @@ public actor VTAPIClient: VTAPIClientProtocol {
         let url = self.updaterURL.appendingPathComponent("config")
         let request = VTRequest<Void>(method: .PUT, url: url, query: nil, body: config)
         try await send(request)
+    }
+    
+    // MARK: - 5 Timers
+    
+    func getTimers() async throws -> [String: VTTimer] {
+        let request = VTRequest<[String: VTTimer]>(method: .GET, url: timersURL)
+        return try await send(request)
+    }
+    
+    func addTimer(_ timer: VTTimer) async throws {
+        let request = VTRequest<Void>(method: .POST, url: timersURL, query: nil, body: timer)
+        return try await send(request)
+    }
+    
+    // MARK: - 5.1 {id}
+    
+    func getTimer(id: String) async throws -> VTTimer {
+        let url = timersURL.appendingPathComponent(id)
+        let request = VTRequest<VTTimer>(method: .GET, url: url)
+        return try await send(request)
+    }
+    
+    func updateTimer(_ timer: VTTimer) async throws {
+        guard let id: String = timer.id else {
+            let domain = String(describing: VTTimer.self)
+            throw VTAPIError.missingID(domain)
+        }
+        let url = timersURL.appendingPathComponent(id)
+        let request = VTRequest<Void>(method: .PUT, url: url, query: nil, body: timer)
+        return try await send(request)
+    }
+    
+    public func deleteTimer(id: String) async throws {
+        let url = timersURL.appendingPathComponent(id)
+        let request = VTRequest<Void>(method: .DELETE, url: url)
+        try await send(request)
+    }
+    
+    // MARK: - 5.2 {id}/action
+    
+    public func executeTimer(id: String) async throws {
+        let url = timersURL.appendingPathComponent(id).appendingPathComponent("action")
+        let request = VTRequest<Void>(method: .PUT, url: url, query: nil, body: VTTimerExecutionAction())
+        try await send(request)
+    }
+    
+    // MARK: - 5.3 Properties
+    
+    func getTimerProperties() async throws -> VTTimersProperties {
+        let url = timersURL.appendingPathComponent("properties")
+        let request = VTRequest<VTTimersProperties>(method: .GET, url: url)
+        return try await send(request)
     }
     
     // MARK: - Internal

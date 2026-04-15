@@ -70,7 +70,7 @@ fileprivate extension VTSidebarData {
     func section(at: Int) -> VTSidebarSection? { self[safe: at]?.0 }
 }
 
-class VTSidebarViewController: UICollectionViewController {
+class VTSidebarViewController: VTCollectionViewController {
     typealias VTSidebarDataSource = UICollectionViewDiffableDataSource<VTSidebarSection, VTSidebarItem>
     typealias VTSidebarDatasourceSnapshot = NSDiffableDataSourceSnapshot<VTSidebarSection, VTSidebarItem>
     

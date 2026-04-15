@@ -6,7 +6,7 @@
 //
 import UIKit
 
-final class VTSelectionCellView<S: Describable & Hashable & Equatable>: UIView, UIContentView {
+final class VTSelectionCellContentView<S: Describable & Hashable & Equatable>: UIView, UIContentView {
 
     private let titleLabel = UILabel()
     private let selectionButton = UIButton(type: .system)
@@ -64,7 +64,7 @@ final class VTSelectionCellView<S: Describable & Hashable & Equatable>: UIView, 
         // Build menu
         selectionButton.menu = UIMenu(children: options.map { sel in
             UIAction(title: sel.description, state: sel == selection ? .on : .off) { [weak self] _ in
-                self?.selectionButton.isEnabled = false
+                self?.selectionButton.isEnabled = !config.disableSelectionAfterAction
                 self?.selection = sel
                 config.onChange?(sel)
             }

@@ -11,7 +11,7 @@ import MarkdownKit
 
 fileprivate let unknownString = "UNKNOWN".localizedUppercase()
 
-class VTLogViewController: UICollectionViewController, UISearchResultsUpdating {
+final class VTLogViewController: UICollectionViewController, UISearchResultsUpdating {
     typealias VTLogDataSource = UICollectionViewDiffableDataSource<VTLogSection, VTLogItem>
     typealias VTLogSnapshot = NSDiffableDataSourceSnapshot<VTLogSection, VTLogItem>
     
@@ -148,6 +148,7 @@ class VTLogViewController: UICollectionViewController, UISearchResultsUpdating {
             switch (item) {
             case .updateLogLevel(let presets):
                 let config = VTSelectionCellContentConfiguration<String>(
+                    id: "log_level",
                     title: "LEVEL".localizedCapitalized(),
                     options: presets.map { $0.capitalized },
                     selection: self?.currentLogLevel ?? presets.last ?? ""

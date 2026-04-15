@@ -8,7 +8,7 @@ import Foundation
 
 public struct VTEntity: Decodable, Sendable {
     public let __class: String
-    public let metaData: [String: VTAnyDecodable]
+    public let metaData: [String: VTAnyCodable]
     public let type: VTEntityType
     public let points: [Int]
 }

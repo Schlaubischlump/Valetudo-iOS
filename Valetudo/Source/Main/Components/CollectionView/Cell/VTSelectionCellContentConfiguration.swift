@@ -8,26 +8,30 @@ import Foundation
 import UIKit
 
 struct VTSelectionCellContentConfiguration<S: Describable &  Hashable & Equatable>: UIContentConfiguration, Hashable {
-    var title: String?
-    var options: [S]
-    var selection: S
-    var onChange: ((S) -> Void)?
+    let id: String
+    let title: String?
+    let options: [S]
+    let selection: S
+    var disableSelectionAfterAction: Bool = true
+    let onChange: ((S) -> Void)?
     
     func makeContentView() -> UIView & UIContentView {
-        VTSelectionCellView<S>(configuration: self)
+        VTSelectionCellContentView<S>(configuration: self)
     }
 
     func updated(for state: UIConfigurationState) -> VTSelectionCellContentConfiguration<S> {
         self
     }
     
-    static func == (lhs: VTSelectionCellContentConfiguration, rhs: VTSelectionCellContentConfiguration) -> Bool {
+    static func == (lhs: VTSelectionCellContentConfiguration<S>, rhs: VTSelectionCellContentConfiguration<S>) -> Bool {
+        lhs.id == rhs.id &&
         lhs.title == rhs.title &&
         lhs.options == rhs.options &&
         lhs.selection == rhs.selection
     }
     
     public func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
         hasher.combine(title)
         hasher.combine(options)
         hasher.combine(selection)

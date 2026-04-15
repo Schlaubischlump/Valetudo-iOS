@@ -22,7 +22,7 @@ public enum VTValetudoDataPointType: String, Decodable, Sendable, Describable {
 
 public struct VTValetudoDataPoint: Decodable, Sendable, Describable {
     let __class: String
-    let metaData: [String: VTAnyDecodable]
+    let metaData: [String: VTAnyCodable]
     let timestamp: Date
     let type: VTValetudoDataPointType
     let value: Int

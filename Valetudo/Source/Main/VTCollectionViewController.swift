@@ -6,7 +6,7 @@
 //
 import UIKit
 
-class VTViewController: UIViewController {
+class VTCollectionViewController: UICollectionViewController {
     
     @objc
     private func sceneWillEnterForeground(_ notification: Notification) {

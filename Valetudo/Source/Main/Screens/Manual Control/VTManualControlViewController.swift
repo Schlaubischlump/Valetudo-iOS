@@ -87,7 +87,7 @@ final class VTManualControlViewController: VTManualControlViewControllerBase {
     }
     
     @MainActor
-    override func loadInitialData() async {        
+    override func reconnectAndRefresh() async {        
         let isEnabled = (try? await client.getManualControlIsEnabled()) ?? false
         
         if (isEnabled) {

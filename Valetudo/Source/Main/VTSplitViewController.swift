@@ -60,7 +60,8 @@ class VTSplitViewController: UISplitViewController, UISplitViewControllerDelegat
         case .highResolutionManualControl:  VTHighResolutionManualControlViewController(client: client)
         case .updater:                      VTUpdaterViewController(client: client)
         case .log:                          VTLogViewController(client: client)
-        default:            UIViewController()
+        case .timers:                       VTTimersViewController(client: client)
+        default:                            UIViewController()
         }
         vc.title = item.title
         detail.setViewControllers([vc], animated: animated)

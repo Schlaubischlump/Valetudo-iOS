@@ -74,7 +74,7 @@ final class VTHighResolutionManualControlViewController: VTManualControlViewCont
         baseView.isUserInteractionEnabled = false
     }
     
-    override func loadInitialData() async {        
+    override func reconnectAndRefresh() async {        
         let isEnabled = (try? await client.getHighResolutionManualControlIsEnabled()) ?? false
         if (isEnabled) {
             enableJoyStick()

@@ -9,4 +9,10 @@ extension Array {
     subscript(safe index: Int) -> Element? {
         return indices.contains(index) ? self[index] : nil
     }
+    
+    /// Shift an array by one element to the left.
+    func shiftedLeft() -> [Element] {
+        guard let first = self.first else { return self }
+        return Array(self.dropFirst()) + [first]
+    }
 }

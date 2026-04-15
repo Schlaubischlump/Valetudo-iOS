@@ -150,7 +150,7 @@ public enum VTBatteryFlag: String, Codable, Sendable {
 
 public protocol VTStateAttribute: Decodable, Equatable, Sendable  {
     var __class: String { get }
-    var metaData: [String: VTAnyDecodable] { get }
+    var metaData: [String: VTAnyCodable] { get }
 }
 
 extension VTStateAttribute {
@@ -162,7 +162,7 @@ extension VTStateAttribute {
 
 public struct VTAttachmentStateAttribute: VTStateAttribute {
     public let __class: String
-    public let metaData: [String: VTAnyDecodable]
+    public let metaData: [String: VTAnyCodable]
     public let type: VTAttachmentType
     public let attached: Bool
 }
@@ -171,7 +171,7 @@ extension VTAttachmentStateAttribute: Equatable {}
 
 public struct VTDockStatusStateAttribute: VTStateAttribute {
     public let __class: String
-    public let metaData: [String: VTAnyDecodable]
+    public let metaData: [String: VTAnyCodable]
     public let value: VTDockStatusValue
 }
 
@@ -179,7 +179,7 @@ extension VTDockStatusStateAttribute: Equatable {}
 
 public struct VTPresetSelectionStateAttribute: VTStateAttribute {
     public let __class: String
-    public let metaData: [String: VTAnyDecodable]
+    public let metaData: [String: VTAnyCodable]
     public let type: VTPresetType
     public let value: VTPresetValue
     public let customValue: Double?
@@ -189,7 +189,7 @@ extension VTPresetSelectionStateAttribute: Equatable {}
 
 public struct VTBatteryStateAttribute: VTStateAttribute {
     public let __class: String
-    public let metaData: [String: VTAnyDecodable]
+    public let metaData: [String: VTAnyCodable]
     public let level: Double
     public let flag: VTBatteryFlag
 }
@@ -198,7 +198,7 @@ extension VTBatteryStateAttribute: Equatable {}
 
 public struct VTStatusStateAttribute: VTStateAttribute {
     public let __class: String
-    public let metaData: [String: VTAnyDecodable]
+    public let metaData: [String: VTAnyCodable]
     public let value: VTStatusValue?
     public let flag: VTStatusFlag?
 }
@@ -227,7 +227,7 @@ extension VTConsumableRemaining: Equatable {}
 
 public struct VTConsumableStateAttribute: VTStateAttribute {
     public let __class: String
-    public let metaData: [String: VTAnyDecodable]
+    public let metaData: [String: VTAnyCodable]
     public let type: VTConsumableType
     public let subType: VTConsumableSubType
     public let remaining: VTConsumableRemaining
@@ -245,6 +245,16 @@ public struct VTConsumableStateAttributeProperties: Decodable, Sendable, Equatab
 
 public struct VTConsumableStateAttributePropertiesList: Decodable, Sendable, Equatable {
     public let availableConsumables: [VTConsumableStateAttributeProperties]
+}
+
+extension VTAnyCodable {
+    static let attachmentStateAttribute: VTAnyCodable = .string("AttachmentStateAttribute")
+    static let dockStatusStateAttribute: VTAnyCodable = .string("DockStatusStateAttribute")
+    static let presetSelectionStateAttribute: VTAnyCodable = .string("PresetSelectionStateAttribute")
+    static let batteryStateAttribute: VTAnyCodable = .string("BatteryStateAttribute")
+    static let statusStateAttribute: VTAnyCodable = .string("StatusStateAttribute")
+    static let consumableStateAttribute: VTAnyCodable = .string("ConsumableStateAttribute")
+    static let valetudoConsumable: VTAnyCodable = .string("ValetudoConsumable")
 }
 
 public struct VTStateAttributeList: Decodable, Sendable {
@@ -402,29 +412,29 @@ public struct VTStateAttributeList: Decodable, Sendable {
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.singleValueContainer()
-        let rawArray = try container.decode([[String: VTAnyDecodable]].self)
-
+        let rawArray = try container.decode([[String: VTAnyCodable]].self)
+        
         var decodedAttributes: [any VTStateAttribute] = []
         let jsonDecoder = JSONDecoder()
         
         for dict in rawArray {
-            guard let className = dict["__class"]?.stringValue else { continue }
-
+            guard let className = dict["__class"] else { continue }
+            
             // Convert back to Data for decoding the specific type
-            let jsonData = try JSONSerialization.data(withJSONObject: dict.mapValues { $0.value })
+            let jsonData = try JSONEncoder().encode(dict)
 
             switch className {
-            case "AttachmentStateAttribute":
+            case .attachmentStateAttribute:
                 decodedAttributes.append(try jsonDecoder.decode(VTAttachmentStateAttribute.self, from: jsonData))
-            case "DockStatusStateAttribute":
+            case .dockStatusStateAttribute:
                 decodedAttributes.append(try jsonDecoder.decode(VTDockStatusStateAttribute.self, from: jsonData))
-            case "PresetSelectionStateAttribute":
+            case .presetSelectionStateAttribute:
                 decodedAttributes.append(try jsonDecoder.decode(VTPresetSelectionStateAttribute.self, from: jsonData))
-            case "BatteryStateAttribute":
+            case .batteryStateAttribute:
                 decodedAttributes.append(try jsonDecoder.decode(VTBatteryStateAttribute.self, from: jsonData))
-            case "StatusStateAttribute":
+            case .statusStateAttribute:
                 decodedAttributes.append(try jsonDecoder.decode(VTStatusStateAttribute.self, from: jsonData))
-            case "ConsumableStateAttribute", "ValetudoConsumable":
+            case .consumableStateAttribute, .valetudoConsumable:
                 decodedAttributes.append(try jsonDecoder.decode(VTConsumableStateAttribute.self, from: jsonData))
             default:
                 print("Unknown __class: \(className)")

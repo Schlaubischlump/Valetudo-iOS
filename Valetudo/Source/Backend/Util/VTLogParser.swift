@@ -6,16 +6,14 @@
 import Foundation
 import os.log
 
-/// High-performance log parser with SIMD-accelerated scanning and caching.
+/// High-performance log parser with SIMD-accelerated scanning and caching that operates on the byte data directly.
 struct VTLogParser {
-    
-    private static let logger = Logger(subsystem: "Valetudo", category: "LogParser")
-    
+        
     /// Parses log data directly from bytes
     static func parse(data: Data) -> [VTLogLine] {
         guard !data.isEmpty else { return [] }
         
-        let startTime = CFAbsoluteTimeGetCurrent()
+        //let startTime = CFAbsoluteTimeGetCurrent()
         
         let result = data.withUnsafeBytes { buffer in
             guard let baseAddress = buffer.baseAddress?.assumingMemoryBound(to: UInt8.self) else {
@@ -23,9 +21,6 @@ struct VTLogParser {
             }
             return parseBytes(baseAddress, count: buffer.count)
         }
-        
-        let elapsed = CFAbsoluteTimeGetCurrent() - startTime
-        logger.debug("Parsed \(result.count) log entries from \(data.count) bytes in \(String(format: "%.4f", elapsed))s")
         
         return result
     }
@@ -77,10 +72,8 @@ struct VTLogParser {
             
             let hash = computeHash(start, length: length)
             
-            if let cached = cache[hash] {
-                if verifyCacheHit(cached, start: start, length: length) {
-                    return cached
-                }
+            if let cached = cache[hash], verifyCacheHit(cached, start: start, length: length) {
+                return cached
             }
             
             let newString = String(decoding: UnsafeBufferPointer(start: start, count: length), as: UTF8.self)
@@ -135,7 +128,7 @@ struct VTLogParser {
             let entryEnd = (i + 1 < boundaries.count) ? boundaries[i + 1] : count
             
             if let entry = parseEntryAt(bytes: bytes, start: entryStart, end: entryEnd,
-                                         timestampCache: &timestampCache, stringCache: &stringCache) {
+                                        timestampCache: &timestampCache, stringCache: &stringCache) {
                 results.append(entry)
             }
         }
@@ -269,11 +262,13 @@ struct VTLogParser {
         }
         
         return cache.getTimestamp(year: year, month: month, day: day,
-                                   hour: hour, minute: minute, second: second,
-                                   fraction: fraction)
+                                  hour: hour, minute: minute, second: second,
+                                  fraction: fraction)
     }
     
-    private static func extractMessage(from start: UnsafePointer<UInt8>, to end: UnsafePointer<UInt8>, cache: inout StringCache) -> String {
+    private static func extractMessage(
+        from start: UnsafePointer<UInt8>, to end: UnsafePointer<UInt8>, cache: inout StringCache
+    ) -> String {
         var actualEnd = end
         while actualEnd > start {
             let c = actualEnd.advanced(by: -1).pointee

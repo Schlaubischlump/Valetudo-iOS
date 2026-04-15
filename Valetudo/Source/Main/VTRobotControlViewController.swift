@@ -251,7 +251,8 @@ class VTRobotControlViewController: VTViewController {
         stopSSEObservation()
     }
     
-    override func reconnectAndRefresh() {
+    @MainActor
+    override func reconnectAndRefresh() async {
         // Cancel existing SSE task and reconnect
         stopSSEObservation()
         startSSEObservation()

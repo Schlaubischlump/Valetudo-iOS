@@ -143,4 +143,26 @@ protocol VTAPIClientProtocol: Actor {
     
     func setUpdaterConfiguration(_ config: VTUpdaterConfig) async throws
     
+    // MARK: 5.0 Timer
+    
+    func getTimers() async throws -> [String: VTTimer]
+    
+    func addTimer(_ timer: VTTimer) async throws
+        
+    // MARK: - 5.1 {id}
+    
+    func getTimer(id: String) async throws -> VTTimer
+    
+    func updateTimer(_ timer: VTTimer) async throws
+    
+    func deleteTimer(id: String) async throws
+    
+    // MARK: - 5.2 {id}/action
+    
+    func executeTimer(id: String) async throws
+    
+    // MARK: - 5.3 Properties
+    
+    func getTimerProperties() async throws -> VTTimersProperties
+    
 }

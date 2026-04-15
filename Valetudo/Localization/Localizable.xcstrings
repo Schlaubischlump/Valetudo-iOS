@@ -1,6 +1,28 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "ACTION" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "action"
+          }
+        }
+      }
+    },
+    "ADD_TIMER" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "add timer"
+          }
+        }
+      }
+    },
     "ALL" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -63,6 +85,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "attachments"
+          }
+        }
+      }
+    },
+    "AVAILABLE_SEGMENTS" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "available segments"
           }
         }
       }
@@ -243,6 +276,28 @@
         }
       }
     },
+    "CUSTOM_LABEL" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "custom label"
+          }
+        }
+      }
+    },
+    "DELETE" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "delete"
+          }
+        }
+      }
+    },
     "DEPENDENCIES" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -342,6 +397,17 @@
         }
       }
     },
+    "EDIT_TIMER" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "edit timer"
+          }
+        }
+      }
+    },
     "EMBEDDED" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -382,6 +448,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "enable manual control"
+          }
+        }
+      }
+    },
+    "ENABLED" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "enabled"
           }
         }
       }
@@ -470,6 +547,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "free"
+          }
+        }
+      }
+    },
+    "FULL_CLEANUP" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "full cleanup"
+          }
+        }
+      }
+    },
+    "GENERAL" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "general"
           }
         }
       }
@@ -870,6 +969,17 @@
         }
       }
     },
+    "PRE_ACTIONS" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "pre-actions"
+          }
+        }
+      }
+    },
     "READ_LESS" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -947,6 +1057,39 @@
         }
       }
     },
+    "SCHEDULE" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "schedule"
+          }
+        }
+      }
+    },
+    "SEGMENT_CLEANUP" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "segment cleanup"
+          }
+        }
+      }
+    },
+    "SELECTED_SEGMENTS" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "selected segments"
+          }
+        }
+      }
+    },
     "SENSOR" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -954,6 +1097,39 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "sensor"
+          }
+        }
+      }
+    },
+    "SET_FAN" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "set fan to"
+          }
+        }
+      }
+    },
+    "SET_MODE" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "set mode to"
+          }
+        }
+      }
+    },
+    "SET_WATER" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "set water to"
           }
         }
       }
@@ -1020,6 +1196,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "time"
+          }
+        }
+      }
+    },
+    "TIMER" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "timer"
           }
         }
       }
@@ -1174,6 +1361,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "uptime"
+          }
+        }
+      }
+    },
+    "USE_CUSTOM_ORDER" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "use custom order"
           }
         }
       }

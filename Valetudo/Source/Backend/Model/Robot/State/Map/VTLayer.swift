@@ -8,7 +8,7 @@ import Foundation
 
 public struct VTLayer: Decodable, Sendable {
     public let __class: String
-    public let metaData: [String: VTAnyDecodable]
+    public let metaData: [String: VTAnyCodable]
     public let type: VTLayerType
     public let pixels: [Int]
     public let compressedPixels: [Int]?
@@ -29,5 +29,11 @@ extension VTLayer: Equatable, Hashable {
 
     public func hash(into hasher: inout Hasher) {
         hasher.combine(segmentId)
+    }
+}
+
+extension VTLayer: Describable {
+    var description: String {
+        self.name ?? self.segmentId ?? "UNKNOWN".localizedCapitalized()
     }
 }

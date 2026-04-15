@@ -6,7 +6,7 @@
 //
 import UIKit
 
-class VTManualControlViewControllerBase: UIViewController {
+class VTManualControlViewControllerBase: VTViewController {
     let client: VTAPIClientProtocol
     
     private(set) var ignoreInput: Bool = false
@@ -65,12 +65,7 @@ class VTManualControlViewControllerBase: UIViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         
-        Task { await loadInitialData() }
-    }
-    
-    @MainActor
-    func loadInitialData() async {
-        fatalError("loadInitialData should fetch the initial state of the manual control and call finalizeLoading")
+        Task { await reconnectAndRefresh() }
     }
     
     func finalizeLoading(manualControlIsEnabled: Bool) {
@@ -96,7 +91,7 @@ class VTManualControlViewControllerBase: UIViewController {
             } else {
                 try? await self.disableManualControl()
             }
-            await loadInitialData()
+            await reconnectAndRefresh()
         }
     }
 }

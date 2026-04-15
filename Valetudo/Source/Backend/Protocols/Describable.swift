@@ -15,3 +15,7 @@ protocol Describable {
 extension String: Describable {
     var description: String { self }
 }
+
+extension Int: Describable {
+    var description: String { "\(self)" }
+}

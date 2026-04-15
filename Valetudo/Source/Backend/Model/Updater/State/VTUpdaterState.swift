@@ -23,14 +23,14 @@ protocol VTUpdaterState: Equatable, Sendable {
     var className: String { get }
     var timestamp: Date { get }
     var busy: Bool { get }
-    var metaData: [String: VTAnyDecodable] { get }
+    var metaData: [String: VTAnyCodable] { get }
 }
 
 struct VTUpdaterNoUpdateRequiredState: VTUpdaterState, Equatable, Sendable {
     let className: String
     let timestamp: Date
     let busy: Bool
-    let metaData: [String: VTAnyDecodable]
+    let metaData: [String: VTAnyCodable]
     
     let currentVersion: String
     let changelog: String
@@ -40,7 +40,7 @@ struct VTUpdaterIdleState: VTUpdaterState, Equatable, Sendable {
     let className: String
     let timestamp: Date
     let busy: Bool
-    let metaData: [String: VTAnyDecodable]
+    let metaData: [String: VTAnyCodable]
     
     let currentVersion: String
 }
@@ -49,7 +49,7 @@ struct VTUpdaterErrorState: VTUpdaterState, Equatable, Sendable {
     let className: String
     let timestamp: Date
     let busy: Bool
-    let metaData: [String: VTAnyDecodable]
+    let metaData: [String: VTAnyCodable]
     
     let type: VTUpdaterErrorType
     let message: String
@@ -59,7 +59,7 @@ struct VTUpdaterDownloadingState: VTUpdaterState, Equatable, Sendable {
     let className: String
     let timestamp: Date
     let busy: Bool
-    let metaData: [String: VTAnyDecodable]
+    let metaData: [String: VTAnyCodable]
     
     let version: String
     let releaseTimestamp: Date
@@ -79,14 +79,14 @@ struct VTUpdaterDisabledState: VTUpdaterState, Equatable, Sendable {
     let className: String
     let timestamp: Date
     let busy: Bool
-    let metaData: [String: VTAnyDecodable]
+    let metaData: [String: VTAnyCodable]
 }
 
 struct VTUpdaterApprovalPendingState: VTUpdaterState, Equatable, Sendable {
     let className: String
     let timestamp: Date
     let busy: Bool
-    let metaData: [String: VTAnyDecodable]
+    let metaData: [String: VTAnyCodable]
     
     let version: String
     let releaseTimestamp: Date
@@ -100,7 +100,7 @@ struct VTUpdaterApplyPendingState: VTUpdaterState, Equatable, Sendable {
     let className: String
     let timestamp: Date
     let busy: Bool
-    let metaData: [String: VTAnyDecodable]
+    let metaData: [String: VTAnyCodable]
     
     let version: String
     let releaseTimestamp: Date
@@ -109,7 +109,7 @@ struct VTUpdaterApplyPendingState: VTUpdaterState, Equatable, Sendable {
 
 internal struct VTUpdaterStateDecoder: Decodable, Sendable, Equatable {
     let className: String
-    let metaData: [String: VTAnyDecodable]?
+    let metaData: [String: VTAnyCodable]?
     let timestamp: Date
     var busy: Bool
     

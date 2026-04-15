@@ -7,7 +7,7 @@
 import UIKit
 
 
-class VTConsumablesViewController: UICollectionViewController {
+class VTConsumablesViewController: VTCollectionViewController {
     fileprivate typealias VTConsumablesDataSource = UICollectionViewDiffableDataSource<VTConsumablesSection, VTConsumableItem>
     fileprivate typealias VTConsumablesDatasourceSnapshot = NSDiffableDataSourceSnapshot<VTConsumablesSection, VTConsumableItem>
     
@@ -132,6 +132,11 @@ class VTConsumablesViewController: UICollectionViewController {
                 }
             }*/
         }
+    }
+    
+    @MainActor
+    override func reconnectAndRefresh() async {
+        Task { await self.reloadData(animated: false) }
     }
 
     func reloadData(animated: Bool) async {

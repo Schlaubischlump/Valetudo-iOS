@@ -6,7 +6,7 @@
 //
 import UIKit
 
-class VTSystemInformationViewControllerBase: UICollectionViewController {
+class VTSystemInformationViewControllerBase: VTCollectionViewController {
     typealias VTSystemInformationDataSource = UICollectionViewDiffableDataSource<VTSystemInformationSection, VTSystemInformationItem>
     typealias VTSystemInformationSnapshot = NSDiffableDataSourceSnapshot<VTSystemInformationSection, VTSystemInformationItem>
     
@@ -119,6 +119,11 @@ class VTSystemInformationViewControllerBase: UICollectionViewController {
         fatalError("Not implemented!")
     }
 
+    @MainActor
+    override func reconnectAndRefresh() async {
+        Task { await self.reloadData(animated: false) }
+    }
+    
     
     // MARK: UICollectionViewDelegate
     

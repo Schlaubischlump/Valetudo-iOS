@@ -11,7 +11,7 @@ import MarkdownKit
 
 fileprivate let unknownString = "UNKNOWN".localizedUppercase()
 
-class VTUpdaterViewController: UICollectionViewController {
+class VTUpdaterViewController: VTCollectionViewController {
     typealias VTUpdaterDataSource = UICollectionViewDiffableDataSource<VTUpdaterSection, VTUpdaterItem>
     typealias VTUpdaterSnapshot = NSDiffableDataSourceSnapshot<VTUpdaterSection, VTUpdaterItem>
     
@@ -81,6 +81,12 @@ class VTUpdaterViewController: UICollectionViewController {
         }
     }
     
+    @MainActor
+    override func reconnectAndRefresh() async {
+        Task { await self.reloadData(animated: false) }
+    }
+    
+    
     private func configureDataSource() {
         let currentVersionRegistration = UICollectionView.CellRegistration<UICollectionViewListCell, VTUpdaterItem> { cell, _, item in
             switch (item) {
@@ -103,6 +109,7 @@ class VTUpdaterViewController: UICollectionViewController {
             switch (item) {
             case .updaterProvider(let provider):
                 let config = VTSelectionCellContentConfiguration(
+                    id: "update",
                     title: "UPDATE_CHANNEL".localizedCapitalized(),
                     options: provider,
                     selection: (self?.selectedProvider ?? provider.last!),
