@@ -14,6 +14,8 @@ class VTMapView: UIView {
     private var mapLayer: CALayer
     private(set) var selectedLayers: Set<VTLayer> = []
     
+    var hideNoGoAreas: Bool = true
+    
     var onLayerSelectionChange: ((VTLayer, Bool) async -> Bool)?
     var onEntityClicked: ((VTEntity, CGPoint) async -> Bool)?
 
@@ -21,7 +23,8 @@ class VTMapView: UIView {
         self.data = data
         
         let scale = UIScreen.current?.scale ?? kDefaultScale
-        mapLayer = data.toLayer(fitting: frame.size.insetBy(dx: pad, dy: pad), screenScale: scale)
+        let fittingFrame = frame.size.insetBy(dx: pad, dy: pad)
+        mapLayer = data.toLayer(fitting: fittingFrame, screenScale: scale, hideNoGoAreas: hideNoGoAreas)
 
         // use the size of the mapLayer to get a fitting size for the parent
         let size = mapLayer.frame.size
@@ -48,7 +51,8 @@ class VTMapView: UIView {
     @MainActor
     public func updateData(data: VTMapData) async {
         let scale = UIScreen.current?.scale ?? kDefaultScale
-        let newMapLayer = data.toLayer(fitting: frame.size.insetBy(dx: pad, dy: pad), screenScale: scale)
+        let fittingFrame = frame.size.insetBy(dx: pad, dy: pad)
+        let newMapLayer = data.toLayer(fitting: fittingFrame, screenScale: scale, hideNoGoAreas: hideNoGoAreas)
         newMapLayer.position = mapLayer.position
         let transform = mapLayer.transform
         mapLayer.removeFromSuperlayer()
@@ -131,10 +135,10 @@ class VTMapView: UIView {
         
         if isSelected {
             selectedLayers.remove(vtLayer)
-            shapeLayer.fillColor = vtLayer.color
+            shapeLayer.fillColor = vtLayer.fillColor
         } else {
             selectedLayers.insert(vtLayer)
-            shapeLayer.fillColor = vtLayer.color.darker(by: 0.5)
+            shapeLayer.fillColor = vtLayer.fillColor?.darker(by: 0.5)
         }
         return true
     }

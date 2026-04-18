@@ -7,7 +7,8 @@
 import UIKit
 
 struct VTProgressCellContentConfiguration: UIContentConfiguration, Hashable {
-    var message: String
+    let id: String
+    let message: String
     var progress: Double
     
     func makeContentView() -> UIView & UIContentView {

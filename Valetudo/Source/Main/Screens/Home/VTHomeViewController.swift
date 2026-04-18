@@ -243,7 +243,7 @@ class VTHomeViewController: VTViewController {
 
     private func updateLegend(data: VTMapData) async {
         legendView.items = segmentLayer.map { layer in
-            return VTLegendItem(color: layer.color, text: layer.name ?? layer.segmentId!)
+            return VTLegendItem(color: layer.fillColor ?? .black, text: layer.name ?? layer.segmentId!)
         }
     }
 

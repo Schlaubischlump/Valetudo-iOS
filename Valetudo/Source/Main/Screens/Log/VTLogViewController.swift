@@ -147,7 +147,7 @@ final class VTLogViewController: UICollectionViewController, UISearchResultsUpda
         let updateLogLevel = UICollectionView.CellRegistration<UICollectionViewListCell, VTLogItem> { [weak self] cell, _, item in
             switch (item) {
             case .updateLogLevel(let presets):
-                let config = VTSelectionCellContentConfiguration<String>(
+                let config = VTDropDownCellContentConfiguration<String>(
                     id: "log_level",
                     title: "LEVEL".localizedCapitalized(),
                     options: presets.map { $0.capitalized },

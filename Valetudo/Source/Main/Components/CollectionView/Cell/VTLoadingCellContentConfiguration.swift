@@ -7,7 +7,8 @@
 import UIKit
 
 struct VTLoadingCellContentConfiguration: UIContentConfiguration, Hashable {
-    var message: String
+    let id: String
+    let message: String
     
     func makeContentView() -> UIView & UIContentView {
         VTLoadingCellView(configuration: self)

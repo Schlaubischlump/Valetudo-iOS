@@ -6,7 +6,7 @@
 //
 import UIKit
 
-final class VTSelectionCellContentView<S: Describable & Hashable & Equatable>: UIView, UIContentView {
+final class VTDropDownCellContentView<S: Describable & Hashable & Equatable>: UIView, UIContentView {
 
     private let titleLabel = UILabel()
     private let selectionButton = UIButton(type: .system)
@@ -20,7 +20,7 @@ final class VTSelectionCellContentView<S: Describable & Hashable & Equatable>: U
         }
     }
 
-    init(configuration: VTSelectionCellContentConfiguration<S>) {
+    init(configuration: VTDropDownCellContentConfiguration<S>) {
         self.configuration = configuration
         super.init(frame: .zero)
 
@@ -55,7 +55,7 @@ final class VTSelectionCellContentView<S: Describable & Hashable & Equatable>: U
     }
 
     private func apply(configuration: UIContentConfiguration) {
-        guard let config = configuration as? VTSelectionCellContentConfiguration<S> else { return }
+        guard let config = configuration as? VTDropDownCellContentConfiguration<S> else { return }
         titleLabel.text = config.title
         options = config.options
         selection = config.selection

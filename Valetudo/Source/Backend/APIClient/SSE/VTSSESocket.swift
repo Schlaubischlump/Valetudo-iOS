@@ -19,6 +19,8 @@ internal protocol VTSSESocketProtocol: Actor {
 }
 
 
+// TODO: Add polling based sse socket for events
+
 internal final actor VTSSESocket<E: Decodable & Equatable & Sendable>: VTSSESocketProtocol {
     typealias Action = VTEventAction<E>
     

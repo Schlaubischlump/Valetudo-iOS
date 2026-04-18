@@ -30,6 +30,7 @@ extension VTEntityType {
         case .charger_location: .blue
         case .robot_position: .white
         case .path: nil
+        case .carpet: nil
         default: .black
         }
     }
@@ -39,6 +40,7 @@ extension VTEntityType {
         case .charger_location: .white
         case .robot_position: .lightGray
         case .path: .white
+        case .carpet: .lightGray.copy(alpha: 0.5)
         default: .black
         }
     }
@@ -48,6 +50,7 @@ extension VTEntityType {
         case .charger_location: 1.0
         case .robot_position: 0.5
         case .path: 0.5
+        case .carpet: 0.5
         default: 1.0
         }
     }
@@ -102,6 +105,7 @@ extension VTEntityType {
             
             return iconPath
             
+        case .carpet: return nil
         case .no_go_area: return nil
         case .no_mop_area: return nil
         case .virtual_wall: return nil

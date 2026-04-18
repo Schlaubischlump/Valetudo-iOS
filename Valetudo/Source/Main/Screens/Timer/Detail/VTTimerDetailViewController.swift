@@ -26,8 +26,8 @@ fileprivate let kSegments = "SEGMENTS"
 
 final class VTTimerDetailViewController: VTCollectionViewController {
 
-    typealias DataSource = UICollectionViewDiffableDataSource<VTTimersDetailSection, VTAnyTimersDetailItem>
-    typealias Snapshot = NSDiffableDataSourceSnapshot<VTTimersDetailSection, VTAnyTimersDetailItem>
+    typealias DataSource = UICollectionViewDiffableDataSource<VTTimersDetailSection, VTAnyItem>
+    typealias Snapshot = NSDiffableDataSourceSnapshot<VTTimersDetailSection, VTAnyItem>
 
     private let client: VTAPIClientProtocol
     private var dataSource: DataSource!
@@ -134,9 +134,10 @@ final class VTTimerDetailViewController: VTCollectionViewController {
     
     private func configureDataSource() {
 
-        let checkboxCell = UICollectionView.CellRegistration<
-            UICollectionViewListCell, VTCheckboxItem
-        > { [weak self] cell, _, item in
+        let checkboxCell = VTCellRegistration { [weak self] cell, _, wrappedItem in
+            guard let item = wrappedItem.base as? VTCheckboxItem else {
+                fatalError("Unsupported checkbox item: \(wrappedItem.base)")
+            }
             
             let disabledToggleOnAction = (item.id != kEnabled) && (item.id != kCustomOrder)
             
@@ -163,6 +164,11 @@ final class VTTimerDetailViewController: VTCollectionViewController {
                     if timer.action.type == .segmentCleanup {
                         let params = timer.action.params
                         timer = timer.copy(action: .init(type: .segmentCleanup, params: params.copy(customOrder: new)))
+                        
+                        // Update UI to allow or disallow reordering
+                        Task {
+                            await applySnapshotAfterAnimationDelay()
+                        }
                     }
                 default:
                     fatalError("Unexpected id: \(item.id)")
@@ -170,9 +176,10 @@ final class VTTimerDetailViewController: VTCollectionViewController {
             }
         }
         
-        let textFieldCell = UICollectionView.CellRegistration<
-            UICollectionViewListCell, VTTextFieldItem
-        > { [weak self] cell, _, item in
+        let textFieldCell = VTCellRegistration { [weak self] cell, _, wrappedItem in
+            guard let item = wrappedItem.base as? VTTextFieldItem else {
+                fatalError("Unsupported textField item: \(wrappedItem.base)")
+            }
             
             cell.contentConfiguration = VTTextFieldCellContentConfiguration(
                 id: item.id,
@@ -191,7 +198,10 @@ final class VTTimerDetailViewController: VTCollectionViewController {
             }
         }
         
-        let timePickerCell = UICollectionView.CellRegistration<UICollectionViewListCell, VTTimePickerItem> { [weak self] cell, _, item in
+        let timePickerCell = VTCellRegistration { [weak self] cell, _, wrappedItem in
+            guard let item = wrappedItem.base as? VTTimePickerItem else {
+                fatalError("Unsupported time picker item: \(wrappedItem.base)")
+            }
             
             cell.contentConfiguration = VTTimePickerCellContentConfiguration(
                 id: item.id,
@@ -212,44 +222,10 @@ final class VTTimerDetailViewController: VTCollectionViewController {
             }
         }
         
-        let presetDropdownCell = UICollectionView.CellRegistration<
-            UICollectionViewListCell, VTDropDownItem<VTPresetValue>
-        > { [weak self] cell, _, item in
-            
-            cell.contentConfiguration = VTSelectionCellContentConfiguration(
-                id: item.id,
-                title: item.id.localizedCapitalized(),
-                options: item.options,
-                selection: item.active,
-                disableSelectionAfterAction: false
-            ) { [weak self] newValue in
-                guard let self else { return }
-                
-                switch item.id {
-                case kSetFan:
-                    let filtered = timer.preActions.filter { $0.type != .fanSpeedControl }
-                    timer = timer.copy(preActions: filtered + [
-                        .init(type: .fanSpeedControl, params: .init(value: newValue))
-                    ])
-                case kSetWater:
-                    let filtered = timer.preActions.filter { $0.type != .waterUsageControl }
-                    timer = timer.copy(preActions: filtered + [
-                        .init(type: .waterUsageControl, params: .init(value: newValue))
-                    ])
-                case kSetMode:
-                    let filtered = timer.preActions.filter { $0.type != .operationModeControl }
-                    timer = timer.copy(preActions: filtered + [
-                        .init(type: .operationModeControl, params: .init(value: newValue))
-                    ])
-                default:
-                    fatalError("Unexpected id: \(item.id)")
-                }
+        let segmentCell = VTCellRegistration { [weak self] cell, _, wrappedItem in
+            guard let item = wrappedItem.base as? VTSegmentItem<VTWeekday> else {
+                fatalError("Unsupported segment item: \(wrappedItem.base)")
             }
-        }
-        
-        let segmentCell = UICollectionView.CellRegistration<
-            UICollectionViewListCell, VTSegmentItem<VTWeekday>
-        > { [weak self] cell, _, item in
             
             cell.contentConfiguration = VTSegmentCellContentConfiguration(
                 id: item.id,
@@ -267,65 +243,96 @@ final class VTTimerDetailViewController: VTCollectionViewController {
             }
         }
         
-        let actionDropdownCell = UICollectionView.CellRegistration<
-            UICollectionViewListCell, VTDropDownItem<VTTimer.Action.ActionType>
-        > { [weak self] cell, _, item in
-            
-            cell.contentConfiguration = VTSelectionCellContentConfiguration(
-                id: item.id,
-                title: item.id.localizedCapitalized(),
-                options: item.options,
-                selection: item.active,
-                disableSelectionAfterAction: false
-            ) { [weak self] newActionType in
-                guard let self else { return }
-                
-                switch item.id {
-                case kAction:
-                    timer = timer.copy(action: .init(type: newActionType, params: .empty))
-                    Task {
-                        await applySnapshotAfterAnimationDelay()
+        let dropdownCell = VTCellRegistration { [weak self] cell, _, wrappedItem in
+            switch(wrappedItem.base) {
+            case let item as VTDropDownItem<VTTimer.Action.ActionType>:
+                cell.contentConfiguration = VTDropDownCellContentConfiguration(
+                    id: item.id,
+                    title: item.id.localizedCapitalized(),
+                    options: item.options,
+                    selection: item.active,
+                    disableSelectionAfterAction: false
+                ) { [weak self] newActionType in
+                    guard let self else { return }
+                    
+                    switch item.id {
+                    case kAction:
+                        timer = timer.copy(action: .init(type: newActionType, params: .empty))
+                        Task {
+                            await applySnapshotAfterAnimationDelay()
+                        }
+                    default:
+                        fatalError("Unexpected id: \(item.id)")
                     }
-                default:
-                    fatalError("Unexpected id: \(item.id)")
                 }
-            }
-        }
-        
-        let intDropdownCell = UICollectionView.CellRegistration<
-            UICollectionViewListCell, VTDropDownItem<Int>
-        > { [weak self] cell, _, item in
-            
-            cell.contentConfiguration = VTSelectionCellContentConfiguration(
-                id: item.id,
-                title: item.id.localizedCapitalized(),
-                options: item.options,
-                selection: item.active,
-                disableSelectionAfterAction: false
-            ) { [weak self] new in
-                guard let self else { return }
-                
-                
-                switch item.id {
-                case kIterations:
-                    if timer.action.type == .segmentCleanup {
-                        let params = timer.action.params
-                        timer = timer.copy(action: .init(type: .segmentCleanup, params: params.copy(iterations: new)))
+            case let item as VTDropDownItem<Int>:
+                cell.contentConfiguration = VTDropDownCellContentConfiguration(
+                    id: item.id,
+                    title: item.id.localizedCapitalized(),
+                    options: item.options,
+                    selection: item.active,
+                    disableSelectionAfterAction: false
+                ) { [weak self] new in
+                    guard let self else { return }
+                    
+                    
+                    switch item.id {
+                    case kIterations:
+                        if timer.action.type == .segmentCleanup {
+                            let params = timer.action.params
+                            timer = timer.copy(action: .init(type: .segmentCleanup, params: params.copy(iterations: new)))
+                        }
+                    default:
+                        fatalError("Unexpected id: \(item.id)")
                     }
-                default:
-                    fatalError("Unexpected id: \(item.id)")
                 }
+            case let item as VTDropDownItem<VTPresetValue>:
+                cell.contentConfiguration = VTDropDownCellContentConfiguration(
+                    id: item.id,
+                    title: item.id.localizedCapitalized(),
+                    options: item.options,
+                    selection: item.active,
+                    disableSelectionAfterAction: false
+                ) { [weak self] newValue in
+                    guard let self else { return }
+                    
+                    switch item.id {
+                    case kSetFan:
+                        let filtered = timer.preActions.filter { $0.type != .fanSpeedControl }
+                        timer = timer.copy(preActions: filtered + [
+                            .init(type: .fanSpeedControl, params: .init(value: newValue))
+                        ])
+                    case kSetWater:
+                        let filtered = timer.preActions.filter { $0.type != .waterUsageControl }
+                        timer = timer.copy(preActions: filtered + [
+                            .init(type: .waterUsageControl, params: .init(value: newValue))
+                        ])
+                    case kSetMode:
+                        let filtered = timer.preActions.filter { $0.type != .operationModeControl }
+                        timer = timer.copy(preActions: filtered + [
+                            .init(type: .operationModeControl, params: .init(value: newValue))
+                        ])
+                    default:
+                        fatalError("Unexpected id: \(item.id)")
+                    }
+                }
+            default:
+                fatalError("Unsupported item: \(wrappedItem.base)")
             }
         }
 
-        let layerListCell = UICollectionView.CellRegistration<
-            UICollectionViewListCell, VTListSelectionItem<VTLayer>
-        > { [weak self] cell, _, item in
+        let layerListCell = VTCellRegistration { [weak self] cell, _, wrappedItem in
+            guard let item = wrappedItem.base as? VTListSelectionItem<VTLayer> else {
+                fatalError("Unsupported segment item: \(wrappedItem.base)")
+            }
+            
+            let customOrder = self?.timer.action.params.customOrder ?? true
             
             cell.contentConfiguration = VTListSelectionCellContentConfiguration(
                 id: item.id,
                 enabledTitle: "SELECTED_SEGMENTS".localizedCapitalized(),
                 disabledTitle: "AVAILABLE_SEGMENTS".localizedCapitalized(),
+                allowReordering: customOrder,
                 options: item.options,
                 active: item.active,
             ) { [weak self] newLayer in
@@ -345,27 +352,20 @@ final class VTTimerDetailViewController: VTCollectionViewController {
             }
         }
 
-        dataSource = DataSource(collectionView: collectionView) { collectionView, indexPath, wrapperItem in
-            switch wrapperItem.base {
-            case let item as VTCheckboxItem:
-                collectionView.dequeueConfiguredReusableCell(using: checkboxCell, for: indexPath, item: item)
-            case let item as VTTextFieldItem:
-                collectionView.dequeueConfiguredReusableCell(using: textFieldCell,for: indexPath, item: item)
-            case let item as VTSegmentItem<VTWeekday>:
-                collectionView.dequeueConfiguredReusableCell(using: segmentCell, for: indexPath, item: item)
-            case let item as VTTimePickerItem:
-                collectionView.dequeueConfiguredReusableCell(using: timePickerCell, for: indexPath, item: item)
-            case let item as VTDropDownItem<VTPresetValue>:
-                collectionView.dequeueConfiguredReusableCell(using: presetDropdownCell, for: indexPath, item: item)
-            case let item as VTDropDownItem<VTTimer.Action.ActionType>:
-                collectionView.dequeueConfiguredReusableCell(using: actionDropdownCell, for: indexPath, item: item)
-            case let item as VTDropDownItem<Int>:
-                collectionView.dequeueConfiguredReusableCell(using: intDropdownCell, for: indexPath, item: item)
-            case let item as VTListSelectionItem<VTLayer>:
-                collectionView.dequeueConfiguredReusableCell(using: layerListCell, for: indexPath, item: item)
-            default:
-                fatalError("Unsupported item type: \(type(of: wrapperItem.base))")
+        dataSource = DataSource(collectionView: collectionView) { collectionView, indexPath, wrappedItem in
+            let registration = switch wrappedItem.base {
+            case _ as VTCheckboxItem:                               checkboxCell
+            case _ as VTTextFieldItem:                              textFieldCell
+            case _ as VTSegmentItem<VTWeekday>:                     segmentCell
+            case _ as VTTimePickerItem:                             timePickerCell
+            case _ as VTDropDownItem<VTPresetValue>,
+                 _ as VTDropDownItem<VTTimer.Action.ActionType>,
+                 _ as VTDropDownItem<Int>:                          dropdownCell
+            case _ as VTListSelectionItem<VTLayer>:                 layerListCell
+            default: fatalError("Unsupported item type: \(type(of: wrappedItem.base))")
             }
+            
+            return collectionView.dequeueConfiguredReusableCell(using: registration, for: indexPath, item: wrappedItem)
         }
 
         // Header
@@ -457,7 +457,7 @@ final class VTTimerDetailViewController: VTCollectionViewController {
                 let isEnabled = preAction != nil
                 
                 // Add 'enable' toggle item
-                var items: [VTAnyTimersDetailItem] = [
+                var items: [VTAnyItem] = [
                     .checkbox(toggleID, title: title.localizedCapitalized(), enabled: isEnabled)
                 ]
                 // Add drop down menu only if enabled
@@ -504,12 +504,14 @@ final class VTTimerDetailViewController: VTCollectionViewController {
             })
             let activeSegments = params.segmentIds?.compactMap { segmentsMap[$0] } ?? []
             
-            let segmentActions: [VTAnyTimersDetailItem] = [
+            let segmentActions: [VTAnyItem] = [
                 .listSelection(kSegments, active: activeSegments, options: allSegments)
             ]
             let segmentSection = freshGroup()
             snapshot.appendSections([segmentSection])
             snapshot.appendItems(segmentActions, toSection: segmentSection)
+            // reconfigure to force a UI update to allow or disallow reordering
+            snapshot.reconfigureItems(segmentActions)
         }
     
         await dataSource.apply(snapshot, animatingDifferences: animated)

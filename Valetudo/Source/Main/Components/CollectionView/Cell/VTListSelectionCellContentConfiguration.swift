@@ -10,6 +10,7 @@ struct VTListSelectionCellContentConfiguration<T: Hashable & Sendable & Describa
     let id: String
     var enabledTitle: String = "ENABLED"
     var disabledTitle: String = "DISABLED"
+    var allowReordering: Bool = true
     let options: [T]
     let active: [T]
     let onChange: (([T]) -> Void)?

@@ -96,12 +96,16 @@ final class VTListSelectionCellContentView<T: Hashable & Equatable & Sendable & 
     // MARK: - DataSource
 
     private func configureDataSource() {
-        let cellRegistration = UICollectionView.CellRegistration<UICollectionViewListCell, T> { cell, indexPath, item in
+        let cellRegistration = UICollectionView.CellRegistration<UICollectionViewListCell, T> { [weak self] cell, indexPath, item in
+            guard let allowReordering = self?.currentConfiguration.allowReordering else { return }
+            
             var content = UIListContentConfiguration.cell()
             content.text = item.description
             cell.contentConfiguration = content
             let section = Section(rawValue: indexPath.section)
-            cell.accessories = section == .enabled ? [.reorder(displayed: .always)] : []
+            cell.accessories = section == .enabled ?
+                (allowReordering ? [.reorder(displayed: .always)] : [])
+                : [.plus()]
         }
 
         dataSource = UICollectionViewDiffableDataSource<Section, T>(
@@ -178,6 +182,8 @@ final class VTListSelectionCellContentView<T: Hashable & Equatable & Sendable & 
                         itemsForBeginning session: UIDragSession,
                         at indexPath: IndexPath)
     -> [UIDragItem] {
+        guard currentConfiguration.allowReordering else { return [] }
+        
         let section = Section(rawValue: indexPath.section)
         guard section == .enabled else { return [] }
         
@@ -193,7 +199,8 @@ final class VTListSelectionCellContentView<T: Hashable & Equatable & Sendable & 
                         dropSessionDidUpdate session: UIDropSession,
                         withDestinationIndexPath destinationIndexPath: IndexPath?)
     -> UICollectionViewDropProposal {
-
+        guard currentConfiguration.allowReordering else { return UICollectionViewDropProposal(operation: .forbidden) }
+        
         guard let destinationIndexPath else { return UICollectionViewDropProposal(operation: .cancel) }
         guard let sourceIndexPath = session.localDragSession?
             .items.first?
@@ -214,7 +221,8 @@ final class VTListSelectionCellContentView<T: Hashable & Equatable & Sendable & 
 
     func collectionView(_ collectionView: UICollectionView,
                         performDropWith coordinator: UICollectionViewDropCoordinator) {
-
+        guard currentConfiguration.allowReordering else { return }
+        
         guard let destinationIndexPath = coordinator.destinationIndexPath else { return }
         guard let item = coordinator.items.first, let sourceIndexPath = item.sourceIndexPath else { return }
 

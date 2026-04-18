@@ -7,6 +7,7 @@
 import UIKit
 
 struct VTUpdateDetailCellContentConfiguration: UIContentConfiguration, Hashable {
+    let id: String
     var title: String
     var subtitle: String
     var image: UIImage?

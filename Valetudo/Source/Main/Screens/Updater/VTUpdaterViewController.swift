@@ -11,9 +11,24 @@ import MarkdownKit
 
 fileprivate let unknownString = "UNKNOWN".localizedUppercase()
 
+fileprivate let kUpdate = "UPDATE_CHANNEL"
+fileprivate let kUpdateUnknown = "UPDATE_UNKNOWN"
+fileprivate let kUpToDate = "UP_TO_DATE"
+fileprivate let kCheckingForUpdates = "CHECKING_FOR_UPDATES"
+fileprivate let kUpdatError = "UPDATE_ERROR"
+fileprivate let kProgress = "PROGRESS"
+fileprivate let kLoading = "LOADING"
+fileprivate let kUpdateDisabled = "UPDATE_DISABLED"
+fileprivate let kUpdateAvailable = "UPDATE_AVAILABLE"
+fileprivate let kApplyUpdate = "APPLY_UPDATE"
+fileprivate let kInstallUpdate = "INSTALL_UPDATE"
+fileprivate let kCurrentVersion = "CURRENT_VERSION"
+fileprivate let kCurrentCommit = "CURRENT_COMMIT"
+fileprivate let kUpdateProvider = "UPDATE_PROVIDER"
+
 class VTUpdaterViewController: VTCollectionViewController {
-    typealias VTUpdaterDataSource = UICollectionViewDiffableDataSource<VTUpdaterSection, VTUpdaterItem>
-    typealias VTUpdaterSnapshot = NSDiffableDataSourceSnapshot<VTUpdaterSection, VTUpdaterItem>
+    typealias VTUpdaterDataSource = UICollectionViewDiffableDataSource<VTUpdaterSection, VTAnyItem>
+    typealias VTUpdaterSnapshot = NSDiffableDataSourceSnapshot<VTUpdaterSection, VTAnyItem>
     
     let client: VTAPIClientProtocol
     var dataSource: VTUpdaterDataSource!
@@ -22,7 +37,6 @@ class VTUpdaterViewController: VTCollectionViewController {
     
     private var sections: [VTUpdaterSection] = [.main, .update]
     
-    private var selectedProvider: VTUpdaterProvider?
     private var needsVersionCheck: Bool = true
     
     init(client: VTAPIClientProtocol) {
@@ -88,48 +102,47 @@ class VTUpdaterViewController: VTCollectionViewController {
     
     
     private func configureDataSource() {
-        let currentVersionRegistration = UICollectionView.CellRegistration<UICollectionViewListCell, VTUpdaterItem> { cell, _, item in
-            switch (item) {
-            case .currentVersion(let version):
+        let currentVersionRegistration = VTCellRegistration { cell, _, wrappedItem in
+            switch (wrappedItem.base) {
+            case let item as VTCurrentVersionItem:
                 var listContent = cell.defaultContentConfiguration()
                 listContent.text = "VERSION".localizedCapitalized()
-                listContent.secondaryText = version
+                listContent.secondaryText = item.versionString
                 cell.contentConfiguration = listContent
-            case .currentCommit(let commit):
+            case let item as VTCurrentCommitItem:
                 var listContent = cell.defaultContentConfiguration()
                 listContent.text = "COMMIT".localizedCapitalized()
-                listContent.secondaryText = commit
+                listContent.secondaryText = item.commitString
                 cell.contentConfiguration = listContent
             default:
                 break
             }
         }
         
-        let updateProviderRegistration = UICollectionView.CellRegistration<UICollectionViewListCell, VTUpdaterItem> { [weak self] cell, _, item in
-            switch (item) {
-            case .updaterProvider(let provider):
-                let config = VTSelectionCellContentConfiguration(
-                    id: "update",
+        let updateProviderRegistration = VTCellRegistration { [weak self] cell, _, wrappedItem in
+            switch (wrappedItem.base) {
+            case let item as VTUpdaterProviderItem:
+                let config = VTDropDownCellContentConfiguration(
+                    id: item.id,
                     title: "UPDATE_CHANNEL".localizedCapitalized(),
-                    options: provider,
-                    selection: (self?.selectedProvider ?? provider.last!),
+                    options: item.options,
+                    selection: item.active,
+                    disableSelectionAfterAction: true
                 ) { newProvider in
                     Task {
                         do {
-                            try await self?.client.setUpdaterConfiguration(VTUpdaterConfig(updateProvider: newProvider))
-                            self?.selectedProvider = newProvider
+                            guard let self else { return }
                             
-                            let updaterState = try? await self?.client.getUpdaterState()
-                            self?.needsVersionCheck = true
-                            await self?.checkForUpdateIfNeeded(updaterState)
+                            try await self.client.setUpdaterConfiguration(VTUpdaterConfig(updateProvider: newProvider))
+                            
+                            let updaterState = try? await self.client.getUpdaterState()
+                            
+                            self.needsVersionCheck = true
+                            await self.checkForUpdateIfNeeded(updaterState)
+                            
+                            await self.refreshUpdaterProviderCell(newProvider, animated: false)
                         } catch {
                             /* nothing */
-                        }
-                        
-                        var snapshot = self?.dataSource.snapshot()
-                        snapshot?.reconfigureItems([item])
-                        if let snapshot {
-                            await self?.dataSource.apply(snapshot, animatingDifferences: false)
                         }
                     }
                 }
@@ -139,47 +152,49 @@ class VTUpdaterViewController: VTCollectionViewController {
             }
         }
         
-        let loadingUpdateCellRegistration = UICollectionView.CellRegistration<UICollectionViewListCell, VTUpdaterItem> { cell, _, item in
-            switch (item) {
-            case .loading(let title):
-                cell.contentConfiguration = VTLoadingCellContentConfiguration(message: title)
+        let loadingUpdateCellRegistration = VTCellRegistration { cell, _, wrappedItem in
+            switch (wrappedItem.base) {
+            case let item as VTLoadingItem:
+                cell.contentConfiguration = VTLoadingCellContentConfiguration(id: item.id, message: item.message)
             default:
                 break
             }
         }
         
-        let updateStateCellRegistration = UICollectionView.CellRegistration<UICollectionViewListCell, VTUpdaterItem> { cell, _, item in
-            switch (item) {
-            case .updateState(let title, let image, let color):
+        let updateStateCellRegistration = VTCellRegistration { cell, _, wrappedItem in
+            switch (wrappedItem.base) {
+            case let item as VTUpdateStateItem:
                 cell.contentConfiguration = VTUpdateStateCellContentConfiguration(
-                    message: title,
-                    image: image,
-                    tintColor: color
+                    id: item.id,
+                    message: item.title,
+                    image: item.image,
+                    tintColor: item.tintColor
                 )
             default:
                 break
             }
         }
         
-        let updateProgressCellRegistration = UICollectionView.CellRegistration<UICollectionViewListCell, VTUpdaterItem> { cell, _, item in
-            switch (item) {
-            case .progress(let title, let progress):
+        let updateProgressCellRegistration = VTCellRegistration { cell, _, wrappedItem in
+            switch (wrappedItem.base) {
+            case let item as VTProgressItem:
                 cell.contentConfiguration = VTProgressCellContentConfiguration(
-                    message: title,
-                    progress: progress
+                    id: item.id,
+                    message: item.message,
+                    progress: item.progress
                 )
             default:
                 break
             }
         }
         
-        let updateDetailCellRegistration = UICollectionView.CellRegistration<UICollectionViewListCell, VTUpdaterItem> { cell, _, item in
-            switch (item) {
-            case .updateAvailable(let title, let image, let version, let changelog):
-                let markdownString = if let range = changelog.range(of: "</div>") {
-                    String(changelog[range.upperBound...]).trimmingCharacters(in: .whitespacesAndNewlines)
+        let updateDetailCellRegistration = VTCellRegistration { cell, _, wrappedItem in
+            switch (wrappedItem.base) {
+            case let item as VTUpdateAvailableItem:
+                let markdownString = if let range = item.changelog.range(of: "</div>") {
+                    String(item.changelog[range.upperBound...]).trimmingCharacters(in: .whitespacesAndNewlines)
                 } else {
-                    changelog
+                    item.changelog
                 }
                 let markdownParser = MarkdownParser(
                     font: .systemFont(ofSize: UIFont.labelFontSize),
@@ -187,9 +202,10 @@ class VTUpdaterViewController: VTCollectionViewController {
                 )
                 let attributedText = markdownParser.parse(markdownString)
                 cell.contentConfiguration = VTUpdateDetailCellContentConfiguration(
-                    title: title,
-                    subtitle: version,
-                    image: image,
+                    id: item.id,
+                    title: item.title,
+                    subtitle: item.version,
+                    image: item.image,
                     attributedMessage: attributedText,
                     baseTextColor: .label,
                     buttonTitle: "DOWNLOAD".localizedCapitalized(),
@@ -201,11 +217,12 @@ class VTUpdaterViewController: VTCollectionViewController {
                         }
                     }
                 )
-            case .installUpdate(let title, let image, let version):
+            case let item as VTInstallUpdateItem:
                 cell.contentConfiguration = VTUpdateDetailCellContentConfiguration(
-                    title: title,
-                    subtitle: version,
-                    image: image,
+                    id: item.id,
+                    title: item.title,
+                    subtitle: item.version,
+                    image: item.image,
                     attributedMessage: NSAttributedString(
                         string: "INSTALL_WARNING".localized(),
                         attributes: [.foregroundColor: UIColor.systemRed]
@@ -225,21 +242,18 @@ class VTUpdaterViewController: VTCollectionViewController {
             }
         }
         
-        dataSource = VTUpdaterDataSource(collectionView: collectionView) { collectionView, indexPath, item in
-            switch (item) {
-            case .currentVersion(_), .currentCommit(_):
-                collectionView.dequeueConfiguredReusableCell(using: currentVersionRegistration, for: indexPath, item: item)
-            case .updaterProvider(_):
-                collectionView.dequeueConfiguredReusableCell(using: updateProviderRegistration, for: indexPath, item: item)
-            case .loading(_):
-                collectionView.dequeueConfiguredReusableCell(using: loadingUpdateCellRegistration, for: indexPath, item: item)
-            case .updateState(_, _, _):
-                collectionView.dequeueConfiguredReusableCell(using: updateStateCellRegistration, for: indexPath, item: item)
-            case .progress(_, _):
-                collectionView.dequeueConfiguredReusableCell(using: updateProgressCellRegistration, for: indexPath, item: item)
-            case .updateAvailable(_, _, _, _), .installUpdate(_, _, _):
-                collectionView.dequeueConfiguredReusableCell(using: updateDetailCellRegistration, for: indexPath, item: item)
+        dataSource = VTUpdaterDataSource(collectionView: collectionView) { collectionView, indexPath, wrappedItem in
+            let registration = switch (wrappedItem.base) {
+            case _ as VTCurrentVersionItem, _ as VTCurrentCommitItem:   currentVersionRegistration
+            case _ as VTUpdaterProviderItem:                            updateProviderRegistration
+            case _ as VTLoadingItem:                                    loadingUpdateCellRegistration
+            case _ as VTUpdateStateItem:                                updateStateCellRegistration
+            case _ as VTProgressItem:                                   updateProgressCellRegistration
+            case _ as VTUpdateAvailableItem, _ as VTInstallUpdateItem:  updateDetailCellRegistration
+            default: fatalError("Unsupported item type: \(type(of: wrappedItem.base))")
             }
+            
+            return collectionView.dequeueConfiguredReusableCell(using: registration, for: indexPath, item: wrappedItem)
         }
         
         dataSource.supplementaryViewProvider = { collectionView, kind, indexPath in
@@ -281,8 +295,9 @@ class VTUpdaterViewController: VTCollectionViewController {
         sections[indexPath.section] 
     }
     
-    private func item(forState state: (any VTUpdaterState)?) -> VTUpdaterItem {
-        let unknownState: VTUpdaterItem = .updateState(
+    private func item(forState state: (any VTUpdaterState)?) -> VTAnyItem {
+        let unknownState: VTAnyItem = .updateState(
+            kUpdateUnknown,
             title: "UPDATE_UNKNOWN".localizedCapitalized(),
             image: UIImage(systemName: "questionmark.circle.fill"),
             tintColor: .secondaryLabel
@@ -291,14 +306,16 @@ class VTUpdaterViewController: VTCollectionViewController {
         switch (state) {
         case _ as VTUpdaterNoUpdateRequiredState:
             return .updateState(
+                kUpToDate,
                 title: "UP_TO_DATE".localizedCapitalized(),
                 image: UIImage(systemName: "checkmark.circle.fill"),
                 tintColor: .systemGreen
             )
         case _ as VTUpdaterIdleState:
-            return .loading(title: "CHECKING_FOR_UPDATES".localizedCapitalized())
+            return .loading(kCheckingForUpdates, message: "CHECKING_FOR_UPDATES".localizedCapitalized())
         case _ as VTUpdaterErrorState:
             return .updateState(
+                kUpdatError,
                 title: "UPDATE_ERROR".localizedCapitalized(),
                 image: UIImage(systemName: "xmark.circle.fill"),
                 tintColor: .systemRed
@@ -307,20 +324,23 @@ class VTUpdaterViewController: VTCollectionViewController {
             if let progress = downloadingState.progress {
                 let formattedProgress = String(format: "%.0f", progress)
                 return .progress(
-                    title: "\(formattedProgress)% " + "DOWNLOADING_UPDATE".localizedCapitalized(),
+                    kProgress,
+                    message: "\(formattedProgress)% " + "DOWNLOADING_UPDATE".localizedCapitalized(),
                     progress: progress
                 )
             } else {
-                return .loading(title: "DOWNLOADING_UPDATE".localizedCapitalized())
+                return .loading(kLoading, message: "DOWNLOADING_UPDATE".localizedCapitalized())
             }
         case _ as VTUpdaterDisabledState:
             return .updateState(
+                kUpdateDisabled,
                 title: "UPDATE_DISABLED".localizedCapitalized(),
                 image: UIImage(systemName: "circle.slash.fill"),
                 tintColor: .secondaryLabel
             )
         case let approvalPendingState as VTUpdaterApprovalPendingState:
             return .updateAvailable(
+                kUpdateAvailable,
                 title: "VALETUDO".localizedCapitalized(),
                 image: UIImage(named: "Logo"),
                 version: approvalPendingState.version,
@@ -328,9 +348,10 @@ class VTUpdaterViewController: VTCollectionViewController {
             )
         case let applyPendingState as VTUpdaterApplyPendingState:
             if applyPendingState.busy {
-                return .loading(title: "APPLY_UPDATE".localizedCapitalized())
+                return .loading(kApplyUpdate, message: "APPLY_UPDATE".localizedCapitalized())
             } else {
                 return .installUpdate(
+                    kInstallUpdate,
                     title: "INSTALL".localizedCapitalized(),
                     image: UIImage(systemName: "arrow.trianglehead.2.counterclockwise"),
                     version: applyPendingState.version
@@ -402,6 +423,15 @@ class VTUpdaterViewController: VTCollectionViewController {
     }
     
     @MainActor
+    private func refreshUpdaterProviderCell(_ provider: VTUpdaterProvider, animated: Bool) async {
+        var snapshot = dataSource.snapshot()
+        let identifier = snapshot.itemIdentifiers(inSection: .main).last!
+        snapshot.deleteItems([identifier])
+        snapshot.appendItems([.updaterProvider(kUpdateProvider, provider: provider)], toSection: .main)
+        await dataSource.apply(snapshot, animatingDifferences: animated)
+    }
+    
+    @MainActor
     private func refreshUpdateCell(_ state: any VTUpdaterState, animated: Bool) async {
         var snapshot = dataSource.snapshot()
         let identifiers = snapshot.itemIdentifiers(inSection: .update)
@@ -416,20 +446,21 @@ class VTUpdaterViewController: VTCollectionViewController {
         let updaterConfig = try? await client.getUpdaterConfiguration()
         let updaterState = try? await client.getUpdaterState()
                 
-        selectedProvider = updaterConfig?.updateProvider
+        let selectedProvider = updaterConfig?.updateProvider ?? VTUpdaterProvider.allCases.last!
         
         var snapshot = VTUpdaterSnapshot()
         snapshot.appendSections([.main])
         snapshot.appendItems([
-            .currentVersion(valetudoVersion?.release ?? unknownString),
-            .currentCommit(valetudoVersion?.commit ?? unknownString),
-            .updaterProvider(VTUpdaterProvider.allCases),
+            .currentVersion(kCurrentVersion, versionString: valetudoVersion?.release ?? unknownString),
+            .currentCommit(kCurrentCommit, commitString: valetudoVersion?.commit ?? unknownString),
+            .updaterProvider(kUpdateProvider, provider: selectedProvider)
         ], toSection: .main)
+        
         snapshot.appendSections([.update])
         snapshot.appendItems([
             item(forState: updaterState)
         ], toSection: .update)
-
+        
         await dataSource.apply(snapshot, animatingDifferences: animated)
         
         if self.refreshControl.isRefreshing {

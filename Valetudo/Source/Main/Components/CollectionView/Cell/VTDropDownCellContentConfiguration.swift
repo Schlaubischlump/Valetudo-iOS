@@ -7,7 +7,7 @@
 import Foundation
 import UIKit
 
-struct VTSelectionCellContentConfiguration<S: Describable &  Hashable & Equatable>: UIContentConfiguration, Hashable {
+struct VTDropDownCellContentConfiguration<S: Describable &  Hashable & Equatable>: UIContentConfiguration, Hashable {
     let id: String
     let title: String?
     let options: [S]
@@ -16,14 +16,14 @@ struct VTSelectionCellContentConfiguration<S: Describable &  Hashable & Equatabl
     let onChange: ((S) -> Void)?
     
     func makeContentView() -> UIView & UIContentView {
-        VTSelectionCellContentView<S>(configuration: self)
+        VTDropDownCellContentView<S>(configuration: self)
     }
 
-    func updated(for state: UIConfigurationState) -> VTSelectionCellContentConfiguration<S> {
+    func updated(for state: UIConfigurationState) -> VTDropDownCellContentConfiguration<S> {
         self
     }
     
-    static func == (lhs: VTSelectionCellContentConfiguration<S>, rhs: VTSelectionCellContentConfiguration<S>) -> Bool {
+    static func == (lhs: VTDropDownCellContentConfiguration<S>, rhs: VTDropDownCellContentConfiguration<S>) -> Bool {
         lhs.id == rhs.id &&
         lhs.title == rhs.title &&
         lhs.options == rhs.options &&

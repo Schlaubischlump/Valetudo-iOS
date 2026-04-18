@@ -38,7 +38,7 @@ extension CGColor {
         CGColor(red: 0, green: 122.0/255.0, blue: 1.0, alpha: 1.0)
     }
 
-    static func from(hue: CGFloat, saturation: CGFloat, brightness: CGFloat, alpha: CGFloat) -> CGColor {
+    /*static func from(hue: CGFloat, saturation: CGFloat, brightness: CGFloat, alpha: CGFloat) -> CGColor {
         let i = Int(hue * 6)
         let f = hue * 6 - CGFloat(i)
         let p = brightness * (1 - saturation)
@@ -66,7 +66,7 @@ extension CGColor {
         let saturation: CGFloat = 0.7
         let brightness: CGFloat = 0.9
         return CGColor.from(hue: hue, saturation: saturation, brightness: brightness, alpha: 1.0)
-    }
+    }*/
 
     func inverted() -> CGColor {
         guard let rgbColor = self.converted(to: CGColorSpace(name: CGColorSpace.sRGB)!,

@@ -7,6 +7,7 @@
 import UIKit
 
 struct VTUpdateStateCellContentConfiguration: UIContentConfiguration, Hashable {
+    let id: String
     var message: String
     var image: UIImage?
     var tintColor: UIColor
