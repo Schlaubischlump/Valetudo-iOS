@@ -22,5 +22,5 @@ public struct VTRobotInfo: Decodable, Sendable, Describable {
     let modelDetails: VTModelDetails
     let implementation: String
 
-    var description: String { "\(manufacturer) \(modelName)" }
+    public var description: String { "\(manufacturer) \(modelName)" }
 }

@@ -14,7 +14,7 @@ struct VTStackedProgressBarCellContentConfiguration: UIContentConfiguration, Has
     var availableWidth: CGFloat = 0
     
     func makeContentView() -> UIView & UIContentView {
-        VTStackedProgressBarView(configuration: self)
+        VTStackedProgressBarCellContentView(configuration: self)
     }
 
     func updated(for state: UIConfigurationState) -> VTStackedProgressBarCellContentConfiguration {

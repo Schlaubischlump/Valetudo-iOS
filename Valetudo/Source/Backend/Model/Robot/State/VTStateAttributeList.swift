@@ -12,7 +12,7 @@ public enum VTPresetType: String, Codable, Sendable, Describable {
     case waterGrade = "water_grade"
     case operationMode = "operation_mode"
     
-    var description: String {
+    public var description: String {
         switch (self) {
         case .waterGrade:       "WATER_GRADE".localized()
         case .fanSpeed:         "FAN_SPEED".localized()
@@ -25,7 +25,7 @@ public enum VTPresetValue: String, Codable, Sendable, Describable {
     case off, min, low, medium, high, max, turbo, custom
     case vacuum, mop, vacuumAndMop = "vacuum_and_mop", vacuumThenMop = "vacuum_then_mop"
     
-    var description: String {
+    public var description: String {
         switch self {
         case .off:             "OFF".localized()
         case .min:             "MIN".localized()
@@ -46,7 +46,7 @@ public enum VTPresetValue: String, Codable, Sendable, Describable {
 public enum VTStatusValue: String, Codable, Sendable, Describable {
     case docked, error, idle, returning, cleaning, paused, manualControl = "manual_control", moving
     
-    var description: String {
+    public var description: String {
         switch self {
         case .docked: "DOCKED".localized()
         case .cleaning: "CLEANING".localized()
@@ -88,7 +88,7 @@ public enum VTStatusFlag: String, Codable, Sendable {
 public enum VTDockStatusValue: String, Codable, Sendable, Describable {
     case error, idle, pause, emptying, cleaning, drying
     
-    var description: String {
+    public var description: String {
         switch self {
         case .error: "ERROR".localized()
         case .idle: "IDLE".localized()
@@ -107,7 +107,7 @@ public enum VTConsumableUnit: String, Codable, Sendable {
 public enum VTConsumableType: String, Codable, Sendable, Describable {
     case brush, filter, cleaning, mop, detergent
     
-    var description: String {
+    public var description: String {
         switch(self) {
         case .brush:        return "BRUSH".localized()
         case .cleaning:     return "CLEANING".localized()
@@ -121,7 +121,7 @@ public enum VTConsumableType: String, Codable, Sendable, Describable {
 public enum VTConsumableSubType: String, Codable, Sendable, Describable {
     case main, sideRight = "side_right", sensor, all, dock
     
-    var description: String {
+    public var description: String {
         switch(self) {
         case .all:          "ALL".localized()
         case .dock:         "DOCK".localized()
@@ -135,7 +135,7 @@ public enum VTConsumableSubType: String, Codable, Sendable, Describable {
 public enum VTAttachmentType: String, Codable, Sendable, Describable {
     case dustbin, watertank, mop
     
-    var description: String {
+    public var description: String {
         switch self {
         case .dustbin:      "DUSTBIN".localized()
         case .watertank:    "WATERTANK".localized()
@@ -209,7 +209,7 @@ public struct VTConsumableRemaining: Codable, Sendable, Describable {
     public let value: Double
     public let unit: VTConsumableUnit
     
-    var description: String {
+    public var description: String {
         switch (unit) {
         case .percent: 
             return "\(Int(value)) %"

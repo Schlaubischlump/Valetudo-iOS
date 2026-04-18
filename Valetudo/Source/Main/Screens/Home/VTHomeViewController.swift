@@ -112,6 +112,8 @@ class VTHomeViewController: VTViewController {
             robotStatusView.heightAnchor.constraint(equalToConstant: 86),
             robotStatusView.widthAnchor.constraint(equalToConstant: 118),
         ])
+        
+        self.navigationItem.rightBarButtonItem = VTEventBarButton(client: client)
     }
 
     required init?(coder aDecoder: NSCoder) {

@@ -51,6 +51,7 @@ public actor VTAPIClient: VTAPIClientProtocol {
     let updaterURL: URL
     let logURL: URL
     let timersURL: URL
+    let eventsURL: URL
 
     // MARK: - (SSE) Server side events
     lazy var sseSockets: [String: any VTSSESocketProtocol] = [:]
@@ -87,6 +88,8 @@ public actor VTAPIClient: VTAPIClientProtocol {
             .appendingPathComponent("log")
         self.timersURL = self.baseURL
             .appendingPathComponent("timers")
+        self.eventsURL = self.baseURL
+            .appendingPathComponent("events")
         
         self.session = URLSession(configuration: configuration)
     }
@@ -501,6 +504,30 @@ public actor VTAPIClient: VTAPIClientProtocol {
     func getTimerProperties() async throws -> VTTimersProperties {
         let url = timersURL.appendingPathComponent("properties")
         let request = VTRequest<VTTimersProperties>(method: .GET, url: url)
+        return try await send(request)
+    }
+    
+    // MARK: - 6.0 Events
+    
+    func getEvents() async throws -> [any VTEvent] {
+        let request = VTRequest<[VTAnyEvent]>(method: .GET, url: eventsURL)
+        return try await send(request).map(\.event)
+    }
+    
+    // MARK: - 6.1 {id}
+    
+    func getEvent(id: String) async throws -> any VTEvent {
+        let url = eventsURL.appendingPathComponent(id)
+        let request = VTRequest<VTAnyEvent>(method: .GET, url: url)
+        return try await send(request).event
+    }
+    
+    // MARK: - 6.2 {id}/interact
+    
+    func interactWithEvent(id: String, interaction: VTEventInteraction) async throws {
+        let url = eventsURL.appendingPathComponent(id).appendingPathComponent("interact")
+        let action = VTEventInteractionAction(interaction: interaction)
+        let request = VTRequest<Void>(method: .PUT, url: url, body: action)
         return try await send(request)
     }
     

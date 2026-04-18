@@ -93,6 +93,8 @@ class VTSidebarViewController: VTCollectionViewController {
         let layout = UICollectionViewCompositionalLayout.list(using: listConfig)
         super.init(collectionViewLayout: layout)
         self.clearsSelectionOnViewWillAppear = true
+        
+        self.navigationItem.rightBarButtonItem = VTEventBarButton(client: client)
     }
 
     required init?(coder: NSCoder) {

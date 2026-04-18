@@ -165,4 +165,15 @@ protocol VTAPIClientProtocol: Actor {
     
     func getTimerProperties() async throws -> VTTimersProperties
     
+    // MARK: 6.0 Events
+
+    func getEvents() async throws -> [any VTEvent]
+    
+    // MARK: 6.1 {id}
+    
+    func getEvent(id: String) async throws -> any VTEvent
+    
+    // MARK: 6.1 {id}/interact
+    
+    func interactWithEvent(id: String, interaction: VTEventInteraction) async throws
 }

@@ -40,11 +40,14 @@ final class VTTimersViewController: VTCollectionViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        navigationItem.rightBarButtonItem = UIBarButtonItem(
-            barButtonSystemItem: .add,
-            target: self,
-            action: #selector(didTapAdd)
-        )
+        navigationItem.rightBarButtonItems = [
+            VTEventBarButton(client: client),
+            UIBarButtonItem(
+                barButtonSystemItem: .add,
+                target: self,
+                action: #selector(didTapAdd)
+            ),
+        ]
         
         configureCollectionView()
         configureDataSource()

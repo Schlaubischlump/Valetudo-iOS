@@ -8,14 +8,14 @@
 // This is effectively a CustomStringConvertible. However, we return localized strings here.
 // I think its cleaner to have a separate protocol for it.
 
-protocol Describable {
+public protocol Describable {
     var description: String { get }
 }
 
 extension String: Describable {
-    var description: String { self }
+    public var description: String { self }
 }
 
 extension Int: Describable {
-    var description: String { "\(self)" }
+    public var description: String { "\(self)" }
 }

@@ -75,7 +75,7 @@ fileprivate final class VTHorizontalFlowStack: UIView {
 }
 
 
-final class VTStackedProgressBarView: UIView, UIContentView {
+final class VTStackedProgressBarCellContentView: UIView, UIContentView {
     private var currentConfiguration: VTStackedProgressBarCellContentConfiguration!
 
     // MARK: Subviews

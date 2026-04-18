@@ -18,7 +18,7 @@ class VTViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
+                
         // We don't need any cleanup, since we are using target / action pattern
         NotificationCenter.default.addObserver(
             self,

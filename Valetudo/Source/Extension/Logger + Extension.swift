@@ -10,6 +10,7 @@ import os.log
 enum VTSubsystem: String {
     case mock
     case sse
+    case event
 }
 
 func log(message: String, forSubsystem subsystem: VTSubsystem, level: OSLogType = .info) {

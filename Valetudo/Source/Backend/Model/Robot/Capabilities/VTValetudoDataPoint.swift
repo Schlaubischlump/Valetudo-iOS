@@ -11,7 +11,7 @@ public enum VTValetudoDataPointType: String, Decodable, Sendable, Describable {
     case area
     case count
     
-    var description: String {
+    public var description: String {
         switch (self) {
         case .time:  "TIME".localized()
         case .area:  "AREA".localized()
@@ -43,7 +43,7 @@ public struct VTValetudoDataPoint: Decodable, Sendable, Describable {
         return "\(hString) \(mString) \(sString)"
     }
     
-    var description: String {
+    public var description: String {
         switch (self.type) {
         case .time:  timeString ?? ""
         case .area:  areaInM2.map({ String(format: "%06.2f m\u{00B2}", $0) }) ?? ""
