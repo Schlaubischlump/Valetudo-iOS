@@ -6,7 +6,7 @@
 //
 import Foundation
 
-public enum VTEventInteraction: Encodable, Hashable, Equatable, Sendable {
+public enum VTEventInteraction: String, Encodable, Hashable, Equatable, Sendable {
     case ok
     case yes
     case no

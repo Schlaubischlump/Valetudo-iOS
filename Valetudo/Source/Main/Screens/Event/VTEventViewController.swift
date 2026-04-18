@@ -47,26 +47,21 @@ final class VTEventsViewController: VTCollectionViewController {
         var config = UICollectionLayoutListConfiguration(appearance: .plain)
         config.trailingSwipeActionsConfigurationProvider = { [weak self] indexPath in
             guard let item = self?.dataSource.itemIdentifier(for: indexPath) else { return nil }
-
-            let delete = UIContextualAction(style: .destructive, title: "DELETE".localizedCapitalized()) {
-                [weak self] _, _, completion in
-
-                Task {
-                    var success = false
+            if item.processed {
+                return nil
+            } else {
+                let actions = item.createContextualAction { interaction in
                     do {
-                        try await self?.client.interactWithEvent(id: item.id, interaction: .ok)
-                        await self?.applySnapshot(animated: true)
-                        success = true
+                        try await self?.client.interactWithEvent(id: item.id, interaction: interaction)
+                        await self?.reloadData(animated: true)
+                        return true
                     } catch {
-                        success = false
-                    }
-                    DispatchQueue.main.async {
-                        completion(success)
+                        log(message: error.localizedDescription, forSubsystem: .event, level: .error)
+                        return false
                     }
                 }
+                return UISwipeActionsConfiguration(actions: actions)
             }
-
-            return UISwipeActionsConfiguration(actions: [delete])
         }
         config.showsSeparators = true
 
@@ -89,7 +84,23 @@ final class VTEventsViewController: VTCollectionViewController {
 
             content.text = item.title
             content.secondaryText = formatter.string(from: item.timestamp)
-            content.textProperties.color = .systemRed
+            
+            if item.processed {
+                content.text = nil
+                content.textProperties.color = .label
+                let attributedTitle = NSAttributedString(
+                    string: item.title,
+                    attributes: [
+                        .strikethroughStyle: NSUnderlineStyle.single.rawValue,
+                        .foregroundColor: UIColor.label
+                    ]
+                )
+                content.attributedText = attributedTitle
+            } else {
+                content.attributedText = nil
+                content.text = item.title
+                content.textProperties.color = .systemRed
+            }
 
             cell.contentConfiguration = content
         }
@@ -105,6 +116,11 @@ final class VTEventsViewController: VTCollectionViewController {
         }
     }
     
+    // MARK: - Selection
+    
+    override func collectionView(_ collectionView: UICollectionView, shouldHighlightItemAt indexPath: IndexPath) -> Bool {
+        return false
+    }
 
     // MARK: - Reload
     
@@ -126,7 +142,7 @@ final class VTEventsViewController: VTCollectionViewController {
         var snapshot = NSDiffableDataSourceSnapshot<Int, VTEventItem>()
         snapshot.appendSections([0])
 
-        let items = events.map { VTEventItem(id: $0.id, title: $0.description, timestamp: $0.timestamp) }
+        let items = events.map { VTEventItem(event: $0) }
         snapshot.appendItems(items)
 
         if self.refreshControl.isRefreshing {

@@ -183,13 +183,21 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Consumable of type %@  - %@ depleted."
+            "value" : "The consumable %@ - %@ is depleted."
           }
         }
       }
     },
     "CONSUMABLE_FOOTER_DESCRIPTION" : {
-      "extractionState" : "manual"
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Consumables are components of the robot that need periodic cleaning, replacement or other maintenance work.\\n\\nThey come in two flavours, which are basically the same\\n- operating hours left\\n- percent left\\nAt some point, they will become depleted, requiring you to do maintenance and reset them in the Valetudo UI. This will restore them to either their manufacturer-dependent design operating hours or 100%.\\n\\nNot maintaining your consumables may lead to performance degradation.\\nStill, Valetudo recommends manual inspection of the part in question. You may be able to use it longer than the manufacturer recommends.\\n\\n###Types of consumables\\n\\nThere are various types of consumables that require different treatment.\\n\\n###Brushes\\n\\nBrushes come in different types such as main or side. At some point, they are worn out and have to be replaced.\\n\\nThey often also require removal of tangled hair or similar for optimal performance, so you should keep an eye on them.\\n\\n###Filters\\n\\nVacuum-robots usually have some kind of filter, which needs periodic cleaning and replacing when it is worn out.\\n\\n###Sensors\\n\\nYour robot has a few sensors such as cliff- or wall-distance-sensors, which are used for navigation and might get obstructed by dirt, debris, cobwebs or similar. Cleaning them can usually be done with a soft cloth. Make sure to not scratch the sensors as they are vital to the robot's operation.\\n\\n###Wheels\\n\\nSimilarly to the sensors, it also makes sense to check the wheels from time to time and remove any dirt and debris.\\n\\n###Mops\\n\\nWhile replacing mop pads might not always be necessary, it is strongly recommended to properly wash them from time to time."
+          }
+        }
+      }
     },
     "CONSUMABLES" : {
       "extractionState" : "manual",
@@ -323,6 +331,17 @@
         }
       }
     },
+    "DISMISS" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "dismiss"
+          }
+        }
+      }
+    },
     "DOCK" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -395,7 +414,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Dust bin is full."
+            "value" : "The dust bin is full. Please empty it."
           }
         }
       }
@@ -890,7 +909,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Please attach the mop attachment."
+            "value" : "The mop is still attached to the robot."
           }
         }
       }
@@ -935,6 +954,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "nightly"
+          }
+        }
+      }
+    },
+    "NO" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "no"
           }
         }
       }
@@ -1000,7 +1030,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Map change is pending."
+            "value" : "A map change is pending. Do you want to accept the new map?"
           }
         }
       }
@@ -1056,6 +1086,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "release"
+          }
+        }
+      }
+    },
+    "RESET" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "reset"
           }
         }
       }
@@ -1551,6 +1592,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "watertank"
+          }
+        }
+      }
+    },
+    "YES" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "yes"
           }
         }
       }
