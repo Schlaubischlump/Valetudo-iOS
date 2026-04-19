@@ -32,8 +32,8 @@ The long-term goal is to support all features available in the official Valetudo
 
 | | | |
 |---|---|---|
-| ![](Screenshots/Sidebar.png) | ![](Screenshots/Control.png) | ![](Screenshots/Home.png) |
-| ![](Screenshots/Timer.png) | ![](Screenshots/Timer2.png) | ![](Screenshots/Consumables.png) |
+| ![](Screenshots/Sidebar.png) | ![](Screenshots/Home.png) | ![](Screenshots/Control.png) |
+| ![](Screenshots/Consumables.png) | ![](Screenshots/Timer.png) | ![](Screenshots/Timer2.png) |
 | ![](Screenshots/Log.png) | ![](Screenshots/SoftwareUpdate.png) | ![](Screenshots/SystemInfo.png) |
 
 ## Why UIKit and not SwiftUI?
