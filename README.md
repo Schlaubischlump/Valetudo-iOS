@@ -18,7 +18,7 @@ This project implements such a native iOS client for Valetudo.
 
 It is currently a work in progress (for example, the robot URL is still hardcoded), but many features are already supported, including:
 
-- Map with Rooms (Floor material, carpets...)
+- Map with rooms (Floor material, carpets...)
 - Cleaning controls (Fan Speed, Water Control, Iterations...)
 - Timer configuration  
 - View Logs   
@@ -32,7 +32,7 @@ The long-term goal is to support all features available in the official Valetudo
 
 | | | |
 |---|---|---|
-| ![](Screenshots/Home.png) | ![](Screenshots/Control.png) | ![](Screenshots/Sidebar.png) |
+| ![](Screenshots/Sidebar.png) | ![](Screenshots/Control.png) | ![](Screenshots/Home.png) |
 | ![](Screenshots/Timer.png) | ![](Screenshots/Timer2.png) | ![](Screenshots/Consumables.png) |
 | ![](Screenshots/Log.png) | ![](Screenshots/SoftwareUpdate.png) | ![](Screenshots/SystemInfo.png) |
 
