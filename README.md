@@ -18,7 +18,8 @@ This project implements such a native iOS client for Valetudo.
 
 It is currently a work in progress (for example, the robot URL is still hardcoded), but many features are already supported, including:
 
-- Basic cleaning controls  
+- Map with Rooms (Floor material, carpets...)
+- Cleaning controls (Fan Speed, Water Control, Iterations...)
 - Timer configuration  
 - View Logs   
 - Manual control (remote driving)  
