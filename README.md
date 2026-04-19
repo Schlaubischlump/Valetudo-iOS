@@ -1,10 +1,11 @@
-# Valetudo-iOS
+<div align="center">
+  <img src="Resources/AppIcon.png" width="128px">
+  <h2 align="center">Valetudo-iOS</h2>
+</div>
 
 ⚠️ **This project is not officially affiliated with the [Valetudo](https://github.com/Hypfer/Valetudo) project.**
 
 This repository contains an iOS client for Valetudo, built unapologetically with UIKit rather than SwiftUI.
-
----
 
 ## What is Valetudo?
 
