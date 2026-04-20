@@ -33,7 +33,7 @@ class VTValetudoEventBarButton: UIBarButtonItem {
     }
     
     @objc func showEventsPopup(_ sender: UIBarButtonItem) {
-        let vc = VTEventsViewController(client: client)
+        let vc = VTValetudoEventsViewController(client: client)
         vc.title = "EVENTS".localizedCapitalized()
         
         let nav = UINavigationController(rootViewController: vc)
@@ -69,8 +69,8 @@ class VTValetudoEventBarButton: UIBarButtonItem {
             guard !Task.isCancelled else { break }
             
             switch event {
-            case .didReceiveData:
-                eventCount += 1
+            case .didReceiveData(let events):
+                eventCount = events.count
                 updateBadge()
             case .didReceiveError(let message):
                 log(message: message, forSubsystem: .event, level: .error)

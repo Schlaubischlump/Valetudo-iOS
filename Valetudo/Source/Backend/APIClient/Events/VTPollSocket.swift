@@ -4,9 +4,13 @@
 //
 //  Created by David Klopp on 19.04.26.
 //
-
 import Foundation
 
+/// A shared polling socket for endpoints that are not consumed through SSE.
+///
+/// `VTPollSocket` owns one polling task per endpoint instance and broadcasts lifecycle and
+/// decoded data actions to every registered listener. Polling starts when the first listener is
+/// registered and stops when the final listener is removed.
 internal final actor VTPollSocket<E: Decodable & Equatable & Sendable, O: Sendable>: VTEventSocketProtocol {
     typealias Action = VTEventAction<E>
     
@@ -16,19 +20,25 @@ internal final actor VTPollSocket<E: Decodable & Equatable & Sendable, O: Sendab
     private var lastResult: E?
     
     let endpoint: VTEventEndpoint<E, O>
+    private let url: URL
     private let interval: TimeInterval
     
-    init(endpoint: VTEventEndpoint<E, O>) {
+    /// Creates a polling socket with the default polling interval.
+    init(endpoint: VTEventEndpoint<E, O>, url: URL) {
         self.endpoint = endpoint
+        self.url = url
         self.interval = 5
     }
     
-    init(endpoint: VTEventEndpoint<E, O>, interval: TimeInterval) {
+    /// Creates a polling socket with a custom interval, clamped to a minimum of 0.1 seconds.
+    init(endpoint: VTEventEndpoint<E, O>, url: URL, interval: TimeInterval) {
         self.endpoint = endpoint
+        self.url = url
         self.interval = max(interval, 0.1)
     }
 
-    func register(at url: URL) -> (VTListenerToken, AsyncStream<Action>) {
+    /// Registers a listener and starts polling when this is the first active listener.
+    func register() -> (VTListenerToken, AsyncStream<Action>) {
         let token = UUID()
         let stream = AsyncStream<Action> { continuation in
             continuations[token] = continuation
@@ -37,12 +47,13 @@ internal final actor VTPollSocket<E: Decodable & Equatable & Sendable, O: Sendab
             }
             
             if task == nil {
-                startPolling(at: url)
+                startPolling()
             }
         }
         return (token, stream)
     }
     
+    /// Removes a listener and stops polling when no listeners remain.
     func remove(token: VTListenerToken) {
         continuations[token] = nil
         
@@ -53,7 +64,8 @@ internal final actor VTPollSocket<E: Decodable & Equatable & Sendable, O: Sendab
     
     // MARK: - Polling Lifecycle
     
-    private func startPolling(at url: URL) {
+    /// Starts the polling loop against the socket URL and broadcasts only changed decoded values.
+    private func startPolling() {
         let currentTaskID = UUID()
         taskID = currentTaskID
         
@@ -71,7 +83,6 @@ internal final actor VTPollSocket<E: Decodable & Equatable & Sendable, O: Sendab
             while !Task.isCancelled && !continuations.isEmpty {
                 do {
                     let (data, response) = try await URLSession.shared.data(from: url)
-                    print(String(data: data, encoding: .utf8)!)
                     try validate(response: response)
                     
                     let decoder = JSONDecoder()
@@ -97,6 +108,7 @@ internal final actor VTPollSocket<E: Decodable & Equatable & Sendable, O: Sendab
         }
     }
     
+    /// Cancels the active polling task and resets cached polling state.
     private func stopPolling() {
         task?.cancel()
         task = nil
@@ -107,6 +119,7 @@ internal final actor VTPollSocket<E: Decodable & Equatable & Sendable, O: Sendab
         }
     }
     
+    /// Throws when the polling response is not a successful HTTP response.
     private func validate(response: URLResponse) throws {
         guard let httpResponse = response as? HTTPURLResponse,
               (200..<300).contains(httpResponse.statusCode) else {

@@ -35,7 +35,7 @@ final class VTLogViewController: UICollectionViewController, UISearchResultsUpda
         
         navigationItem.title = "LOG".localizedCapitalized()
         navigationItem.rightBarButtonItems = [
-            VTEventBarButton(client: client),
+            VTValetudoEventBarButton(client: client),
             UIBarButtonItem(
                 barButtonSystemItem: .refresh,
                 target: self,

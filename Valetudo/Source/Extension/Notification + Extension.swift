@@ -7,5 +7,5 @@
 import UIKit
 
 extension Notification.Name {
-    static let sceneWillEnterForeground = Notification.Name("de.schlaubi.Valetudo.sceneWillEnterForeground")
+    static let scene​Did​Request​Refresh​After​Background = Notification.Name("de.schlaubi.Valetudo.sceneWillEnterForeground")
 }

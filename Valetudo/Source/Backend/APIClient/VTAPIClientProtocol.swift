@@ -32,11 +32,10 @@ protocol VTAPIClientProtocol: Actor {
     
     // MARK: - 1.1.3 SSE
     
-    // TODO: Can we use an additional flag here to support polling. Than we can monitor everything, even things without SSE
     @discardableResult
-    func registerEventObserver<E: Decodable & Equatable>(for endpoint: VTEventEndpoint<E>) async -> (VTListenerToken, AsyncStream<VTEventAction<E>>)
+    func registerEventObserver<E: Decodable & Equatable, O>(for endpoint: VTEventEndpoint<E, O>) async -> (VTListenerToken, AsyncStream<VTEventAction<O>>)
 
-    func removeEventObserver<E: Decodable & Equatable>(token: VTListenerToken, for endpoint: VTEventEndpoint<E>) async
+    func removeEventObserver<E: Decodable & Equatable, O>(token: VTListenerToken, for endpoint: VTEventEndpoint<E, O>) async
     
     // MARK: - 1.2 Capabilities
     
@@ -167,13 +166,13 @@ protocol VTAPIClientProtocol: Actor {
     
     // MARK: 6.0 Events
 
-    func getEvents() async throws -> [any VTEvent]
+    func getValetudoEvents() async throws -> [any VTValetudoEvent]
     
     // MARK: 6.1 {id}
     
-    func getEvent(id: String) async throws -> any VTEvent
+    func getValetudoEvent(id: String) async throws -> any VTValetudoEvent
     
     // MARK: 6.1 {id}/interact
     
-    func interactWithEvent(id: String, interaction: VTEventInteraction) async throws
+    func interactWithValetudoEvent(id: String, interaction: VTEventInteraction) async throws
 }

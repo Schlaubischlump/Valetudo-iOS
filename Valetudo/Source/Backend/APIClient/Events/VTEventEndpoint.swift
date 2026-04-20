@@ -6,51 +6,72 @@
 //
 import Foundation
 
-public enum VTEventEndpoint<E: Decodable & Equatable & Sendable, O: Sendable>: Sendable {
-    /// E = Decodable type received by backend
-    /// O = Output type
-    case endpoint(E.Type, O.Type, String, Bool)
+enum VTEventEndpointEventID: String {
+    case stateAttributes = "StateAttributesUpdated"
+    case map = "Map"
+    case valetudoEvent = "ValetudoEvent"
+}
+
+
+/// A typed descriptor for a Valetudo event stream endpoint.
+///
+/// `VTEventEndpoint` pairs the Valetudo event identifier with the concrete payload type used
+/// for decoding and the output type delivered to event consumers. Most endpoints decode and
+/// emit the same type, but an endpoint can provide a transform when the wire representation
+/// differs from the value that should be exposed by the API client.
+///
+/// - Note: `useSSE` indicates whether consumers should use the server-sent events socket
+///   for this endpoint. Endpoints with `useSSE` set to `false` should use the polling socket
+///   fallback. Not all endpoints support sse.
+public struct VTEventEndpoint<E: Decodable & Equatable & Sendable, O: Sendable>: Sendable {
+    internal let decodableType: E.Type
+    internal let outputType: O.Type
+    internal let eventID: VTEventEndpointEventID
+    internal let useSSE: Bool
+    internal let transform: (@Sendable (E) -> O)
     
-    // Convenience static cases to avoid `.endpoint(...)` boilerplate
+    private init(
+        decodableType: E.Type,
+        outputType: O.Type,
+        eventID: VTEventEndpointEventID,
+        useSSE: Bool,
+        transform: @escaping (@Sendable (E) -> O)
+    ) {
+        self.decodableType = decodableType
+        self.outputType = outputType
+        self.eventID = eventID
+        self.useSSE = useSSE
+        self.transform = transform
+    }
+    
+    /// An endpoint that emits the robot's current state attributes.
     public static var stateAttributes: VTEventEndpoint<VTStateAttributeList, VTStateAttributeList> {
-        .endpoint(VTStateAttributeList.self, VTStateAttributeList.self, "StateAttributesUpdated", true)
+        .init(type: VTStateAttributeList.self, eventID: .stateAttributes, useSSE: true)
     }
     
+    /// An endpoint that emits complete map updates.
     public static var map: VTEventEndpoint<VTMapData, VTMapData> {
-        .endpoint(VTMapData.self, VTMapData.self, "MapUpdated", true)
+        .init(type: VTMapData.self, eventID: .map, useSSE: true)
     }
+    
+    /// An endpoint that emits Valetudo interaction events.
+    ///
+    /// The endpoint decodes the wire payload as type-erased event wrappers, then unwraps them
+    /// into concrete ``VTValetudoEvent`` values before delivery.
     public static var valetudoEvent: VTEventEndpoint<[VTAnyValetudoEvent], [any VTValetudoEvent]> {
-        .endpoint([VTAnyValetudoEvent].self, [(any VTValetudoEvent)].self, "ValetudoEvent", false)
-    }
-    
-    func transform(_ e: E) -> O {
-        if let anyEvent = e as? [VTAnyValetudoEvent], let result = anyEvent.map(\.event) as? O {
-            return result
+        .init(
+            decodableType: [VTAnyValetudoEvent].self,
+            outputType: [(any VTValetudoEvent)].self,
+            eventID: .valetudoEvent,
+            useSSE: false
+        ) { anyEvents in
+            anyEvents.map(\.event)
         }
+    }
+}
 
-        if let result = e as? O {
-            return result
-        }
-
-        fatalError("Unsupported transform from \(E.self) to \(O.self)")
-    }
-    
-    internal var decodableType: E.Type {
-        if case let .endpoint(ty, _, _, _) = self { return ty }
-        fatalError("Unknown endpoint!")
-    }
-    
-    internal var eventID: String {
-        if case let .endpoint(_, _, eventId, _) = self {
-            return eventId
-        }
-        fatalError("Unknown endpoint: \(self)")
-    }
-    
-    internal var suppportsSSE: Bool {
-        if case let .endpoint(_, _, _, support) = self {
-            return support
-        }
-        fatalError("Unknown endpoint: \(self)")
+fileprivate extension VTEventEndpoint where E == O {
+    init(type: E.Type, eventID: VTEventEndpointEventID, useSSE: Bool) {
+        self.init(decodableType: type, outputType: type, eventID: eventID, useSSE: useSSE) { e in e}
     }
 }

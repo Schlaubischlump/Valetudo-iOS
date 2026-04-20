@@ -49,7 +49,7 @@ class VTUpdaterViewController: VTCollectionViewController {
         super.init(collectionViewLayout: layout)
         
         navigationItem.title = "UPDATER".localizedCapitalized()
-        navigationItem.rightBarButtonItem = VTEventBarButton(client: client)
+        navigationItem.rightBarButtonItem = VTValetudoEventBarButton(client: client)
     }
     
     required init?(coder: NSCoder) {

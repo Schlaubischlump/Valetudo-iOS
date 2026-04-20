@@ -54,7 +54,7 @@ public actor VTAPIClient: VTAPIClientProtocol {
     let eventsURL: URL
 
     // MARK: - (SSE) Server side events
-    lazy var sseSockets: [String: any VTSSESocketProtocol] = [:]
+    lazy var eventSockets: [VTEventEndpointEventID: any VTEventSocketProtocol] = [:]
 
         
     // MARK: - Requests
@@ -509,22 +509,22 @@ public actor VTAPIClient: VTAPIClientProtocol {
     
     // MARK: - 6.0 Events
     
-    func getEvents() async throws -> [any VTEvent] {
-        let request = VTRequest<[VTAnyEvent]>(method: .GET, url: eventsURL)
+    func getValetudoEvents() async throws -> [any VTValetudoEvent] {
+        let request = VTRequest<[VTAnyValetudoEvent]>(method: .GET, url: eventsURL)
         return try await send(request).map(\.event)
     }
     
     // MARK: - 6.1 {id}
     
-    func getEvent(id: String) async throws -> any VTEvent {
+    func getValetudoEvent(id: String) async throws -> any VTValetudoEvent {
         let url = eventsURL.appendingPathComponent(id)
-        let request = VTRequest<VTAnyEvent>(method: .GET, url: url)
+        let request = VTRequest<VTAnyValetudoEvent>(method: .GET, url: url)
         return try await send(request).event
     }
     
     // MARK: - 6.2 {id}/interact
     
-    func interactWithEvent(id: String, interaction: VTEventInteraction) async throws {
+    func interactWithValetudoEvent(id: String, interaction: VTEventInteraction) async throws {
         let url = eventsURL.appendingPathComponent(id).appendingPathComponent("interact")
         let action = VTEventInteractionAction(interaction: interaction)
         let request = VTRequest<Void>(method: .PUT, url: url, body: action)

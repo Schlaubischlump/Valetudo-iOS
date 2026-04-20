@@ -23,7 +23,7 @@ class VTCollectionViewController: UICollectionViewController {
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(sceneWillEnterForeground(_:)),
-            name: .sceneWillEnterForeground,
+            name: .scene​Did​Request​Refresh​After​Background,
             object: nil
         )
     }

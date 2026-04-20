@@ -28,9 +28,9 @@ public struct VTConsumableDepletedEvent: VTValetudoEvent {
     }
 }
 
-public protocol VTDismissibleEvent: VTValetudoEvent {}
+public protocol VTDismissibleValetudoEvent: VTValetudoEvent {}
 
-public struct VTDustBinFullEvent: VTDismissibleEvent {
+public struct VTDustBinFullEvent: VTDismissibleValetudoEvent {
     public let __class: String
     public let metaData: [String: VTAnyCodable]
     public let id: String
@@ -43,7 +43,7 @@ public struct VTDustBinFullEvent: VTDismissibleEvent {
 }
 
 
-public struct VTErrorStateEvent: VTDismissibleEvent {
+public struct VTErrorStateEvent: VTDismissibleValetudoEvent {
     public let __class: String
     public let metaData: [String: VTAnyCodable]
     public let id: String
@@ -56,7 +56,7 @@ public struct VTErrorStateEvent: VTDismissibleEvent {
     }
 }
 
-public struct VTMissingResourceEvent: VTDismissibleEvent {
+public struct VTMissingResourceEvent: VTDismissibleValetudoEvent {
     public let __class: String
     public let metaData: [String: VTAnyCodable]
     public let id: String
@@ -69,7 +69,7 @@ public struct VTMissingResourceEvent: VTDismissibleEvent {
     }
 }
 
-public struct VTMopAttachmentReminderEvent: VTDismissibleEvent {
+public struct VTMopAttachmentReminderEvent: VTDismissibleValetudoEvent {
     public let __class: String
     public let metaData: [String: VTAnyCodable]
     public let id: String
@@ -81,7 +81,7 @@ public struct VTMopAttachmentReminderEvent: VTDismissibleEvent {
     }
 }
 
-public struct VTPendingMapChangeEvent: VTDismissibleEvent {
+public struct VTPendingMapChangeEvent: VTDismissibleValetudoEvent {
     public let __class: String
     public let metaData: [String: VTAnyCodable]
     public let id: String
@@ -93,7 +93,7 @@ public struct VTPendingMapChangeEvent: VTDismissibleEvent {
     }
 }
 
-public struct VTAnyEvent: Decodable, Sendable, Hashable, Equatable {
+public struct VTAnyValetudoEvent: Decodable, Sendable, Hashable, Equatable {
     private enum CodingKeys: String, CodingKey {
         case __class
     }

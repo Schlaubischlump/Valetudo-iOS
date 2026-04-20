@@ -6,6 +6,12 @@
 //
 import Foundation
 
+/// A shared server-sent events socket for endpoints consumed through SSE.
+///
+/// `VTSSESocket` owns one streaming task per endpoint instance and broadcasts lifecycle and
+/// decoded data actions to every registered listener. The stream starts when the first listener
+/// is registered, attempts a limited number of reconnects after transient failures, and stops
+/// when the final listener is removed.
 internal final actor VTSSESocket<E: Decodable & Equatable & Sendable, O: Sendable>: VTEventSocketProtocol {
     typealias Action = VTEventAction<E>
     
@@ -14,14 +20,18 @@ internal final actor VTSSESocket<E: Decodable & Equatable & Sendable, O: Sendabl
     private var taskID: UUID?
     
     let endpoint: VTEventEndpoint<E, O>
+    private let url: URL
     private let maxNumberOfRetries = 5
     private var numberOfRetries = 0
     
-    init(endpoint: VTEventEndpoint<E, O>) {
+    /// Creates an SSE socket for an event endpoint and its streaming URL.
+    init(endpoint: VTEventEndpoint<E, O>, url: URL) {
         self.endpoint = endpoint
+        self.url = url
     }
     
-    func register(at url: URL) -> (VTListenerToken, AsyncStream<Action>) {
+    /// Registers a listener and starts the SSE stream when this is the first active listener.
+    func register() -> (VTListenerToken, AsyncStream<Action>) {
         let token = UUID()
         let stream = AsyncStream<Action> { continuation in
             continuations[token] = continuation
@@ -30,12 +40,13 @@ internal final actor VTSSESocket<E: Decodable & Equatable & Sendable, O: Sendabl
             }
             
             if task == nil {
-                startSSE(at: url)
+                startSSE()
             }
         }
         return (token, stream)
     }
     
+    /// Removes a listener and stops the SSE stream when no listeners remain.
     func remove(token: VTListenerToken) {
         continuations[token] = nil
         
@@ -46,6 +57,7 @@ internal final actor VTSSESocket<E: Decodable & Equatable & Sendable, O: Sendabl
     
     // MARK: - SSE Lifecycle
     
+    /// Decodes a complete SSE payload and broadcasts matching endpoint data.
     private func process(eventPayload: String) {
         guard !eventPayload.starts(with: ":") else { return } // skip : sse-keep-alive
         let substrings = eventPayload.components(separatedBy: "\n")
@@ -53,8 +65,8 @@ internal final actor VTSSESocket<E: Decodable & Equatable & Sendable, O: Sendabl
         guard substrings.count >= 2 else { return }
         let event = substrings[0].replacing("event: ", with: "")
         let data = substrings[1].replacing("data: ", with: "").data(using: .utf8)
-        
-        guard endpoint.eventID == event, let data else { return }
+                
+        guard endpoint.eventID.rawValue == event, let data else { return }
         
         do {
             let decoder = JSONDecoder()
@@ -66,6 +78,7 @@ internal final actor VTSSESocket<E: Decodable & Equatable & Sendable, O: Sendabl
         }
     }
     
+    /// Finds the next blank-line delimiter that terminates an SSE event payload.
     private func searchForEvent(inBuffer: NSData, searchRange: NSRange) -> NSRange? {
         for whitespace in ["\n", "\r"] {
             let delimiter =  "\(whitespace)\(whitespace)".data(using: .utf8)!
@@ -77,7 +90,8 @@ internal final actor VTSSESocket<E: Decodable & Equatable & Sendable, O: Sendabl
         return nil
     }
     
-    private func startSSE(at url: URL) {
+    /// Starts the SSE byte stream against the socket URL and attempts reconnects after non-cancellation failures.
+    private func startSSE() {
         let currentTaskID = UUID()
         taskID = currentTaskID
         
@@ -97,7 +111,6 @@ internal final actor VTSSESocket<E: Decodable & Equatable & Sendable, O: Sendabl
             repeat {
                 do {
                     let (bytes, _) = try await URLSession.shared.bytes(from: url)
-                    
                     for try await byte in bytes {
                         var byte = UInt8(byte)
                         buffer.append(&byte, length: 1)
@@ -147,6 +160,7 @@ internal final actor VTSSESocket<E: Decodable & Equatable & Sendable, O: Sendabl
         }
     }
 
+    /// Cancels the active SSE task and notifies listeners about the disconnect.
     private func stopSSE() {
         task?.cancel()
         task = nil

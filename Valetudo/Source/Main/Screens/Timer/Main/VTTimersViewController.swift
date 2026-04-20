@@ -41,7 +41,7 @@ final class VTTimersViewController: VTCollectionViewController {
         super.viewDidLoad()
         
         navigationItem.rightBarButtonItems = [
-            VTEventBarButton(client: client),
+            VTValetudoEventBarButton(client: client),
             UIBarButtonItem(
                 barButtonSystemItem: .add,
                 target: self,

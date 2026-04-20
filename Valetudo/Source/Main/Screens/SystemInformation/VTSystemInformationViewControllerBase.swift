@@ -22,7 +22,7 @@ class VTSystemInformationViewControllerBase: VTCollectionViewController {
         super.init(collectionViewLayout: layout)
         
         navigationItem.title = "SYSTEM_INFORMATION".localizedCapitalized()
-        navigationItem.rightBarButtonItem = VTEventBarButton(client: client)
+        navigationItem.rightBarButtonItem = VTValetudoEventBarButton(client: client)
     }
     
     required init?(coder: NSCoder) {

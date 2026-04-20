@@ -6,13 +6,13 @@
 //
 import UIKit
 
-final class VTEventsViewController: VTCollectionViewController {
-    private var dataSource: UICollectionViewDiffableDataSource<Int, VTEventItem>!
+final class VTValetudoEventsViewController: VTCollectionViewController {
+    private var dataSource: UICollectionViewDiffableDataSource<Int, VTValetudoEventItem>!
 
     private let refreshControl = UIRefreshControl()
     
     private var client: any VTAPIClientProtocol
-    private var events: [any VTEvent] = []
+    private var events: [any VTValetudoEvent] = []
     
     init(client: any VTAPIClientProtocol) {
         self.client = client
@@ -52,7 +52,7 @@ final class VTEventsViewController: VTCollectionViewController {
             } else {
                 let actions = item.createContextualAction { interaction in
                     do {
-                        try await self?.client.interactWithEvent(id: item.id, interaction: interaction)
+                        try await self?.client.interactWithValetudoEvent(id: item.id, interaction: interaction)
                         await self?.reloadData(animated: true)
                         return true
                     } catch {
@@ -74,7 +74,7 @@ final class VTEventsViewController: VTCollectionViewController {
     }
     
     private func configureDataSource() {
-        let cellRegistration = UICollectionView.CellRegistration<UICollectionViewListCell, VTEventItem> { cell, _, item in
+        let cellRegistration = UICollectionView.CellRegistration<UICollectionViewListCell, VTValetudoEventItem> { cell, _, item in
             
             var content = cell.defaultContentConfiguration()
             
@@ -105,7 +105,7 @@ final class VTEventsViewController: VTCollectionViewController {
             cell.contentConfiguration = content
         }
 
-        dataSource = UICollectionViewDiffableDataSource<Int, VTEventItem>(
+        dataSource = UICollectionViewDiffableDataSource<Int, VTValetudoEventItem>(
             collectionView: collectionView
         ) { collectionView, indexPath, item in
             collectionView.dequeueConfiguredReusableCell(
@@ -130,7 +130,7 @@ final class VTEventsViewController: VTCollectionViewController {
     
     @MainActor func reloadData(animated: Bool) async {
         do {
-            events = try await client.getEvents()
+            events = try await client.getValetudoEvents()
         } catch {
             events = []
             log(message: error.localizedDescription, forSubsystem: .event, level: .error)
@@ -139,10 +139,10 @@ final class VTEventsViewController: VTCollectionViewController {
     }
     
     private func applySnapshot(animated: Bool) async {
-        var snapshot = NSDiffableDataSourceSnapshot<Int, VTEventItem>()
+        var snapshot = NSDiffableDataSourceSnapshot<Int, VTValetudoEventItem>()
         snapshot.appendSections([0])
 
-        let items = events.map { VTEventItem(event: $0) }
+        let items = events.map { VTValetudoEventItem(event: $0) }
         snapshot.appendItems(items)
 
         if self.refreshControl.isRefreshing {
@@ -168,7 +168,7 @@ final class VTEventsViewController: VTCollectionViewController {
     }
 }
 
-extension VTEventsViewController: UIPopoverPresentationControllerDelegate {
+extension VTValetudoEventsViewController: UIPopoverPresentationControllerDelegate {
     func adaptivePresentationStyle(for controller: UIPresentationController) -> UIModalPresentationStyle {
         .none
     }
