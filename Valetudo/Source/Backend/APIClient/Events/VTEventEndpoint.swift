@@ -6,9 +6,19 @@
 //
 import Foundation
 
+
+/// The Valetudo event identifiers used to route endpoint payloads.
+///
+/// Raw values match the event names emitted by Valetudo and are used to filter incoming SSE
+/// payloads before decoding them with the endpoint's payload type.
 enum VTEventEndpointEventID: String {
+    /// The robot state attributes update event.
     case stateAttributes = "StateAttributesUpdated"
+
+    /// The map update event.
     case map = "Map"
+
+    /// The Valetudo interaction event.
     case valetudoEvent = "ValetudoEvent"
 }
 
@@ -24,26 +34,6 @@ enum VTEventEndpointEventID: String {
 ///   for this endpoint. Endpoints with `useSSE` set to `false` should use the polling socket
 ///   fallback. Not all endpoints support sse.
 public struct VTEventEndpoint<E: Decodable & Equatable & Sendable, O: Sendable>: Sendable {
-    internal let decodableType: E.Type
-    internal let outputType: O.Type
-    internal let eventID: VTEventEndpointEventID
-    internal let useSSE: Bool
-    internal let transform: (@Sendable (E) -> O)
-    
-    private init(
-        decodableType: E.Type,
-        outputType: O.Type,
-        eventID: VTEventEndpointEventID,
-        useSSE: Bool,
-        transform: @escaping (@Sendable (E) -> O)
-    ) {
-        self.decodableType = decodableType
-        self.outputType = outputType
-        self.eventID = eventID
-        self.useSSE = useSSE
-        self.transform = transform
-    }
-    
     /// An endpoint that emits the robot's current state attributes.
     public static var stateAttributes: VTEventEndpoint<VTStateAttributeList, VTStateAttributeList> {
         .init(type: VTStateAttributeList.self, eventID: .stateAttributes, useSSE: true)
@@ -67,6 +57,26 @@ public struct VTEventEndpoint<E: Decodable & Equatable & Sendable, O: Sendable>:
         ) { anyEvents in
             anyEvents.map(\.event)
         }
+    }
+    
+    internal let decodableType: E.Type
+    internal let outputType: O.Type
+    internal let eventID: VTEventEndpointEventID
+    internal let useSSE: Bool
+    internal let transform: (@Sendable (E) -> O)
+    
+    private init(
+        decodableType: E.Type,
+        outputType: O.Type,
+        eventID: VTEventEndpointEventID,
+        useSSE: Bool,
+        transform: @escaping (@Sendable (E) -> O)
+    ) {
+        self.decodableType = decodableType
+        self.outputType = outputType
+        self.eventID = eventID
+        self.useSSE = useSSE
+        self.transform = transform
     }
 }
 
