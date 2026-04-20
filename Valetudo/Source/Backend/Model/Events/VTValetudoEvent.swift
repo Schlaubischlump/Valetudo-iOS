@@ -6,7 +6,7 @@
 //
 import Foundation
 
-public protocol VTEvent: Decodable, Hashable, Equatable, Sendable, Describable {
+public protocol VTValetudoEvent: Decodable, Hashable, Equatable, Sendable, Describable {
     var __class: String { get }
     var metaData: [String: VTAnyCodable] { get }
     var id: String { get }
@@ -14,7 +14,7 @@ public protocol VTEvent: Decodable, Hashable, Equatable, Sendable, Describable {
     var processed: Bool { get }
 }
 
-public struct VTConsumableDepletedEvent: VTEvent {
+public struct VTConsumableDepletedEvent: VTValetudoEvent {
     public let __class: String
     public let metaData: [String: VTAnyCodable]
     public let id: String
@@ -28,7 +28,7 @@ public struct VTConsumableDepletedEvent: VTEvent {
     }
 }
 
-public protocol VTDismissibleEvent: VTEvent {}
+public protocol VTDismissibleEvent: VTValetudoEvent {}
 
 public struct VTDustBinFullEvent: VTDismissibleEvent {
     public let __class: String
@@ -93,14 +93,14 @@ public struct VTPendingMapChangeEvent: VTDismissibleEvent {
     }
 }
 
-struct VTAnyEvent: Decodable, Sendable, Hashable, Equatable {
+public struct VTAnyEvent: Decodable, Sendable, Hashable, Equatable {
     private enum CodingKeys: String, CodingKey {
         case __class
     }
 
-    let event: any VTEvent
+    let event: any VTValetudoEvent
         
-    init(from decoder: Decoder) throws {
+    public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         let className = try container.decode(String.self, forKey: .__class)
 
@@ -120,11 +120,11 @@ struct VTAnyEvent: Decodable, Sendable, Hashable, Equatable {
         }
     }
     
-    func hash(into hasher: inout Hasher) {
+    public func hash(into hasher: inout Hasher) {
         event.hash(into: &hasher)
     }
     
-    static func == (lhs: Self, rhs: Self) -> Bool {
+    public static func == (lhs: Self, rhs: Self) -> Bool {
         switch (lhs.event, rhs.event) {
         case (let this as VTConsumableDepletedEvent, let other as VTConsumableDepletedEvent):       this == other
         case (let this as VTDustBinFullEvent, let other as VTDustBinFullEvent):                     this == other

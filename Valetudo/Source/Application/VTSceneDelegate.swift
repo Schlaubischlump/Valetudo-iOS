@@ -10,7 +10,8 @@ import UIKit
 
 class VTSceneDelegate: UIResponder, UIWindowSceneDelegate {
 	var window: UIWindow?
-	
+    private var didEnterBackground = false
+
 	func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
 		guard let windowScene = scene as? UIWindowScene else {
 			fatalError("Expected scene of type UIWindowScene but got an unexpected type")
@@ -41,9 +42,16 @@ class VTSceneDelegate: UIResponder, UIWindowSceneDelegate {
 			
 			window.makeKeyAndVisible()
 		}
-	}
+    }
     
+    func sceneDidEnterBackground(_ scene: UIScene) {
+        didEnterBackground = true
+    }
+
     func sceneWillEnterForeground(_ scene: UIScene) {
-        NotificationCenter.default.post(name: .sceneWillEnterForeground, object: nil)
+        guard didEnterBackground else { return }
+
+        didEnterBackground = false
+        NotificationCenter.default.post(name: .scene​Did​Request​Refresh​After​Background, object: nil)
     }
 }

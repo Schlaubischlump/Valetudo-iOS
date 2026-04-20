@@ -4,35 +4,20 @@
 //
 //  Created by David Klopp on 29.05.25.
 //
-
-import ObjectiveC
 import Foundation
 
-public typealias VTListenerToken = UUID
-
-internal protocol VTSSESocketProtocol: Actor {
-    associatedtype E: Decodable & Equatable
-    associatedtype Action
-    
-    func register(at url: URL) -> (VTListenerToken, AsyncStream<Action>)
-    func remove(token: VTListenerToken)
-}
-
-
-// TODO: Add polling based sse socket for events
-
-internal final actor VTSSESocket<E: Decodable & Equatable & Sendable>: VTSSESocketProtocol {
+internal final actor VTSSESocket<E: Decodable & Equatable & Sendable, O: Sendable>: VTEventSocketProtocol {
     typealias Action = VTEventAction<E>
     
     private var continuations: [VTListenerToken: AsyncStream<Action>.Continuation] = [:]
-    private var listeners: Set<VTListenerToken> = []
     private var task: Task<Void, Never>?
+    private var taskID: UUID?
     
-    private let endpoint: VTEventEndpoint<E>
+    let endpoint: VTEventEndpoint<E, O>
     private let maxNumberOfRetries = 5
     private var numberOfRetries = 0
     
-    init(endpoint: VTEventEndpoint<E>) {
+    init(endpoint: VTEventEndpoint<E, O>) {
         self.endpoint = endpoint
     }
     
@@ -40,7 +25,9 @@ internal final actor VTSSESocket<E: Decodable & Equatable & Sendable>: VTSSESock
         let token = UUID()
         let stream = AsyncStream<Action> { continuation in
             continuations[token] = continuation
-            listeners.insert(token)
+            continuation.onTermination = { [weak self] _ in
+               Task { await self?.remove(token: token) }
+            }
             
             if task == nil {
                 startSSE(at: url)
@@ -51,9 +38,8 @@ internal final actor VTSSESocket<E: Decodable & Equatable & Sendable>: VTSSESock
     
     func remove(token: VTListenerToken) {
         continuations[token] = nil
-        listeners.remove(token)
         
-        if listeners.isEmpty {
+        if continuations.isEmpty {
             stopSSE()
         }
     }
@@ -71,7 +57,9 @@ internal final actor VTSSESocket<E: Decodable & Equatable & Sendable>: VTSSESock
         guard endpoint.eventID == event, let data else { return }
         
         do {
-            let result = try JSONDecoder().decode(endpoint.decodableType, from: data)
+            let decoder = JSONDecoder()
+            decoder.dateDecodingStrategy = .iso8601Flexible
+            let result = try decoder.decode(endpoint.decodableType, from: data)
             continuations.values.forEach { $0.yield(.didReceiveData(result)) }
         } catch {
             continuations.values.forEach { $0.yield(.didReceiveError(error.localizedDescription)) }
@@ -90,7 +78,18 @@ internal final actor VTSSESocket<E: Decodable & Equatable & Sendable>: VTSSESock
     }
     
     private func startSSE(at url: URL) {
+        let currentTaskID = UUID()
+        taskID = currentTaskID
+        
         task = Task {
+            defer {
+                if taskID == currentTaskID {
+                    task = nil
+                    taskID = nil
+                    numberOfRetries = 0
+                }
+            }
+            
             for c in continuations.values { c.yield(.didConnect) }
 
             let buffer = NSMutableData() // accumulate partial SSE data
@@ -125,9 +124,15 @@ internal final actor VTSSESocket<E: Decodable & Equatable & Sendable>: VTSSESock
                     // Connection closed normally
                     for c in continuations.values { c.yield(.didDisconnect) }
                     break
+                } catch is CancellationError {
+                    break
                 } catch {
+                    if Task.isCancelled {
+                        break
+                    }
+                    
                     numberOfRetries += 1
-                    let shouldRetry = numberOfRetries <= maxNumberOfRetries && !listeners.isEmpty
+                    let shouldRetry = numberOfRetries <= maxNumberOfRetries && !continuations.isEmpty
 
                     if shouldRetry {
                         for c in continuations.values { c.yield(.didAttemptReconnect) }
@@ -142,10 +147,10 @@ internal final actor VTSSESocket<E: Decodable & Equatable & Sendable>: VTSSESock
         }
     }
 
-    
     private func stopSSE() {
         task?.cancel()
         task = nil
+        taskID = nil
         for continuation in continuations.values {
             continuation.yield(.didDisconnect)
         }

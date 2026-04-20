@@ -7,13 +7,13 @@
 import Foundation
 import UIKit
 
-struct VTEventItem: Hashable, Sendable {
+struct VTValetudoEventItem: Hashable, Sendable {
     private let _hash: @Sendable (inout Hasher) -> Void
     private let _isEqual: @Sendable (Any) -> Bool
     
-    private let event: any VTEvent
+    private let event: any VTValetudoEvent
     
-    init<T: VTEvent>(event: T) {
+    init<T: VTValetudoEvent>(event: T) {
         self.event = event
         
         _hash = { hasher in event.hash(into: &hasher) }
