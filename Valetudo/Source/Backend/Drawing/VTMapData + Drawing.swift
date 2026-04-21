@@ -180,6 +180,68 @@ extension VTMapData {
         shapeLayer.lineCap = .round
         return shapeLayer
     }
+
+    private func drawObstacle(for entity: VTEntity, boundedByX x: CGFloat, y: CGFloat, scale: CGFloat) -> VTEntityShapeLayer? {
+        let shapeLayer = VTEntityShapeLayer(data: entity)
+        let points = entity.points
+        guard points.count >= 2 else { return nil }
+
+        let path = CGMutablePath()
+
+        if points.count == 2 {
+            guard let centerPoint = entity.centerPoint?.downScaledBy(x: scale, y: scale).insetBy(dx: x, dy: y) else {
+                return nil
+            }
+
+            let radius: CGFloat = 6.0
+            path.move(to: CGPoint(x: centerPoint.x, y: centerPoint.y - radius))
+            path.addLine(to: CGPoint(x: centerPoint.x + radius, y: centerPoint.y))
+            path.addLine(to: CGPoint(x: centerPoint.x, y: centerPoint.y + radius))
+            path.addLine(to: CGPoint(x: centerPoint.x - radius, y: centerPoint.y))
+            path.closeSubpath()
+
+            let stemWidth: CGFloat = 2.2
+            let stemHeight: CGFloat = 3.2
+            path.addRect(CGRect(
+                x: centerPoint.x - stemWidth / 2,
+                y: centerPoint.y - stemHeight / 2 - 0.7,
+                width: stemWidth,
+                height: stemHeight
+            ))
+
+            let dotRadius: CGFloat = 0.75
+            path.addEllipse(in: CGRect(
+                x: centerPoint.x - dotRadius,
+                y: centerPoint.y + 2.2,
+                width: dotRadius * 2,
+                height: dotRadius * 2
+            ))
+        } else {
+            let obstaclePoints = stride(from: 0, to: points.count, by: 2).map { i in
+                CGPoint(x: points[i], y: points[i + 1])
+                    .downScaledBy(x: scale, y: scale)
+                    .insetBy(dx: x, dy: y)
+            }
+
+            for (index, point) in obstaclePoints.enumerated() {
+                if index == 0 {
+                    path.move(to: point)
+                } else {
+                    path.addLine(to: point)
+                }
+            }
+            path.closeSubpath()
+        }
+
+        guard !path.isEmpty else { return nil }
+        shapeLayer.path = path
+        shapeLayer.fillColor = entity.type.color
+        shapeLayer.strokeColor = entity.type.borderColor
+        shapeLayer.lineWidth = 0.75
+        shapeLayer.lineJoin = .round
+        shapeLayer.lineCap = .round
+        return shapeLayer
+    }
     
     private func drawEntities(in container: CALayer, boundedByX x: CGFloat, y: CGFloat) {
         for entity in entities.sorted().reversed() {
@@ -189,6 +251,7 @@ extension VTMapData {
             case .charger_location, .robot_position: drawIcon(for: entity, boundedByX: x, y: y, scale: pixelScale)
             case .path:                              drawPath(for: entity, boundedByX: x, y: y, scale: pixelScale)
             case .carpet:                            drawCarpet(for: entity, boundedByX: x, y: y, scale: pixelScale)
+            case .obstacle:                          drawObstacle(for: entity, boundedByX: x, y: y, scale: pixelScale)
             default:                                 nil
             }
             

@@ -37,6 +37,10 @@ extension CGColor {
     static var blue: CGColor {
         CGColor(red: 0, green: 122.0/255.0, blue: 1.0, alpha: 1.0)
     }
+    
+    static var yellow: CGColor {
+        CGColor(red: 1.0, green: 0.58, blue: 0.0, alpha: 1.0)
+    }
 
     /*static func from(hue: CGFloat, saturation: CGFloat, brightness: CGFloat, alpha: CGFloat) -> CGColor {
         let i = Int(hue * 6)

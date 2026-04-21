@@ -31,6 +31,7 @@ extension VTEntityType {
         case .robot_position: .white
         case .path: nil
         case .carpet: nil
+        case .obstacle: .yellow
         default: .black
         }
     }
@@ -41,6 +42,7 @@ extension VTEntityType {
         case .robot_position: .lightGray
         case .path: .white
         case .carpet: .lightGray.copy(alpha: 0.5)
+        case .obstacle: .lightGray.copy(alpha: 0.9)
         default: .black
         }
     }
