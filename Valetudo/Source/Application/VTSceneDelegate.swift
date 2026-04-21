@@ -20,6 +20,7 @@ class VTSceneDelegate: UIResponder, UIWindowSceneDelegate {
 
         // TODO: Show MDNS selection to find robots
         let apiClient = VTAPIClient.shared
+        //let apiClient = VTMockAPIClient.shared
         guard let apiClient else {
             // TODO: Show error
             return
