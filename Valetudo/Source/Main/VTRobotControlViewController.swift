@@ -50,7 +50,7 @@ struct VTOperationModeItem: VTSegmentedItem {
         case .vacuum:           fanImage
         case .mop:              waterImage
         case .vacuumAndMop:     UIImage.combine(left: waterImage, right: fanImage)
-        case .vacuumThenMop:    nil
+        case .vacuumThenMop:    UIImage.combine(left: fanImage, right: waterImage, op: "→")
         default: nil
         }
     }
