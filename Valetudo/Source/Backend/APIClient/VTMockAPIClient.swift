@@ -7,17 +7,31 @@
 import CoreGraphics
 import Foundation
 
+extension VTStateAttributeList {
+    init(attributes: [any VTStateAttribute]) {
+        self.attributes = attributes
+    }
+}
+
 actor VTMockAPIClient: VTAPIClientProtocol {
     static let shared: VTMockAPIClient? = VTMockAPIClient()
 
+    private static let defaultPresetSelections: [VTPresetType: VTPresetValue] = [
+        .fanSpeed: .medium,
+        .waterGrade: .low,
+        .operationMode: .vacuumAndMop
+    ]
+
     private var timers: [String: VTTimer]
     private var events: [any VTValetudoEvent]
+    private var stateAttributes = VTMockAPIClient.makeStateAttributes(presetSelections: VTMockAPIClient.defaultPresetSelections)
     private var logLevel = "info"
     private var updaterConfig = VTUpdaterConfig(updateProvider: .github)
     private var manualControlEnabled = false
     private var highResolutionManualControlEnabled = false
-    private var getTimersCallCount = 0
+    private var presetSelections = VTMockAPIClient.defaultPresetSelections
     private var observerTasks: [VTListenerToken: Task<Void, Never>] = [:]
+    private var nextEventNumber = 1
 
     init() {
         let timer = VTTimer(
@@ -49,48 +63,11 @@ actor VTMockAPIClient: VTAPIClientProtocol {
     // MARK: - 1.1 State
 
     func getStateAttributes() async throws -> VTStateAttributeList {
-        mockStateAttributes()
+        stateAttributes
     }
 
     func getMap() async throws -> VTMapData {
-        VTMapData(
-            size: VTSize(x: 20, y: 20),
-            pixelSize: 50,
-            layers: [
-                VTLayer(
-                    __class: "MapLayer",
-                    metaData: [
-                        "segmentId": .string("1"),
-                        "name": .string("Living Room"),
-                        "active": .bool(true),
-                        "area": .int(200000)
-                    ],
-                    type: .segment,
-                    pixels: [0, 0, 20, 20],
-                    compressedPixels: nil,
-                    dimensions: VTDimensions(
-                        x: VTRangeDimension(min: 0, max: 20, mid: 10, avg: nil),
-                        y: VTRangeDimension(min: 0, max: 20, mid: 10, avg: nil),
-                        pixelCount: 400
-                    )
-                )
-            ],
-            entities: [
-                VTEntity(
-                    __class: "MapEntity",
-                    metaData: [:],
-                    type: .charger_location,
-                    points: [2, 2]
-                ),
-                VTEntity(
-                    __class: "MapEntity",
-                    metaData: [:],
-                    type: .robot_position,
-                    points: [10, 10, 0]
-                )
-            ],
-            metaData: VTMetaData(version: 1)
-        )
+        mockMap()
     }
 
     @discardableResult
@@ -102,16 +79,28 @@ actor VTMockAPIClient: VTAPIClientProtocol {
             let task = Task { [weak self] in
                 guard let self else { return }
                 await self.emitEvent(for: endpoint, to: continuation)
+                var lastStateAttributes = await self.stateAttributesIfNeeded(for: endpoint)
 
                 while !Task.isCancelled {
                     try? await Task.sleep(nanoseconds: 5_000_000_000)
                     guard !Task.isCancelled else { break }
-                    await self.tick(endpoint: endpoint)
-                    await self.emitEvent(for: endpoint, to: continuation)
+
+                    switch endpoint.eventID {
+                    case .stateAttributes:
+                        let currentStateAttributes = await self.currentStateAttributes()
+                        guard currentStateAttributes != lastStateAttributes else { continue }
+                        lastStateAttributes = currentStateAttributes
+                        await self.emitEvent(for: endpoint, to: continuation)
+                    case .valetudoEvent:
+                        guard await self.addRandomDummyEvent() else { continue }
+                        await self.emitEvent(for: endpoint, to: continuation)
+                    case .map:
+                        continue
+                    }
                 }
             }
 
-            Task { await self.storeObserverTask(task, for: token) }
+            observerTasks[token] = task
             continuation.onTermination = { [weak self] _ in
                 Task { await self?.removeEventObserver(token: token, for: endpoint) }
             }
@@ -166,15 +155,18 @@ actor VTMockAPIClient: VTAPIClientProtocol {
     func getPresets(forType type: VTPresetType) async throws -> [VTPresetValue] {
         switch type {
         case .fanSpeed:
-            [.off, .min, .low, .medium, .high, .max, .turbo]
+            [.low, .medium, .high, .max]
         case .waterGrade:
-            [.off, .low, .medium, .high, .max]
+            [.low, .medium, .high]
         case .operationMode:
             [.vacuum, .mop, .vacuumAndMop, .vacuumThenMop]
         }
     }
 
-    func setPreset(_ preset: VTPresetValue, forType type: VTPresetType) async throws {}
+    func setPreset(_ preset: VTPresetValue, forType type: VTPresetType) async throws {
+        presetSelections[type] = preset
+        stateAttributes = Self.makeStateAttributes(presetSelections: presetSelections)
+    }
 
     func getConsumables() async throws -> [VTConsumableStateAttribute] {
         [
@@ -322,10 +314,6 @@ actor VTMockAPIClient: VTAPIClientProtocol {
     // MARK: - 5. Timer
 
     func getTimers() async throws -> [String: VTTimer] {
-        getTimersCallCount += 1
-        if getTimersCallCount.isMultiple(of: 5) {
-            addDummyEvent()
-        }
         return timers
     }
 
@@ -374,7 +362,7 @@ actor VTMockAPIClient: VTAPIClientProtocol {
     }
 
     func getValetudoEvent(id: String) async throws -> any VTValetudoEvent {
-        guard let event = events.first(where: { $0.id == id }) else { throw VTAPIError.missingID(String(describing: VTValetudoEvent.self)) }
+        guard let event = events.first(where: { $0.id == id }) else { throw VTAPIError.missingID(String(describing: (any VTValetudoEvent).self)) }
         return event
     }
 
@@ -388,16 +376,10 @@ actor VTMockAPIClient: VTAPIClientProtocol {
         observerTasks[token] = task
     }
 
-    private func tick<E: Decodable & Equatable, O>(endpoint: VTEventEndpoint<E, O>) {
-        if endpoint.eventID == .valetudoEvent {
-            addDummyEvent()
-        }
-    }
-
     private func emitEvent<E: Decodable & Equatable, O>(for endpoint: VTEventEndpoint<E, O>, to continuation: AsyncStream<VTEventAction<O>>.Continuation) {
         switch endpoint.eventID {
         case .stateAttributes:
-            yield(mockStateAttributes(), to: continuation)
+            yield(stateAttributes, to: continuation)
         case .map:
             yield(mockMap(), to: continuation)
         case .valetudoEvent:
@@ -413,38 +395,99 @@ actor VTMockAPIClient: VTAPIClientProtocol {
         continuation.yield(.didReceiveData(output))
     }
 
-    private func addDummyEvent() {
-        events.append(
+    private func currentStateAttributes() -> VTStateAttributeList {
+        stateAttributes
+    }
+
+    private func stateAttributesIfNeeded<E: Decodable & Equatable, O>(for endpoint: VTEventEndpoint<E, O>) -> VTStateAttributeList? {
+        endpoint.eventID == .stateAttributes ? stateAttributes : nil
+    }
+
+    private func addRandomDummyEvent() -> Bool {
+        guard Int.random(in: 1...100) <= 20 else { return false }
+
+        let id = "mock-event-\(nextEventNumber)"
+        nextEventNumber += 1
+        let timestamp = Date()
+
+        let event: any VTValetudoEvent = switch Int.random(in: 0..<6) {
+        case 0:
             VTDustBinFullEvent(
                 __class: "DustBinFullValetudoEvent",
                 metaData: [:],
-                id: "mock-event-\(events.count + 1)",
-                timestamp: Date(),
+                id: id,
+                timestamp: timestamp,
                 processed: false
             )
-        )
+        case 1:
+            VTConsumableDepletedEvent(
+                __class: "ConsumableDepletedValetudoEvent",
+                metaData: [:],
+                id: id,
+                timestamp: timestamp,
+                processed: false,
+                type: .brush,
+                subType: .main
+            )
+        case 2:
+            VTErrorStateEvent(
+                __class: "ErrorStateValetudoEvent",
+                metaData: [:],
+                id: id,
+                timestamp: timestamp,
+                processed: false,
+                message: "Mock robot reported a temporary navigation issue."
+            )
+        case 3:
+            VTMissingResourceEvent(
+                __class: "MissingResourceValetudoEvent",
+                metaData: [:],
+                id: id,
+                timestamp: timestamp,
+                processed: false,
+                message: "Mock map resource is temporarily unavailable."
+            )
+        case 4:
+            VTMopAttachmentReminderEvent(
+                __class: "MopAttachmentReminderValetudoEvent",
+                metaData: [:],
+                id: id,
+                timestamp: timestamp,
+                processed: false
+            )
+        default:
+            VTPendingMapChangeEvent(
+                __class: "PendingMapChangeValetudoEvent",
+                metaData: [:],
+                id: id,
+                timestamp: timestamp,
+                processed: false
+            )
+        }
+
+        events.append(event)
+        return true
     }
 
-    private func mockStateAttributes() -> VTStateAttributeList {
+    private static func makeStateAttributes(presetSelections: [VTPresetType: VTPresetValue]) -> VTStateAttributeList {
         VTStateAttributeList(attributes: [
-            VTStatusStateAttribute(__class: "StatusStateAttribute", metaData: [:], value: .docked, flag: .none),
+            VTStatusStateAttribute(__class: "StatusStateAttribute", metaData: [:], value: .docked, flag: VTStatusFlag.none),
             VTBatteryStateAttribute(__class: "BatteryStateAttribute", metaData: [:], level: 88, flag: .charged),
             VTDockStatusStateAttribute(__class: "DockStatusStateAttribute", metaData: [:], value: .idle),
             VTAttachmentStateAttribute(__class: "AttachmentStateAttribute", metaData: [:], type: .dustbin, attached: true),
             VTAttachmentStateAttribute(__class: "AttachmentStateAttribute", metaData: [:], type: .mop, attached: true),
-            VTPresetSelectionStateAttribute(__class: "PresetSelectionStateAttribute", metaData: [:], type: .fanSpeed, value: .medium, customValue: nil),
-            VTPresetSelectionStateAttribute(__class: "PresetSelectionStateAttribute", metaData: [:], type: .waterGrade, value: .low, customValue: nil),
-            VTPresetSelectionStateAttribute(__class: "PresetSelectionStateAttribute", metaData: [:], type: .operationMode, value: .vacuumAndMop, customValue: nil)
+            VTPresetSelectionStateAttribute(__class: "PresetSelectionStateAttribute", metaData: [:], type: .fanSpeed, value: presetSelections[.fanSpeed] ?? .medium, customValue: nil),
+            VTPresetSelectionStateAttribute(__class: "PresetSelectionStateAttribute", metaData: [:], type: .waterGrade, value: presetSelections[.waterGrade] ?? .low, customValue: nil),
+            VTPresetSelectionStateAttribute(__class: "PresetSelectionStateAttribute", metaData: [:], type: .operationMode, value: presetSelections[.operationMode] ?? .vacuumAndMop, customValue: nil)
         ])
     }
 
     private func mockMap() -> VTMapData {
-        VTMapData(
-            size: VTSize(x: 20, y: 20),
-            pixelSize: 50,
-            layers: [],
-            entities: [],
-            metaData: VTMetaData(version: 1)
-        )
+        do {
+            return try JSONDecoder().decode(VTMapData.self, from: Data(VTMockMapData.mapJSON.utf8))
+        } catch {
+            log(message: "Failed to decode mock map data: \(error.localizedDescription)", forSubsystem: .mock, level: .error)
+            return VTMapData(size: VTSize(x: 0, y: 0), pixelSize: 1, layers: [], entities: [], metaData: VTMetaData(version: 2))
+        }
     }
 }

@@ -529,6 +529,17 @@
         }
       }
     },
+    "NO_EVENTS" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "no events"
+          }
+        }
+      }
+    },
     "EXEC_ARGV" : {
       "extractionState" : "manual",
       "localizations" : {
