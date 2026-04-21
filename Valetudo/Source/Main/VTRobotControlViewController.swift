@@ -278,7 +278,7 @@ class VTRobotControlViewController: VTViewController {
                             try? await updateStatistics()
                         }
                     case .didReceiveError(let msg):
-                        print("Received error message: \(msg)")
+                        log(message: msg, forSubsystem: .stateAttribute, level: .error)
                         // TODO: Show error
                     default:
                         break
@@ -286,7 +286,7 @@ class VTRobotControlViewController: VTViewController {
                 }
             } catch {
                 // TODO: Show error
-                print("Failed to update data: \(error)")
+                log(message: "Failed to update data: \(error.localizedDescription)", forSubsystem: .robotControl, level: .error)
             }
         }
     }

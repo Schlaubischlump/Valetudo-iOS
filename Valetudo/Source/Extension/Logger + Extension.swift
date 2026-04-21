@@ -9,8 +9,15 @@ import os.log
 
 enum VTSubsystem: String {
     case mock
-    case sse
-    case event
+    //case sse
+    case consumable
+    case valetudoLog
+    case map
+    case robotControl
+    case timer
+    case valetudoEvent
+    
+    case stateAttribute
 }
 
 func log(message: String, forSubsystem subsystem: VTSubsystem, level: OSLogType = .info) {

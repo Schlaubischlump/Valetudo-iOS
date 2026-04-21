@@ -111,7 +111,7 @@ final class VTLogViewController: UICollectionViewController, UISearchResultsUpda
             try logText.write(to: fileURL, atomically: true, encoding: .utf8)
         } catch {
             // TODO: Show error
-            print("Failed to write log file: \(error)")
+            log(message: "Failed to write log file: \(error.localizedDescription)", forSubsystem: .valetudoLog, level: .error)
             return
         }
         

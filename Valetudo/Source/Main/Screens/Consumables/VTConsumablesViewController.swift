@@ -86,7 +86,7 @@ class VTConsumablesViewController: VTCollectionViewController {
                         self?.updateItems(with: attrs ?? [], animated: false)
                     } catch {
                         // TODO: Show error
-                        print("Received error: \(error)")
+                        log(message: error.localizedDescription, forSubsystem: .consumable, level: .error)
                     }
                 }
             }
@@ -126,7 +126,7 @@ class VTConsumablesViewController: VTCollectionViewController {
                     print("State attributes: \(stateAttributes.consumableStateAttributes)")
                     updateItems(with: stateAttributes.consumableStateAttributes, animated: true)
                 case .didReceiveError(let msg):
-                    print("Received error message: \(msg)")
+                    log(message: msg, forSubsystem: .stateAttribute, level: .error)
                     // TODO: Show error
                 default:
                     break

@@ -437,7 +437,7 @@ public struct VTStateAttributeList: Decodable, Sendable {
             case .consumableStateAttribute, .valetudoConsumable:
                 decodedAttributes.append(try jsonDecoder.decode(VTConsumableStateAttribute.self, from: jsonData))
             default:
-                print("Unknown __class: \(className)")
+                log(message: "Unknown __class: \(className)", forSubsystem: .stateAttribute, level: .error)
                 continue
             }
         }

@@ -13,6 +13,8 @@ final class VTValetudoEventsViewController: VTCollectionViewController {
     
     private var client: any VTAPIClientProtocol
     private var events: [any VTValetudoEvent] = []
+    private var eventObservationTask: Task<Void, Never>?
+    private var observerToken: VTListenerToken?
     
     init(client: any VTAPIClientProtocol) {
         self.client = client
@@ -21,6 +23,15 @@ final class VTValetudoEventsViewController: VTCollectionViewController {
 
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
+    }
+
+    deinit {
+        eventObservationTask?.cancel()
+
+        if let observerToken {
+            let client = self.client
+            Task { await client.removeEventObserver(token: observerToken, for: .valetudoEvent) }
+        }
     }
 
     override func viewDidLoad() {
@@ -34,11 +45,18 @@ final class VTValetudoEventsViewController: VTCollectionViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         
-        Task { await reloadData(animated: false) }
+        startEventObservation()
+    }
+
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+
+        stopEventObservation()
     }
     
     override func reconnectAndRefresh() async {
-        await reloadData(animated: false)
+        stopEventObservation()
+        startEventObservation()
     }
     
     // MARK: - Setup
@@ -56,7 +74,7 @@ final class VTValetudoEventsViewController: VTCollectionViewController {
                         await self?.reloadData(animated: true)
                         return true
                     } catch {
-                        log(message: error.localizedDescription, forSubsystem: .event, level: .error)
+                        log(message: error.localizedDescription, forSubsystem: .valetudoEvent, level: .error)
                         return false
                     }
                 }
@@ -122,6 +140,51 @@ final class VTValetudoEventsViewController: VTCollectionViewController {
         return false
     }
 
+    // MARK: - Event Observation
+
+    private func startEventObservation() {
+        guard eventObservationTask == nil else { return }
+
+        eventObservationTask = Task { [weak self] in
+            guard let self else { return }
+
+            await reloadData(animated: false)
+
+            let (token, stream) = await client.registerEventObserver(for: .valetudoEvent)
+            observerToken = token
+
+            for await event in stream {
+                guard !Task.isCancelled else { break }
+
+                switch event {
+                case .didReceiveData(let events):
+                    await updateEvents(events, animated: true)
+                case .didReceiveError(let message):
+                    log(message: message, forSubsystem: .valetudoEvent, level: .error)
+                default:
+                    break
+                }
+            }
+        }
+    }
+
+    private func stopEventObservation() {
+        eventObservationTask?.cancel()
+        eventObservationTask = nil
+
+        if let observerToken {
+            let client = self.client
+            Task { await client.removeEventObserver(token: observerToken, for: .valetudoEvent) }
+            self.observerToken = nil
+        }
+    }
+
+    @MainActor
+    private func updateEvents(_ events: [any VTValetudoEvent], animated: Bool) async {
+        self.events = events
+        await applySnapshot(animated: animated)
+    }
+
     // MARK: - Reload
     
     @objc private func didPullToRefresh() {
@@ -133,7 +196,7 @@ final class VTValetudoEventsViewController: VTCollectionViewController {
             events = try await client.getValetudoEvents()
         } catch {
             events = []
-            log(message: error.localizedDescription, forSubsystem: .event, level: .error)
+            log(message: error.localizedDescription, forSubsystem: .valetudoEvent, level: .error)
         }
         await applySnapshot(animated: animated)
     }

@@ -59,7 +59,7 @@ class VTValetudoEventBarButton: UIBarButtonItem {
         } catch {
             eventCount = 0
             updateBadge()
-            log(message: error.localizedDescription, forSubsystem: .event, level: .error)
+            log(message: error.localizedDescription, forSubsystem: .valetudoEvent, level: .error)
         }
         
         let (token, stream) = await client.registerEventObserver(for: .valetudoEvent)
@@ -73,7 +73,7 @@ class VTValetudoEventBarButton: UIBarButtonItem {
                 eventCount = events.count
                 updateBadge()
             case .didReceiveError(let message):
-                log(message: message, forSubsystem: .event, level: .error)
+                log(message: message, forSubsystem: .valetudoEvent, level: .error)
             default:
                 break
             }

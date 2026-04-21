@@ -23,7 +23,7 @@ class VTHomeViewController: VTViewController {
     private var legendView: VTLegendView!
     private var robotStatusView: VTRobotStatusView!
     private var observerToken: VTListenerToken?
-    private var sseTask: Task<Void, Never>?
+    private var eventObservationTask: Task<Void, Never>?
         
     private lazy var robotControlViewController: VTRobotControlViewController? = {
         VTRobotControlViewController(client: self.client)
@@ -158,9 +158,9 @@ class VTHomeViewController: VTViewController {
     }
     
     private func startSSEObservation() {
-        guard sseTask == nil else { return }
+        guard eventObservationTask == nil else { return }
         
-        sseTask = Task {
+        eventObservationTask = Task {
             do {
                 try await loadInitialData()
                 
@@ -172,23 +172,22 @@ class VTHomeViewController: VTViewController {
                     case .didReceiveData(let mapData):
                         await self.mapView?.updateData(data: mapData)
                         await self.updateLegend(data: mapData)
-                    case .didReceiveError(let msg):
-                        print("Received error message: \(msg)")
-                        // TODO: Show error
+                    case .didReceiveError(let message):
+                        log(message: message, forSubsystem: .map, level: .error)
                     default:
                         break
                     }
                 }
             } catch {
+                log(message: error.localizedDescription, forSubsystem: .map, level: .error)
                 // TODO: Show error
-                print("Failed to load map data: \(error)")
             }
         }
     }
     
     private func stopSSEObservation() {
-        sseTask?.cancel()
-        sseTask = nil
+        eventObservationTask?.cancel()
+        eventObservationTask = nil
         
         if let token = observerToken {
             let client = self.client

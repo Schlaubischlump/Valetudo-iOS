@@ -141,7 +141,7 @@ final class VTTimersViewController: VTCollectionViewController {
                     do {
                         try await self?.client.executeTimer(id: timerID)
                     } catch {
-                        print(error)
+                        log(message: error.localizedDescription, forSubsystem: .timer, level: .error)
                         // TODO: Handle error and display it to the user
                     }
                     await self?.enableUserInteraction()
@@ -188,7 +188,7 @@ final class VTTimersViewController: VTCollectionViewController {
                     try await client.addTimer(timer)
                     await self?.reloadData(animated: true)
                 } catch {
-                    print(error)
+                    log(message: error.localizedDescription, forSubsystem: .timer, level: .error)
                     // TODO: Handle error
                 }
             }
@@ -229,7 +229,7 @@ final class VTTimersViewController: VTCollectionViewController {
                 self.applySnapshot(animated: true)
             }
         } catch {
-            print(error)
+            log(message: error.localizedDescription, forSubsystem: .timer, level: .error)
             // TODO: show error UI
         }
 
@@ -268,7 +268,7 @@ final class VTTimersViewController: VTCollectionViewController {
                     try await client.updateTimer(timer)
                     await self?.reloadData(animated: true)
                 } catch {
-                    print(error)
+                    log(message: error.localizedDescription, forSubsystem: .timer, level: .error)
                     // TODO: Handle error
                 }
             }
@@ -283,7 +283,7 @@ final class VTTimersViewController: VTCollectionViewController {
         do {
             timers = try await client.getTimers()
         } catch {
-            print(error)
+            log(message: error.localizedDescription, forSubsystem: .timer, level: .error)
             // TODO: Handle error
             timers = [:]
         }
