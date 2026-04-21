@@ -207,12 +207,32 @@ final class VTValetudoEventsViewController: VTCollectionViewController {
 
         let items = events.map { VTValetudoEventItem(event: $0) }
         snapshot.appendItems(items)
+        updateChromeVisibility(animated: animated)
+        setNeedsUpdateContentUnavailableConfiguration()
 
         if self.refreshControl.isRefreshing {
             self.refreshControl.endRefreshing()
         }
         
         await dataSource.apply(snapshot, animatingDifferences: animated)
+    }
+
+    private func updateChromeVisibility(animated: Bool) {
+        navigationController?.setNavigationBarHidden(events.isEmpty, animated: animated)
+        view.setNeedsLayout()
+    }
+
+    override func updateContentUnavailableConfiguration(using state: UIContentUnavailableConfigurationState) {
+        guard events.isEmpty else {
+            contentUnavailableConfiguration = nil
+            return
+        }
+
+        var config = UIContentUnavailableConfiguration.empty()
+        config.text = "NO_EVENTS".localizedCapitalized()
+        config.image = UIImage(systemName: "bell.fill")
+        config.imageProperties.preferredSymbolConfiguration = .init(pointSize: 36, weight: .regular)
+        contentUnavailableConfiguration = config
     }
     
     // MARK: - Self sizing
