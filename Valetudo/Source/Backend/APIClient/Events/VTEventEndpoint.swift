@@ -16,10 +16,10 @@ enum VTEventEndpointEventID: String {
     case stateAttributes = "StateAttributesUpdated"
 
     /// The map update event.
-    case map = "Map"
+    case map = "MapUpdated"
 
     /// The Valetudo interaction event.
-    case valetudoEvent = "ValetudoEvent"
+    case valetudoEvent = "ValetudoEventUpdated"
 }
 
 
