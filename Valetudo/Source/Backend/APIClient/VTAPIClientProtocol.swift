@@ -14,7 +14,6 @@ struct VTLogLine {
 }
 
 protocol VTAPIClientProtocol: Actor {
-    static var shared: Self? { get }
         
     // MARK: - 1. Robot
     

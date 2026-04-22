@@ -46,6 +46,6 @@ extension VTLayer: Equatable, Hashable {
 
 extension VTLayer: Describable {
     public var description: String {
-        self.name ?? self.segmentId ?? "UNKNOWN".localizedCapitalized()
+        self.name ?? self.segmentId ?? "UNKNOWN".localized()
     }
 }

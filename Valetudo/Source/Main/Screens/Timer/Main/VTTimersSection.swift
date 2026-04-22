@@ -16,6 +16,6 @@ enum VTTimersSection: Hashable {
     }
     
     var title: String? {
-        "TIMER".localizedCapitalized()
+        "TIMER".localized()
     }
 }

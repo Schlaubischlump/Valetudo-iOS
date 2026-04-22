@@ -8,12 +8,13 @@ import Foundation
 import UIKit
 
 class VTValetudoEventBarButton: UIBarButtonItem {
-    let client: any VTAPIClientProtocol
+    private let client: any VTAPIClientProtocol
     private var observerToken: VTListenerToken?
-    private var eventCount: Int = 0
+    private weak var parentViewController: UIViewController?
     
-    init(client: any VTAPIClientProtocol) {
+    init(client: any VTAPIClientProtocol, parentViewController: UIViewController) {
         self.client = client
+        self.parentViewController = parentViewController
         super.init()
         self.image = UIImage(systemName: "bell.fill")
         self.target = self
@@ -34,7 +35,7 @@ class VTValetudoEventBarButton: UIBarButtonItem {
     
     @objc func showEventsPopup(_ sender: UIBarButtonItem) {
         let vc = VTValetudoEventsViewController(client: client)
-        vc.title = "EVENTS".localizedCapitalized()
+        vc.title = "EVENTS".localized()
         
         let nav = UINavigationController(rootViewController: vc)
         nav.modalPresentationStyle = .popover
@@ -44,21 +45,17 @@ class VTValetudoEventBarButton: UIBarButtonItem {
         popover.permittedArrowDirections = .any
         popover.delegate = vc
     
-        guard let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-              let root = scene.windows.first?.rootViewController else { return }
-        
-        let topViewController = root.presentedViewController ?? root
-        topViewController.present(nav, animated: true)
+        let topViewController = parentViewController?.presentedViewController ?? parentViewController
+        topViewController?.present(nav, animated: true)
     }
     
     @MainActor
     private func startEventObservation() async {
         do {
-            eventCount = try await client.getValetudoEvents().count
-            updateBadge()
+            let eventCount = try await client.getValetudoEvents().count
+            updateBadge(eventCount: eventCount)
         } catch {
-            eventCount = 0
-            updateBadge()
+            updateBadge(eventCount: 0)
             log(message: error.localizedDescription, forSubsystem: .valetudoEvent, level: .error)
         }
         
@@ -70,8 +67,7 @@ class VTValetudoEventBarButton: UIBarButtonItem {
             
             switch event {
             case .didReceiveData(let events):
-                eventCount = events.count
-                updateBadge()
+                updateBadge(eventCount: events.count)
             case .didReceiveError(let message):
                 log(message: message, forSubsystem: .valetudoEvent, level: .error)
             default:
@@ -80,7 +76,7 @@ class VTValetudoEventBarButton: UIBarButtonItem {
         }
     }
     
-    private func updateBadge() {
+    private func updateBadge(eventCount: Int) {
         badge = eventCount > 0 ? .count(eventCount) : nil
     }
 }

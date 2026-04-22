@@ -38,7 +38,7 @@ class VTConsumablesViewController: VTCollectionViewController {
         
         collectionView.delaysContentTouches = false
         navigationItem.subtitle = "CONSUMABLES_SUBTITLE".localized()
-        navigationItem.rightBarButtonItem = VTValetudoEventBarButton(client: client)
+        navigationItem.rightBarButtonItem = VTValetudoEventBarButton(client: client, parentViewController: self)
     }
 
     required init?(coder: NSCoder) {

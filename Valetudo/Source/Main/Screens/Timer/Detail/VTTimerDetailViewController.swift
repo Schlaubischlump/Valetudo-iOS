@@ -183,8 +183,8 @@ final class VTTimerDetailViewController: VTCollectionViewController {
             
             cell.contentConfiguration = VTTextFieldCellContentConfiguration(
                 id: item.id,
-                label: "CUSTOM_LABEL".localizedCapitalized(),
-                placeholder: "TIMER".localizedCapitalized(),
+                label: "CUSTOM_LABEL".localized(),
+                placeholder: "TIMER".localized(),
                 text: item.text
             ) { [weak self] newText in
                 guard let self else { return }
@@ -205,7 +205,7 @@ final class VTTimerDetailViewController: VTCollectionViewController {
             
             cell.contentConfiguration = VTTimePickerCellContentConfiguration(
                 id: item.id,
-                label: "TIME".localizedCapitalized(),
+                label: "TIME".localized(),
                 hours: item.hours,
                 minutes: item.minutes
             ) { [weak self] (localHour, localMin) in
@@ -248,7 +248,7 @@ final class VTTimerDetailViewController: VTCollectionViewController {
             case let item as VTDropDownItem<VTTimer.Action.ActionType>:
                 cell.contentConfiguration = VTDropDownCellContentConfiguration(
                     id: item.id,
-                    title: item.id.localizedCapitalized(),
+                    title: item.id.localized(),
                     options: item.options,
                     selection: item.active,
                     disableSelectionAfterAction: false
@@ -268,7 +268,7 @@ final class VTTimerDetailViewController: VTCollectionViewController {
             case let item as VTDropDownItem<Int>:
                 cell.contentConfiguration = VTDropDownCellContentConfiguration(
                     id: item.id,
-                    title: item.id.localizedCapitalized(),
+                    title: item.id.localized(),
                     options: item.options,
                     selection: item.active,
                     disableSelectionAfterAction: false
@@ -289,7 +289,7 @@ final class VTTimerDetailViewController: VTCollectionViewController {
             case let item as VTDropDownItem<VTPresetValue>:
                 cell.contentConfiguration = VTDropDownCellContentConfiguration(
                     id: item.id,
-                    title: item.id.localizedCapitalized(),
+                    title: item.id.localized(),
                     options: item.options,
                     selection: item.active,
                     disableSelectionAfterAction: false
@@ -330,8 +330,8 @@ final class VTTimerDetailViewController: VTCollectionViewController {
             
             cell.contentConfiguration = VTListSelectionCellContentConfiguration(
                 id: item.id,
-                enabledTitle: "SELECTED_SEGMENTS".localizedCapitalized(),
-                disabledTitle: "AVAILABLE_SEGMENTS".localizedCapitalized(),
+                enabledTitle: "SELECTED_SEGMENTS".localized(),
+                disabledTitle: "AVAILABLE_SEGMENTS".localized(),
                 allowReordering: customOrder,
                 options: item.options,
                 active: item.active,
@@ -418,7 +418,7 @@ final class VTTimerDetailViewController: VTCollectionViewController {
         // general
         snapshot.appendSections([.general])
         snapshot.appendItems([
-            .checkbox(kEnabled, title: "ENABLED".localizedCapitalized(), enabled: timer.enabled),
+            .checkbox(kEnabled, title: "ENABLED".localized(), enabled: timer.enabled),
             .textField(kLabel, text: timer.label)
         ], toSection: .general)
         
@@ -458,7 +458,7 @@ final class VTTimerDetailViewController: VTCollectionViewController {
                 
                 // Add 'enable' toggle item
                 var items: [VTAnyItem] = [
-                    .checkbox(toggleID, title: title.localizedCapitalized(), enabled: isEnabled)
+                    .checkbox(toggleID, title: title.localized(), enabled: isEnabled)
                 ]
                 // Add drop down menu only if enabled
                 if isEnabled {
@@ -494,7 +494,7 @@ final class VTTimerDetailViewController: VTCollectionViewController {
             snapshot.appendItems([
                 .dropDown(kAction, active: .segmentCleanup, options: allActions),
                 .dropDown(kIterations, active: currentIter, options: allIters),
-                .checkbox(kCustomOrder, title: "USE_CUSTOM_ORDER".localizedCapitalized(), enabled: customOrder),
+                .checkbox(kCustomOrder, title: "USE_CUSTOM_ORDER".localized(), enabled: customOrder),
             ], toSection: .action)
             
             // Add segments actions to their own separate group

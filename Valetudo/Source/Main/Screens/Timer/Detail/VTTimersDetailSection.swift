@@ -37,10 +37,10 @@ enum VTTimersDetailSection: RawRepresentable, Hashable {
     
     var title: String? {
         switch self {
-        case .general:    "GENERAL".localizedCapitalized()
-        case .schedule:   "SCHEDULE".localizedCapitalized()
-        case .preActions: "PRE_ACTIONS".localizedCapitalized()
-        case .action:     "ACTION".localizedCapitalized()
+        case .general:    "GENERAL".localized()
+        case .schedule:   "SCHEDULE".localized()
+        case .preActions: "PRE_ACTIONS".localized()
+        case .action:     "ACTION".localized()
         case .group:      ""
         }
     }

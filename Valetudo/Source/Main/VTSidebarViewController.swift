@@ -16,9 +16,9 @@ enum VTSidebarSection: Int, CaseIterable {
     var title: String? {
         switch (self) {
         case .main:     return nil
-        case .robot:    return "ROBOT".localizedCapitalized()
-        case .options:  return "OPTIONS".localizedCapitalized()
-        case .misc:     return "MISC".localizedCapitalized()
+        case .robot:    return "ROBOT".localized()
+        case .options:  return "OPTIONS".localized()
+        case .misc:     return "MISC".localized()
         }
     }
 }
@@ -37,15 +37,15 @@ enum VTSidebarItem: Hashable {
 
     var title: String {
         switch self {
-        case .home:                                        return "HOME".localizedCapitalized()
-        case .map:                                         return "MAP".localizedCapitalized()
-        case .consumables:                                 return "CONSUMABLES".localizedCapitalized()
-        case .robot:                                       return "ROBOT".localizedCapitalized()
-        case .timers:                                      return "TIMERS".localizedCapitalized()
-        case .log:                                         return "LOG".localizedCapitalized()
-        case .systemInformation:                           return "SYSTEM_INFORMATION".localizedCapitalized()
-        case .updater:                                     return "UPDATER".localizedCapitalized()
-        case .manualControl, .highResolutionManualControl: return "MANUAL_CONTROL".localizedCapitalized()
+        case .home:                                        return "HOME".localized()
+        case .map:                                         return "MAP".localized()
+        case .consumables:                                 return "CONSUMABLES".localized()
+        case .robot:                                       return "ROBOT".localized()
+        case .timers:                                      return "TIMERS".localized()
+        case .log:                                         return "LOG".localized()
+        case .systemInformation:                           return "SYSTEM_INFORMATION".localized()
+        case .updater:                                     return "UPDATER".localized()
+        case .manualControl, .highResolutionManualControl: return "MANUAL_CONTROL".localized()
         }
     }
 
@@ -94,7 +94,8 @@ class VTSidebarViewController: VTCollectionViewController {
         super.init(collectionViewLayout: layout)
         self.clearsSelectionOnViewWillAppear = true
         
-        self.navigationItem.rightBarButtonItem = VTValetudoEventBarButton(client: client)
+        self.navigationItem.rightBarButtonItem = VTValetudoEventBarButton(client: client, parentViewController: self)
+        self.navigationItem.leftBarButtonItem = VTRobotBarButton(parentViewController: self)
     }
 
     required init?(coder: NSCoder) {

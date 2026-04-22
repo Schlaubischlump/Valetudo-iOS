@@ -9,8 +9,6 @@ import MarkdownKit
 
 // TODO: We could add sse events in the future
 
-fileprivate let unknownString = "UNKNOWN".localizedUppercase()
-
 final class VTLogViewController: UICollectionViewController, UISearchResultsUpdating {
     typealias VTLogDataSource = UICollectionViewDiffableDataSource<VTLogSection, VTLogItem>
     typealias VTLogSnapshot = NSDiffableDataSourceSnapshot<VTLogSection, VTLogItem>
@@ -33,9 +31,9 @@ final class VTLogViewController: UICollectionViewController, UISearchResultsUpda
         let layout = UICollectionViewCompositionalLayout.list(using: listConfig)
         super.init(collectionViewLayout: layout)
         
-        navigationItem.title = "LOG".localizedCapitalized()
+        navigationItem.title = "LOG".localized()
         navigationItem.rightBarButtonItems = [
-            VTValetudoEventBarButton(client: client),
+            VTValetudoEventBarButton(client: client, parentViewController: self),
             UIBarButtonItem(
                 barButtonSystemItem: .refresh,
                 target: self,
@@ -150,7 +148,7 @@ final class VTLogViewController: UICollectionViewController, UISearchResultsUpda
             case .updateLogLevel(let presets):
                 let config = VTDropDownCellContentConfiguration<String>(
                     id: "log_level",
-                    title: "LEVEL".localizedCapitalized(),
+                    title: "LEVEL".localized(),
                     options: presets.map { $0.capitalized },
                     selection: self?.currentLogLevel ?? presets.last ?? ""
                 ) { newLevel in

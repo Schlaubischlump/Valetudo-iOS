@@ -49,11 +49,14 @@ class VTManualControlViewControllerBase: VTViewController {
         
         setupView()
         
-        navigationItem.title = "MANUAL_CONTROL".localizedCapitalized()
+        navigationItem.title = "MANUAL_CONTROL".localized()
         navigationItem.subtitle = "MANUAL_CONTROL_SUBTITLE".localized()
         
         enableSwitch.addTarget(self, action: #selector(didToggleManualControl(_:)), for: .valueChanged)
-        navigationItem.rightBarButtonItems = [VTValetudoEventBarButton(client: client), enableSwitchToolbarButton]
+        navigationItem.rightBarButtonItems = [
+            VTValetudoEventBarButton(client: client, parentViewController: self),
+            enableSwitchToolbarButton
+        ]
         
         disableAllButtons()
     }

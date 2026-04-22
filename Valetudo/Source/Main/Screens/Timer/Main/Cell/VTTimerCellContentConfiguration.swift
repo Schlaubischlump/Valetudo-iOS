@@ -64,7 +64,7 @@ extension VTTimer {
     var detailsText: String {
         let actionText = action.type.description.capitalized
         guard !preActions.isEmpty else { return actionText }
-        let pre = "\(preActions.count) " + "PRE_ACTIONS".localizedCapitalized()
+        let pre = "\(preActions.count) " + "PRE_ACTIONS".localized()
         return "\(actionText) • \(pre)"
     }
     

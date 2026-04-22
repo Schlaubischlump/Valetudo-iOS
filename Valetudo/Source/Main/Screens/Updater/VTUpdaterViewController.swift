@@ -9,7 +9,7 @@ import MarkdownKit
 
 // TODO: Test: After successfull install the check for update spins forever
 
-fileprivate let unknownString = "UNKNOWN".localizedUppercase()
+fileprivate let unknownString = "UNKNOWN".localized()
 
 fileprivate let kUpdate = "UPDATE_CHANNEL"
 fileprivate let kUpdateUnknown = "UPDATE_UNKNOWN"
@@ -48,8 +48,8 @@ class VTUpdaterViewController: VTCollectionViewController {
         let layout = UICollectionViewCompositionalLayout.list(using: listConfig)
         super.init(collectionViewLayout: layout)
         
-        navigationItem.title = "UPDATER".localizedCapitalized()
-        navigationItem.rightBarButtonItem = VTValetudoEventBarButton(client: client)
+        navigationItem.title = "UPDATER".localized()
+        navigationItem.rightBarButtonItem = VTValetudoEventBarButton(client: client, parentViewController: self)
     }
     
     required init?(coder: NSCoder) {
@@ -107,12 +107,12 @@ class VTUpdaterViewController: VTCollectionViewController {
             switch (wrappedItem.base) {
             case let item as VTCurrentVersionItem:
                 var listContent = cell.defaultContentConfiguration()
-                listContent.text = "VERSION".localizedCapitalized()
+                listContent.text = "VERSION".localized()
                 listContent.secondaryText = item.versionString
                 cell.contentConfiguration = listContent
             case let item as VTCurrentCommitItem:
                 var listContent = cell.defaultContentConfiguration()
-                listContent.text = "COMMIT".localizedCapitalized()
+                listContent.text = "COMMIT".localized()
                 listContent.secondaryText = item.commitString
                 cell.contentConfiguration = listContent
             default:
@@ -125,7 +125,7 @@ class VTUpdaterViewController: VTCollectionViewController {
             case let item as VTUpdaterProviderItem:
                 let config = VTDropDownCellContentConfiguration(
                     id: item.id,
-                    title: "UPDATE_CHANNEL".localizedCapitalized(),
+                    title: "UPDATE_CHANNEL".localized(),
                     options: item.options,
                     selection: item.active,
                     disableSelectionAfterAction: true
@@ -209,7 +209,7 @@ class VTUpdaterViewController: VTCollectionViewController {
                     image: item.image,
                     attributedMessage: attributedText,
                     baseTextColor: .label,
-                    buttonTitle: "DOWNLOAD".localizedCapitalized(),
+                    buttonTitle: "DOWNLOAD".localized(),
                     buttonAction: { [weak self] button in
                         button.isEnabled = false
                         Task {
@@ -229,7 +229,7 @@ class VTUpdaterViewController: VTCollectionViewController {
                         attributes: [.foregroundColor: UIColor.systemRed]
                     ),
                     baseTextColor: .systemRed,
-                    buttonTitle: "INSTALL".localizedCapitalized(),
+                    buttonTitle: "INSTALL".localized(),
                     buttonAction: { [weak self] button in
                         button.isEnabled = false
                         Task {
@@ -299,7 +299,7 @@ class VTUpdaterViewController: VTCollectionViewController {
     private func item(forState state: (any VTUpdaterState)?) -> VTAnyItem {
         let unknownState: VTAnyItem = .updateState(
             kUpdateUnknown,
-            title: "UPDATE_UNKNOWN".localizedCapitalized(),
+            title: "UPDATE_UNKNOWN".localized(),
             image: UIImage(systemName: "questionmark.circle.fill"),
             tintColor: .secondaryLabel
         )
@@ -308,16 +308,16 @@ class VTUpdaterViewController: VTCollectionViewController {
         case _ as VTUpdaterNoUpdateRequiredState:
             return .updateState(
                 kUpToDate,
-                title: "UP_TO_DATE".localizedCapitalized(),
+                title: "UP_TO_DATE".localized(),
                 image: UIImage(systemName: "checkmark.circle.fill"),
                 tintColor: .systemGreen
             )
         case _ as VTUpdaterIdleState:
-            return .loading(kCheckingForUpdates, message: "CHECKING_FOR_UPDATES".localizedCapitalized())
+            return .loading(kCheckingForUpdates, message: "CHECKING_FOR_UPDATES".localized())
         case _ as VTUpdaterErrorState:
             return .updateState(
                 kUpdatError,
-                title: "UPDATE_ERROR".localizedCapitalized(),
+                title: "UPDATE_ERROR".localized(),
                 image: UIImage(systemName: "xmark.circle.fill"),
                 tintColor: .systemRed
             )
@@ -326,34 +326,34 @@ class VTUpdaterViewController: VTCollectionViewController {
                 let formattedProgress = String(format: "%.0f", progress)
                 return .progress(
                     kProgress,
-                    message: "\(formattedProgress)% " + "DOWNLOADING_UPDATE".localizedCapitalized(),
+                    message: "\(formattedProgress)% " + "DOWNLOADING_UPDATE".localized(),
                     progress: progress
                 )
             } else {
-                return .loading(kLoading, message: "DOWNLOADING_UPDATE".localizedCapitalized())
+                return .loading(kLoading, message: "DOWNLOADING_UPDATE".localized())
             }
         case _ as VTUpdaterDisabledState:
             return .updateState(
                 kUpdateDisabled,
-                title: "UPDATE_DISABLED".localizedCapitalized(),
+                title: "UPDATE_DISABLED".localized(),
                 image: UIImage(systemName: "circle.slash.fill"),
                 tintColor: .secondaryLabel
             )
         case let approvalPendingState as VTUpdaterApprovalPendingState:
             return .updateAvailable(
                 kUpdateAvailable,
-                title: "VALETUDO".localizedCapitalized(),
+                title: "VALETUDO".localized(),
                 image: UIImage(named: "Logo"),
                 version: approvalPendingState.version,
                 changelog: approvalPendingState.changelog
             )
         case let applyPendingState as VTUpdaterApplyPendingState:
             if applyPendingState.busy {
-                return .loading(kApplyUpdate, message: "APPLY_UPDATE".localizedCapitalized())
+                return .loading(kApplyUpdate, message: "APPLY_UPDATE".localized())
             } else {
                 return .installUpdate(
                     kInstallUpdate,
-                    title: "INSTALL".localizedCapitalized(),
+                    title: "INSTALL".localized(),
                     image: UIImage(systemName: "arrow.trianglehead.2.counterclockwise"),
                     version: applyPendingState.version
                 )

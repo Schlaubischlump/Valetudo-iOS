@@ -75,7 +75,7 @@ final class VTReadMoreTextView: UITextView, UITextViewDelegate {
             let label = isExpanded ? "READ_LESS" : "READ_MORE"
             let actionURL = URL(string: isExpanded ? Self.readLessAction : Self.readMoreAction)!
             let readActionLink = NSAttributedString(
-                string: label.localizedCapitalized(),
+                string: label.localized(),
                 attributes: [
                     .link: actionURL,
                     .font: baseFont,

@@ -33,7 +33,7 @@ class VTRobotStatusView: UIView {
     
     private let titleLabel: UILabel = {
         let label = UILabel()
-        label.text = "ROBOT".localizedCapitalized()
+        label.text = "ROBOT".localized()
         label.font = UIFont.systemFont(ofSize: 16, weight: .semibold)
         label.translatesAutoresizingMaskIntoConstraints = false
         return label

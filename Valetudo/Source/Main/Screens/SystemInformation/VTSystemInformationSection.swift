@@ -19,14 +19,14 @@ enum VTSystemInformationSection: Int, CaseIterable {
     
     var title: String? {
         switch (self) {
-        case .robot:        "ROBOT".localizedCapitalized()
-        case .valetudo:     "VALETUDO".localizedCapitalized()
-        case .host:         "HOST".localizedCapitalized()
-        case .runtime:      "RUNTIME".localizedCapitalized()
+        case .robot:        "ROBOT".localized()
+        case .valetudo:     "VALETUDO".localized()
+        case .host:         "HOST".localized()
+        case .runtime:      "RUNTIME".localized()
             
         case .main:         nil
-        case .keys:         "KEYS".localizedCapitalized()
-        case .dependencies: "DEPENDENCIES".localizedCapitalized()
+        case .keys:         "KEYS".localized()
+        case .dependencies: "DEPENDENCIES".localized()
         }
     }
 }

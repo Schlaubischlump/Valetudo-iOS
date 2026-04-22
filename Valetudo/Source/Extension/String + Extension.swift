@@ -12,15 +12,15 @@ extension String {
         NSLocalizedString(self, comment: comment ?? "")
     }
     
-    func localizedCapitalized(comment: String? = nil) -> String {
+    /*func localized(comment: String? = nil) -> String {
         // capitilize words and preserve all uppercase words
-        self.localized(comment: comment)
-            .split(separator: " ")
+        self.localized(comment: comment).capitalized
+        /*    .split(separator: " ")
             .map { word in
                 word.prefix(1).uppercased() + word.dropFirst()
             }
-            .joined(separator: " ")
-    }
+            .joined(separator: " ")*/
+    }*/
     
     func localizedUppercase(comment: String? = nil) -> String {
         self.localized(comment: comment).uppercased()

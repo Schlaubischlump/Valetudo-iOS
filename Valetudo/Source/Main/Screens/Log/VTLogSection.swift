@@ -13,7 +13,7 @@ enum VTLogSection: Int, CaseIterable {
     var title: String? {
         switch (self) {
         case .main:    nil
-        case .log:  "LOG".localizedCapitalized()
+        case .log:  "LOG".localized()
         }
     }
 }

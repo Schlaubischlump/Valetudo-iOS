@@ -41,7 +41,7 @@ final class VTTimersViewController: VTCollectionViewController {
         super.viewDidLoad()
         
         navigationItem.rightBarButtonItems = [
-            VTValetudoEventBarButton(client: client),
+            VTValetudoEventBarButton(client: client, parentViewController: self),
             UIBarButtonItem(
                 barButtonSystemItem: .add,
                 target: self,
@@ -71,7 +71,7 @@ final class VTTimersViewController: VTCollectionViewController {
             guard let item = self?.dataSource.itemIdentifier(for: indexPath),
                   case .timer(let timer) = item else { return nil }
             
-            let delete = UIContextualAction(style: .destructive, title: "DELETE".localizedCapitalized()) { [weak self] _, _, completion in
+            let delete = UIContextualAction(style: .destructive, title: "DELETE".localized()) { [weak self] _, _, completion in
                 Task {
                     await self?.deleteTimer(timer)
                     completion(true)
@@ -181,7 +181,7 @@ final class VTTimersViewController: VTCollectionViewController {
     @objc private func didTapAdd() {
         let client = self.client
         let vc = VTTimerDetailViewController(timer: VTTimer(), client: client)
-        vc.title = "ADD_TIMER".localizedCapitalized()
+        vc.title = "ADD_TIMER".localized()
         vc.onDone = { [weak self] timer in
             Task {
                 do {
@@ -260,7 +260,7 @@ final class VTTimersViewController: VTCollectionViewController {
               case .timer(let timer) = item else { return }
 
         let vc = VTTimerDetailViewController(timer: timer, client: client)
-        vc.title = "EDIT_TIMER".localizedCapitalized()
+        vc.title = "EDIT_TIMER".localized()
         let client = self.client
         vc.onDone = { [weak self] timer in
             Task {
@@ -316,7 +316,7 @@ extension VTTimersViewController {
               let id = timer.id else { return nil }
 
         return UIContextMenuConfiguration(identifier: id as NSString, previewProvider: nil) { _ in
-            let delete = UIAction(title: "DELETE".localizedCapitalized(), image: UIImage(systemName: "trash"), attributes: .destructive) { [weak self] _ in
+            let delete = UIAction(title: "DELETE".localized(), image: UIImage(systemName: "trash"), attributes: .destructive) { [weak self] _ in
                 Task {
                     await self?.deleteTimer(timer)
                 }

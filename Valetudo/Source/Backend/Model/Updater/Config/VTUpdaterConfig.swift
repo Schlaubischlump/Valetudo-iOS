@@ -12,8 +12,8 @@ enum VTUpdaterProvider: String, Codable, Sendable, CaseIterable, Describable {
     
     var description: String {
         switch (self) {
-        case .github:        "RELEASE".localizedCapitalized()
-        case .githubNightly: "NIGHTLY".localizedCapitalized()
+        case .github:        "RELEASE".localized()
+        case .githubNightly: "NIGHTLY".localized()
         }
     }
 }

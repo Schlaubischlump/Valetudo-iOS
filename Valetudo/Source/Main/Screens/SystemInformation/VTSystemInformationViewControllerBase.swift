@@ -21,8 +21,8 @@ class VTSystemInformationViewControllerBase: VTCollectionViewController {
         let layout = UICollectionViewCompositionalLayout.list(using: listConfig)
         super.init(collectionViewLayout: layout)
         
-        navigationItem.title = "SYSTEM_INFORMATION".localizedCapitalized()
-        navigationItem.rightBarButtonItem = VTValetudoEventBarButton(client: client)
+        navigationItem.title = "SYSTEM_INFORMATION".localized()
+        navigationItem.rightBarButtonItem = VTValetudoEventBarButton(client: client, parentViewController: self)
     }
     
     required init?(coder: NSCoder) {

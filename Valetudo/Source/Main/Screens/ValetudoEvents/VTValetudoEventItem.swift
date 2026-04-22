@@ -33,7 +33,7 @@ struct VTValetudoEventItem: Hashable, Sendable {
         switch (event) {
         case _ as VTConsumableDepletedEvent:
             return [
-                UIContextualAction(style: .destructive, title: "RESET".localizedCapitalized()) { _,_,completion in
+                UIContextualAction(style: .destructive, title: "RESET".localized()) { _,_,completion in
                     Task { completion(await interact(.reset)) }
                 }
             ]
@@ -42,16 +42,16 @@ struct VTValetudoEventItem: Hashable, Sendable {
             _ as VTErrorStateEvent,
             _ as VTMopAttachmentReminderEvent:
             return [
-                UIContextualAction(style: .destructive, title: "DISMISS".localizedCapitalized()) { _,_,completion in
+                UIContextualAction(style: .destructive, title: "DISMISS".localized()) { _,_,completion in
                     Task { completion(await interact(.ok)) }
                 }
             ]
         case _ as VTPendingMapChangeEvent:
             return [
-                UIContextualAction(style: .destructive, title: "NO".localizedCapitalized()) { _,_,completion in
+                UIContextualAction(style: .destructive, title: "NO".localized()) { _,_,completion in
                     Task { completion(await interact(.no)) }
                 },
-                UIContextualAction(style: .normal, title: "YES".localizedCapitalized(), color: .systemGreen) { _,_,completion in
+                UIContextualAction(style: .normal, title: "YES".localized(), color: .systemGreen) { _,_,completion in
                     Task { completion(await interact(.yes)) }
                 }
             ]

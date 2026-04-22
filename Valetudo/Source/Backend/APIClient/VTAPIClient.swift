@@ -32,12 +32,6 @@ enum VTAPIError: Error, LocalizedError {
 }
 
 public actor VTAPIClient: VTAPIClientProtocol {
-    
-    static let shared: VTAPIClient? = {
-        // TODO: Make this URL configurable
-        guard let robotURL = URL(string: "http://dreame-vacuum-r2228o.fritz.box") else { return nil }
-        return VTAPIClient(baseURL: robotURL)
-    }()
 
     // MARK: - URLs
     let baseURL: URL

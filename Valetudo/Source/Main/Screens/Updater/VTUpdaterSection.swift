@@ -13,7 +13,7 @@ enum VTUpdaterSection: Int, CaseIterable {
     var title: String? {
         switch (self) {
         case .main:    nil
-        case .update:  "UPDATE".localizedCapitalized()
+        case .update:  "UPDATE".localized()
         }
     }
 }

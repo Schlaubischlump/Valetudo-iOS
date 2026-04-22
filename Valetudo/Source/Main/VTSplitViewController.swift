@@ -39,8 +39,8 @@ class VTSplitViewController: UISplitViewController, UISplitViewControllerDelegat
         }
         sidebar.navigationItem.titleView = VTNavigationTitleView(
             image: UIImage(named: "Logo"),
-            title: "VALETUDO".localizedCapitalized(),
-            subtitle: "VALETUDO_SUBTITLE".localizedCapitalized()
+            title: "VALETUDO".localized(),
+            subtitle: "VALETUDO_SUBTITLE".localized()
         )
 
         let sidebarNavController = UINavigationController(rootViewController: sidebar)
@@ -61,6 +61,7 @@ class VTSplitViewController: UISplitViewController, UISplitViewControllerDelegat
         case .updater:                      VTUpdaterViewController(client: client)
         case .log:                          VTLogViewController(client: client)
         case .timers:                       VTTimersViewController(client: client)
+        case .robot:                        VTRobotsListViewController()
         default:                            UIViewController()
         }
         vc.title = item.title

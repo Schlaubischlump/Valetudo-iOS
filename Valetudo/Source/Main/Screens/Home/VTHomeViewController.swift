@@ -113,7 +113,7 @@ class VTHomeViewController: VTViewController {
             robotStatusView.widthAnchor.constraint(equalToConstant: 118),
         ])
         
-        self.navigationItem.rightBarButtonItem = VTValetudoEventBarButton(client: client)
+        self.navigationItem.rightBarButtonItem = VTValetudoEventBarButton(client: client, parentViewController: self)
     }
 
     required init?(coder aDecoder: NSCoder) {
@@ -212,10 +212,10 @@ class VTHomeViewController: VTViewController {
         
         switch (entity.type) {
         case .charger_location:
-            title = "CHARGER".localizedCapitalized()
+            title = "CHARGER".localized()
             subtitle = robotInfo?.description ?? ""
         case .robot_position:
-            title = robotInfo?.description ?? "ROBOT".localizedCapitalized()
+            title = robotInfo?.description ?? "ROBOT".localized()
             if let state = robotState {
                 subtitle = "\(state.statusState.description.localizedUppercase()) - \(state.batterLevel)%"
             } else {

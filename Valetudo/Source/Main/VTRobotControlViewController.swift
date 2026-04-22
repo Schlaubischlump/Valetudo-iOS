@@ -160,13 +160,13 @@ class VTRobotControlViewController: VTViewController {
         titleIcon: UIImage(systemName: "drop.fill"),
     )
     private let iterationsRow = VTSegmentedControlRow<VTRepeatItem>(
-        title: "ITERATIONS".localizedCapitalized(),
+        title: "ITERATIONS".localized(),
         titleIcon: UIImage(systemName: "repeat"),
     )
 
     private let dockControls = {
         let dockControls = VTStackedControlRow<VTControlButton>(
-            title: "CHARGER".localizedCapitalized(),
+            title: "CHARGER".localized(),
             titleIcon: UIImage(systemName: "dock.arrow.down.rectangle")
         )
         dockControls.translatesAutoresizingMaskIntoConstraints = false
@@ -206,7 +206,7 @@ class VTRobotControlViewController: VTViewController {
     
     private let attachmentsControls = {
         let attachmentsControls = VTStackedControlRow<VTControlButton>(
-            title: "ATTACHMENTS".localizedCapitalized(),
+            title: "ATTACHMENTS".localized(),
             titleIcon: UIImage(systemName: "puzzlepiece.extension.fill")
         )
         attachmentsControls.axis = .vertical
@@ -216,7 +216,7 @@ class VTRobotControlViewController: VTViewController {
     
     private let statisticsControls = {
         let statisticsControls = VTStackedControlRow<VTControlLabel>(
-            title: "CURRENT_STATISTICS".localizedCapitalized(),
+            title: "CURRENT_STATISTICS".localized(),
             titleIcon: UIImage(systemName: "chart.bar.fill")
         )
         statisticsControls.axis = .horizontal
