@@ -6,6 +6,144 @@
 //
 import UIKit
 
+/// A robot symbol view with animatable brushes and mop pads, used in the launch screen.
+final class VTRobotVacuumView: UIView {
+    struct Brush: OptionSet {
+        let rawValue: Int
+
+        init(rawValue: Int) {
+            self.rawValue = rawValue
+        }
+
+        static let left = Brush(rawValue: 1 << 0)
+        static let right = Brush(rawValue: 1 << 1)
+        static let all: Brush = [.left, .right]
+    }
+    
+    struct MopPad: OptionSet {
+        let rawValue: Int
+
+        init(rawValue: Int) {
+            self.rawValue = rawValue
+        }
+
+        static let left = MopPad(rawValue: 1 << 0)
+        static let right = MopPad(rawValue: 1 << 1)
+        static let all: MopPad = [.left, .right]
+    }
+
+    private let leftBrushView = VTRobotVaccuumBrushView()
+    private let rightBrushView = VTRobotVaccuumBrushView()
+    private let leftMopView = VTRobotVacuumMopView()
+    private let rightMopView = VTRobotVacuumMopView()
+    private let bodyView = VTRobotVacuumBodyView()
+
+    var lineColor: UIColor = .black {
+        didSet {
+            leftBrushView.lineColor = lineColor
+            rightBrushView.lineColor = lineColor
+            bodyView.lineColor = lineColor
+        }
+    }
+
+    var fillColor: UIColor = .white {
+        didSet { bodyView.fillColor = fillColor }
+    }
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        configureView()
+    }
+
+    required init?(coder: NSCoder) {
+        super.init(coder: coder)
+        configureView()
+    }
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+
+        bodyView.frame = bounds
+
+        let s = min(bounds.width, bounds.height)
+        let drawingRect = CGRect(
+            x: bounds.midX - s * 0.5,
+            y: bounds.midY - s * 0.5,
+            width: s,
+            height: s
+        )
+        let brushDiameter = s * 0.18
+        let brushSize = CGSize(width: brushDiameter, height: brushDiameter)
+        let mopDiameter = s * 0.3
+        let mopSize = CGSize(width: mopDiameter, height: mopDiameter)
+
+        leftBrushView.bounds = CGRect(origin: .zero, size: brushSize)
+        rightBrushView.bounds = CGRect(origin: .zero, size: brushSize)
+        leftBrushView.center = CGPoint(x: drawingRect.midX - s * 0.235, y: drawingRect.midY + s * 0.365)
+        rightBrushView.center = CGPoint(x: drawingRect.midX + s * 0.235, y: drawingRect.midY + s * 0.365)
+
+        leftMopView.bounds = CGRect(origin: .zero, size: mopSize)
+        rightMopView.bounds = CGRect(origin: .zero, size: mopSize)
+        leftMopView.center = CGPoint(x: mopDiameter, y: drawingRect.minY + mopDiameter/2 * 1.3)
+        rightMopView.center = CGPoint(x: drawingRect.maxX - mopDiameter, y: drawingRect.minY + mopDiameter/2 * 1.3)
+    }
+
+    private func configureView() {
+        backgroundColor = .clear
+        isOpaque = false
+        clipsToBounds = false
+        contentMode = .redraw
+
+        leftBrushView.lineColor = lineColor
+        rightBrushView.lineColor = lineColor
+        bodyView.lineColor = lineColor
+        bodyView.fillColor = fillColor
+
+        addSubview(leftMopView)
+        addSubview(rightMopView)
+        addSubview(leftBrushView)
+        addSubview(rightBrushView)
+        addSubview(bodyView)
+    }
+
+    func startAnimatingBrushes(_ brushes: Brush = .all) {
+        if brushes.contains(.left) {
+            leftBrushView.startAnimating(clockwise: false)
+        }
+        if brushes.contains(.right) {
+            rightBrushView.startAnimating(clockwise: true)
+        }
+    }
+    
+    func stopAnimatingBrushes(_ brushes: Brush = .all) {
+        if brushes.contains(.left) {
+            leftBrushView.stopAnimating()
+        }
+        if brushes.contains(.right) {
+            rightBrushView.stopAnimating()
+        }
+    }
+    
+    func startAnimatingMopPads(_ mopPad: MopPad = .all) {
+        if mopPad.contains(.left) {
+            leftMopView.startAnimating(clockwise: false)
+        }
+        if mopPad.contains(.right) {
+            rightMopView.startAnimating(clockwise: true)
+        }
+    }
+
+    func stopAnimatingMopPads(_ mopPad: MopPad = .all) {
+        if mopPad.contains(.left) {
+            leftMopView.stopAnimating()
+        }
+        if mopPad.contains(.right) {
+            rightMopView.stopAnimating()
+        }
+    }
+}
+
+
 private final class VTRobotVacuumMopView: UIView {
     private let animationKey = "robotMopSpin"
 
@@ -44,6 +182,16 @@ private final class VTRobotVacuumMopView: UIView {
         context.saveGState()
         padPath.addClip()
 
+        // Draws a set of parallel, flowing stripe lines using cubic Bézier curves.
+        //
+        // Each stripe is a single cubic Bézier curve that starts near the bottom-left
+        // edge of the circle’s bounds and ends near the top-right edge. The control
+        // points are positioned symmetrically around the center to produce a smooth,
+        // S-shaped curve.
+        //
+        // The loop horizontally offsets copies of this base curve to create a series
+        // of visually parallel stripes. The result is a soft, wave-like pattern that
+        // resembles flowing ribbons clipped to the circular area.
         UIColor.white.withAlphaComponent(0.38).setStroke()
         for index in -2...2 {
             let offset = CGFloat(index) * diameter * 0.16
@@ -323,141 +471,5 @@ private final class VTRobotVacuumBodyView: UIView {
             cornerRadius: pillHeight * 0.5
         )
         pill.fill()
-    }
-}
-
-final class VTRobotVacuumView: UIView {
-    struct Brush: OptionSet {
-        let rawValue: Int
-
-        init(rawValue: Int) {
-            self.rawValue = rawValue
-        }
-
-        static let left = Brush(rawValue: 1 << 0)
-        static let right = Brush(rawValue: 1 << 1)
-        static let all: Brush = [.left, .right]
-    }
-    
-    struct MopPad: OptionSet {
-        let rawValue: Int
-
-        init(rawValue: Int) {
-            self.rawValue = rawValue
-        }
-
-        static let left = MopPad(rawValue: 1 << 0)
-        static let right = MopPad(rawValue: 1 << 1)
-        static let all: MopPad = [.left, .right]
-    }
-
-    private let leftBrushView = VTRobotVaccuumBrushView()
-    private let rightBrushView = VTRobotVaccuumBrushView()
-    private let leftMopView = VTRobotVacuumMopView()
-    private let rightMopView = VTRobotVacuumMopView()
-    private let bodyView = VTRobotVacuumBodyView()
-
-    var lineColor: UIColor = .black {
-        didSet {
-            leftBrushView.lineColor = lineColor
-            rightBrushView.lineColor = lineColor
-            bodyView.lineColor = lineColor
-        }
-    }
-
-    var fillColor: UIColor = .white {
-        didSet { bodyView.fillColor = fillColor }
-    }
-
-    override init(frame: CGRect) {
-        super.init(frame: frame)
-        configureView()
-    }
-
-    required init?(coder: NSCoder) {
-        super.init(coder: coder)
-        configureView()
-    }
-
-    override func layoutSubviews() {
-        super.layoutSubviews()
-
-        bodyView.frame = bounds
-
-        let s = min(bounds.width, bounds.height)
-        let drawingRect = CGRect(
-            x: bounds.midX - s * 0.5,
-            y: bounds.midY - s * 0.5,
-            width: s,
-            height: s
-        )
-        let brushDiameter = s * 0.18
-        let brushSize = CGSize(width: brushDiameter, height: brushDiameter)
-        let mopDiameter = s * 0.3
-        let mopSize = CGSize(width: mopDiameter, height: mopDiameter)
-
-        leftBrushView.bounds = CGRect(origin: .zero, size: brushSize)
-        rightBrushView.bounds = CGRect(origin: .zero, size: brushSize)
-        leftBrushView.center = CGPoint(x: drawingRect.midX - s * 0.235, y: drawingRect.midY + s * 0.365)
-        rightBrushView.center = CGPoint(x: drawingRect.midX + s * 0.235, y: drawingRect.midY + s * 0.365)
-
-        leftMopView.bounds = CGRect(origin: .zero, size: mopSize)
-        rightMopView.bounds = CGRect(origin: .zero, size: mopSize)
-        leftMopView.center = CGPoint(x: mopDiameter, y: drawingRect.minY + mopDiameter/2 * 1.3)
-        rightMopView.center = CGPoint(x: drawingRect.maxX - mopDiameter, y: drawingRect.minY + mopDiameter/2 * 1.3)
-    }
-
-    private func configureView() {
-        backgroundColor = .clear
-        isOpaque = false
-        clipsToBounds = false
-        contentMode = .redraw
-
-        leftBrushView.lineColor = lineColor
-        rightBrushView.lineColor = lineColor
-        bodyView.lineColor = lineColor
-        bodyView.fillColor = fillColor
-
-        addSubview(leftMopView)
-        addSubview(rightMopView)
-        addSubview(leftBrushView)
-        addSubview(rightBrushView)
-        addSubview(bodyView)
-    }
-
-    func startAnimatingBrushes(_ brushes: Brush = .all) {
-        if brushes.contains(.left) {
-            leftBrushView.startAnimating(clockwise: false)
-        }
-        if brushes.contains(.right) {
-            rightBrushView.startAnimating(clockwise: true)
-        }
-    }
-    
-    func stopAnimatingBrushes(_ brushes: Brush = .all) {
-        if brushes.contains(.left) {
-            leftBrushView.stopAnimating()
-        }
-        if brushes.contains(.right) {
-            rightBrushView.stopAnimating()
-        }
-    }
-    
-    func startAnimatingMopPads(_ mopPad: MopPad = .all) {
-        if mopPad.contains(.left) {
-            leftMopView.startAnimating(clockwise: false)
-        }
-        if mopPad.contains(.right) {
-            rightMopView.startAnimating(clockwise: true)
-        }
-    }
-
-    func stopAnimatingMopPads(_ mopPad: MopPad = .all) {
-        if mopPad.contains(.left) {
-            leftMopView.stopAnimating()
-        }
-        if mopPad.contains(.right) {
-            rightMopView.stopAnimating()
-        }
     }
 }
