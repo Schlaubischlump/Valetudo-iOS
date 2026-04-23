@@ -8,94 +8,7 @@ import Darwin
 import Foundation
 import Network
 
-/// A Valetudo robot discovered through Bonjour/mDNS.
-///
-/// Valetudo advertises a dedicated `_valetudo._tcp.` Bonjour service. The service TXT
-/// record contains a stable `id` plus optional robot metadata such as manufacturer, model,
-/// version, and display name.
-struct VTMDNSRobot: Identifiable, Hashable, Sendable {
-    /// Stable robot identifier from the Valetudo Bonjour TXT `id` record.
-    let id: String
 
-    /// Human-readable robot name from TXT `name`, falling back to the Bonjour service name.
-    let name: String
-
-    /// Bonjour service instance name.
-    let serviceName: String
-
-    /// Manufacturer from TXT `manufacturer`, if advertised.
-    let manufacturer: String?
-
-    /// Model from TXT `model`, if advertised.
-    let model: String?
-
-    /// Valetudo version from TXT `version`, if advertised.
-    let version: String?
-
-    /// Decoded TXT record values advertised with the service.
-    let txtRecord: [String: String]
-    
-    let endpoint: NWEndpoint
-
-    @MainActor
-    private func resolvedHostPortEndpoint() async -> (host: NWEndpoint.Host, port: NWEndpoint.Port)? {
-        await withCheckedContinuation { continuation in
-            let connection = NWConnection(to: endpoint, using: .tcp)
-            let resolution = VTEndpointResolution(connection: connection, continuation: continuation)
-
-            connection.stateUpdateHandler = { state in
-                Task { @MainActor in
-                    switch state {
-                    case .ready:
-                        if let remoteEndpoint = connection.currentPath?.remoteEndpoint,
-                           case let .hostPort(host, port) = remoteEndpoint {
-                            resolution.resume(with: (host, port))
-                        } else {
-                            resolution.resume(with: nil)
-                        }
-                    case .failed, .cancelled:
-                        resolution.resume(with: nil)
-                    default:
-                        break
-                    }
-                }
-            }
-            connection.start(queue: .main)
-        }
-    }
-    
-    /// Base HTTP URL for connecting to the robot web interface.
-    @MainActor
-    func getUrl() async -> URL? {
-        guard let resolvedEndpoint = await resolvedHostPortEndpoint() else { return nil }
-        let host: String? = switch resolvedEndpoint.host {
-        case let .name(name, _):
-            name
-        case let .ipv4(address):
-            address.rawValue.ipString(addressFamily: AF_INET, maxLength: INET_ADDRSTRLEN)
-        case let .ipv6(address):
-            address.rawValue.ipString(addressFamily: AF_INET6, maxLength: INET6_ADDRSTRLEN)
-        @unknown default:
-            nil
-        }
-
-        guard let host else { return nil }
-
-        var components = URLComponents()
-        components.scheme = "http"
-        if host.contains(":") {
-            components.percentEncodedHost = "[\(host)]"
-        } else {
-            components.host = host
-        }
-        if resolvedEndpoint.port.rawValue != 80 {
-            components.port = Int(resolvedEndpoint.port.rawValue)
-        }
-        return components.url
-    }
-
-
-}
 
 /// Scans the local network for Valetudo robots advertised through Bonjour/mDNS.
 ///
@@ -242,26 +155,4 @@ final class VTMDNSClient {
         scanContinuation?.yield(sortedRobots)
     }
 }
-
-@MainActor
-private final class VTEndpointResolution {
-    private let connection: NWConnection
-    private let continuation: CheckedContinuation<(host: NWEndpoint.Host, port: NWEndpoint.Port)?, Never>
-    private var didResume = false
-    init(
-        connection: NWConnection,
-        continuation: CheckedContinuation<(host: NWEndpoint.Host, port: NWEndpoint.Port)?, Never>
-    ) {
-        self.connection = connection
-        self.continuation = continuation
-    }
-
-    func resume(with endpoint: (host: NWEndpoint.Host, port: NWEndpoint.Port)?) {
-        guard !didResume else { return }
-        didResume = true
-        connection.cancel()
-        continuation.resume(returning: endpoint)
-    }
-}
-
 
