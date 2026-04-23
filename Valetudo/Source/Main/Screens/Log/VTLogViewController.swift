@@ -9,7 +9,7 @@ import MarkdownKit
 
 // TODO: We could add sse events in the future
 
-final class VTLogViewController: UICollectionViewController, UISearchResultsUpdating {
+final class VTLogViewController: VTCollectionViewController, UISearchResultsUpdating {
     typealias VTLogDataSource = UICollectionViewDiffableDataSource<VTLogSection, VTLogItem>
     typealias VTLogSnapshot = NSDiffableDataSourceSnapshot<VTLogSection, VTLogItem>
     
@@ -81,8 +81,7 @@ final class VTLogViewController: UICollectionViewController, UISearchResultsUpda
             withReuseIdentifier: VTHeaderView.reuseIdentifier
         )
         
-        collectionView.refreshControl = refreshControl
-        refreshControl.addTarget(self, action: #selector(didPullToRefresh), for: .valueChanged)
+        configureRefreshControlIfSupported(refreshControl, action: #selector(didPullToRefresh))
     }
     
     @objc private func shareLogFile() {
@@ -122,6 +121,9 @@ final class VTLogViewController: UICollectionViewController, UISearchResultsUpda
     
     
     @objc private func animatePullToRefresh() {
+        #if targetEnvironment(macCatalyst)
+        self.didPullToRefresh()
+        #else
         guard !refreshControl.isRefreshing else { return }
         self.refreshControl.beginRefreshing()
         
@@ -134,6 +136,12 @@ final class VTLogViewController: UICollectionViewController, UISearchResultsUpda
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
             self?.didPullToRefresh()
         }
+        #endif
+    }
+    
+    @MainActor
+    override func reconnectAndRefresh() async {
+        await self.reloadData(animated: true)
     }
     
     @objc private func didPullToRefresh() {

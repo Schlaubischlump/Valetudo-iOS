@@ -123,10 +123,15 @@ class VTSidebarViewController: VTCollectionViewController {
     
     private func selectFirstItemIfNeeded() {
         guard viewIfLoaded != nil, let isCompact = splitViewController?.isCompact else { return }
+        guard !isCompact else { return }
+        guard collectionView.indexPathsForSelectedItems?.isEmpty ?? true else { return }
         
-        if !isCompact, (collectionView.indexPathsForSelectedItems?.isEmpty ?? false) {
-            collectionView.selectItem(at: IndexPath(row: 0, section: 0), animated: false, scrollPosition: .top)
-        }
+        let snapshot = dataSource.snapshot()
+        guard let firstSection = snapshot.sectionIdentifiers.first,
+              let firstItem = snapshot.itemIdentifiers(inSection: firstSection).first,
+              let indexPath = dataSource.indexPath(for: firstItem) else { return }
+
+        collectionView.selectItem(at: indexPath, animated: false, scrollPosition: .top)
     }
 
     private func configureCollectionView() {

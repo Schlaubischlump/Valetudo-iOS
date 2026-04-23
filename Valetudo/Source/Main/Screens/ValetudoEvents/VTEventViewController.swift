@@ -85,8 +85,7 @@ final class VTValetudoEventsViewController: VTCollectionViewController {
 
         let layout = UICollectionViewCompositionalLayout.list(using: config)
         collectionView.collectionViewLayout = layout
-        collectionView.refreshControl = refreshControl
-        refreshControl.addTarget(self, action: #selector(didPullToRefresh), for: .valueChanged)
+        configureRefreshControlIfSupported(refreshControl, action: #selector(didPullToRefresh))
 
         view.addSubview(collectionView)
     }

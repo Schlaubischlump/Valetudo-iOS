@@ -86,8 +86,7 @@ class VTUpdaterViewController: VTCollectionViewController {
             withReuseIdentifier: VTFooterView.reuseIdentifier
         )
         
-        collectionView.refreshControl = refreshControl
-        refreshControl.addTarget(self, action: #selector(didPullToRefresh), for: .valueChanged)
+        configureRefreshControlIfSupported(refreshControl, action: #selector(didPullToRefresh))
     }
     
     @objc private func didPullToRefresh() {

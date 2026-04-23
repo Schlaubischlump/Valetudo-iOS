@@ -1145,6 +1145,17 @@
         }
       }
     },
+    "REFRESH" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Refresh"
+          }
+        }
+      }
+    },
     "RELEASE" : {
       "extractionState" : "manual",
       "localizations" : {

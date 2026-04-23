@@ -87,8 +87,7 @@ final class VTTimersViewController: VTCollectionViewController {
     }
     
     private func configureCollectionView() {
-        collectionView.refreshControl = refreshControl
-        refreshControl.addTarget(self, action: #selector(didPullToRefresh), for: .valueChanged)
+        configureRefreshControlIfSupported(refreshControl, action: #selector(didPullToRefresh))
 
         collectionView.register(
             VTHeaderView.self,
