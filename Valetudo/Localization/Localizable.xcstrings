@@ -1222,6 +1222,17 @@
         }
       }
     },
+    "SCANNING" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scanning"
+          }
+        }
+      }
+    },
     "SCHEDULE" : {
       "extractionState" : "manual",
       "localizations" : {

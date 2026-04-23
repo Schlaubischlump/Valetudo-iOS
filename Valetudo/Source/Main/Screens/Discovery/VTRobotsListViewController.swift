@@ -10,12 +10,19 @@ import UIKit
 final class VTRobotsListViewController: VTCollectionViewController {
     private typealias DataSource = UICollectionViewDiffableDataSource<VTRobotsListViewSection, VTRobotsListViewItem>
     private typealias Snapshot = NSDiffableDataSourceSnapshot<VTRobotsListViewSection, VTRobotsListViewItem>
+    private static let scanRetryDelay: Duration = .milliseconds(750)
 
     var onSelectRobot: ((VTMDNSRobot) -> Void)?
 
     private let mdnsClient = VTMDNSClient()
     private var dataSource: DataSource!
     private var scanTask: Task<Void, Never>?
+    
+    /// We track the current generation of a scan for two reasons:
+    /// - stale robot results should not be publishd into the new scan’s UI
+    /// - prevent running the retry path and restart scanning even though a newer scan is already active
+    private var scanGeneration = 0
+    private var isScanning = false
     private var robots: [VTMDNSRobot] = []
 
     init() {
@@ -26,15 +33,12 @@ final class VTRobotsListViewController: VTCollectionViewController {
         super.init(collectionViewLayout: layout)
 
         title = "ROBOTS".localized()
+        navigationItem.largeTitleDisplayMode = .never
         navigationItem.subtitle = "SEARCHING_FOR_ROBOTS".localized()
     }
 
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
-    }
-
-    deinit {
-        scanTask?.cancel()
     }
 
     override func viewDidLoad() {
@@ -71,83 +75,96 @@ final class VTRobotsListViewController: VTCollectionViewController {
             cell.backgroundConfiguration = .listCell()
         }
 
-        let statusCell = UICollectionView.CellRegistration<UICollectionViewListCell, VTRobotsListViewItem> { cell, _, item in
-            var content = cell.defaultContentConfiguration()
-            content.textProperties.alignment = .center
-            content.textProperties.color = .secondaryLabel
-            content.secondaryTextProperties.alignment = .center
-            content.secondaryTextProperties.color = .tertiaryLabel
-
-            switch item {
-            case .scanning:
-                content.image = UIImage(systemName: "dot.radiowaves.left.and.right")
-                content.text = "SEARCHING_FOR_ROBOTS".localized()
-                //content.secondaryText = "Keep this screen open to discover robots on your local network."
-            case .empty:
-                content.image = UIImage(systemName: "wifi.slash")
-                content.text = "NO_ROBOTS_FOUND".localized()
-                content.secondaryText = "MAKE_SURE_ROBOT_IS_ONLINE".localized()
-            case .robot:
-                break
-            }
-
-            cell.contentConfiguration = content
-            cell.accessories = []
-            cell.backgroundConfiguration = .listCell()
-        }
-
         dataSource = DataSource(collectionView: collectionView) { collectionView, indexPath, item in
             switch item {
             case let .robot(robot):
                 collectionView.dequeueConfiguredReusableCell(using: robotCell, for: indexPath, item: robot)
-            case .scanning, .empty:
-                collectionView.dequeueConfiguredReusableCell(using: statusCell, for: indexPath, item: item)
             }
         }
     }
 
     @MainActor
-    private func startScanning() {
-        stopScanning()
-        robots = []
+    private func startScanning(resetRobots: Bool = true) {
+        stopScanning(preservesScanningState: !resetRobots)
+        scanGeneration += 1
+        let currentScanGeneration = scanGeneration
+
+        if resetRobots {
+            robots = []
+        }
+
+        isScanning = true
         applySnapshot(animated: false)
 
         scanTask = Task { @MainActor [weak self] in
             guard let self else { return }
 
-            var didReceiveRobots = false
             for await robots in mdnsClient.scanForRobotsStream() {
-                didReceiveRobots = true
+                guard self.scanGeneration == currentScanGeneration else { return }
                 self.robots = robots
                 self.applySnapshot(animated: true)
             }
 
-            if !Task.isCancelled, didReceiveRobots, self.robots.isEmpty {
-                self.applySnapshot(animated: true)
-            }
+            await self.retryScanningIfNeeded(scanGeneration: currentScanGeneration)
         }
     }
 
     @MainActor
-    private func stopScanning() {
+    private func stopScanning(preservesScanningState: Bool = false) {
+        scanGeneration += 1
         scanTask?.cancel()
         scanTask = nil
+
+        if !preservesScanningState {
+            isScanning = false
+        }
+
         mdnsClient.stopScanning()
+        setNeedsUpdateContentUnavailableConfiguration()
+    }
+
+    @MainActor
+    private func retryScanningIfNeeded(scanGeneration: Int) async {
+        guard self.scanGeneration == scanGeneration, !Task.isCancelled else { return }
+
+        scanTask = nil
+
+        try? await Task.sleep(for: Self.scanRetryDelay)
+        guard self.scanGeneration == scanGeneration, !Task.isCancelled else { return }
+        startScanning(resetRobots: false)
     }
 
     @MainActor
     private func applySnapshot(animated: Bool) {
         var snapshot = Snapshot()
 
-        if robots.isEmpty {
-            snapshot.appendSections([.status])
-            snapshot.appendItems([scanTask == nil ? .empty : .scanning], toSection: .status)
-        } else {
-            snapshot.appendSections([.robots])
-            snapshot.appendItems(robots.map(VTRobotsListViewItem.robot), toSection: .robots)
-        }
+        snapshot.appendSections([.robots])
+        snapshot.appendItems(robots.map(VTRobotsListViewItem.robot), toSection: .robots)
+        setNeedsUpdateContentUnavailableConfiguration()
 
         dataSource.apply(snapshot, animatingDifferences: animated)
+    }
+
+    override func updateContentUnavailableConfiguration(using state: UIContentUnavailableConfigurationState) {
+        guard robots.isEmpty else {
+            contentUnavailableConfiguration = nil
+            return
+        }
+
+        if isScanning {
+            var config = UIContentUnavailableConfiguration.loading()
+            config.text = "SCANNING".localized()
+            config.secondaryText = "SEARCHING_FOR_ROBOTS".localized()
+            contentUnavailableConfiguration = config
+        } else {
+            // Mostly a safeguard. You should never see this screen.
+            var config = UIContentUnavailableConfiguration.empty()
+            config.image = UIImage(systemName: "wifi.slash")
+            config.text = "NO_ROBOTS_FOUND".localized()
+            config.secondaryText = "MAKE_SURE_ROBOT_IS_ONLINE".localized()
+            config.imageProperties.preferredSymbolConfiguration = .init(pointSize: 36, weight: .regular)
+            contentUnavailableConfiguration = config
+        }
     }
 
     override func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
@@ -157,164 +174,7 @@ final class VTRobotsListViewController: VTCollectionViewController {
               case let .robot(robot) = item else { return }
 
         Task { @MainActor [weak self] in
-            guard let self else { return }
-            
-            if let onSelectRobot = self.onSelectRobot {
-                onSelectRobot(robot)
-                return
-            }
-            
-            guard let url = await robot.getUrl() else {
-                self.presentUnableToResolveAlert(for: robot)
-                return
-            }
-
-            self.presentResolvedURLAlert(url: url, for: robot)
+            self?.onSelectRobot?(robot)
         }
-    }
-
-    private func presentResolvedURLAlert(url: URL, for robot: VTMDNSRobot) {
-        let alert = UIAlertController(
-            title: robot.name,
-            message: url.absoluteString,
-            preferredStyle: .alert
-        )
-        alert.addAction(UIAlertAction(title: "OPEN".localized(), style: .default) { _ in
-            UIApplication.shared.open(url)
-        })
-        alert.addAction(UIAlertAction(title: "OK".localized(), style: .cancel))
-        present(alert, animated: true)
-    }
-
-    private func presentUnableToResolveAlert(for robot: VTMDNSRobot) {
-        let alert = UIAlertController(
-            title: robot.name,
-            message: "UNABLE_TO_RESOLVE_ROBOT_URL".localized(),
-            preferredStyle: .alert
-        )
-        alert.addAction(UIAlertAction(title: "OK", style: .cancel))
-        present(alert, animated: true)
-    }
-}
-private struct VTRobotCellContentConfiguration: UIContentConfiguration, Hashable {
-    let robot: VTMDNSRobot
-
-    func makeContentView() -> UIView & UIContentView {
-        VTRobotCellContentView(configuration: self)
-    }
-
-    func updated(for state: UIConfigurationState) -> VTRobotCellContentConfiguration {
-        self
-    }
-}
-
-private final class VTRobotCellContentView: UIView, UIContentView {
-    private let iconView: UIImageView = {
-        let imageView = UIImageView(image: UIImage(systemName: "robotic.vacuum.fill"))
-        imageView.tintColor = .systemBlue
-        imageView.contentMode = .scaleAspectFit
-        imageView.translatesAutoresizingMaskIntoConstraints = false
-        return imageView
-    }()
-
-    private let titleLabel: UILabel = {
-        let label = UILabel()
-        label.font = .preferredFont(forTextStyle: .headline)
-        label.adjustsFontForContentSizeCategory = true
-        label.numberOfLines = 1
-        return label
-    }()
-
-    private let subtitleLabel: UILabel = {
-        let label = UILabel()
-        label.font = .preferredFont(forTextStyle: .subheadline)
-        label.adjustsFontForContentSizeCategory = true
-        label.textColor = .secondaryLabel
-        label.numberOfLines = 2
-        return label
-    }()
-
-    private let serviceLabel: UILabel = {
-        let label = UILabel()
-        label.font = .preferredFont(forTextStyle: .caption1)
-        label.adjustsFontForContentSizeCategory = true
-        label.textColor = .secondaryLabel
-        label.numberOfLines = 1
-        return label
-    }()
-
-    private let idLabel: UILabel = {
-        let label = UILabel()
-        label.font = .monospacedSystemFont(ofSize: UIFont.preferredFont(forTextStyle: .caption1).pointSize, weight: .regular)
-        label.adjustsFontForContentSizeCategory = true
-        label.textColor = .tertiaryLabel
-        label.numberOfLines = 1
-        return label
-    }()
-
-    private var currentConfiguration: VTRobotCellContentConfiguration!
-
-    var configuration: UIContentConfiguration {
-        get { currentConfiguration }
-        set {
-            guard let configuration = newValue as? VTRobotCellContentConfiguration else { return }
-            currentConfiguration = configuration
-            apply(configuration)
-        }
-    }
-
-    init(configuration: VTRobotCellContentConfiguration) {
-        self.currentConfiguration = configuration
-        super.init(frame: .zero)
-        setupViews()
-        apply(configuration)
-    }
-
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-
-    private func setupViews() {
-        let textStack = UIStackView(arrangedSubviews: [titleLabel, subtitleLabel, serviceLabel, idLabel])
-        textStack.axis = .vertical
-        textStack.spacing = 3
-        textStack.alignment = .fill
-        textStack.translatesAutoresizingMaskIntoConstraints = false
-
-        let contentStack = UIStackView(arrangedSubviews: [iconView, textStack])
-        contentStack.axis = .horizontal
-        contentStack.spacing = 14
-        contentStack.alignment = .top
-        contentStack.translatesAutoresizingMaskIntoConstraints = false
-
-        addSubview(contentStack)
-
-        NSLayoutConstraint.activate([
-            iconView.widthAnchor.constraint(equalToConstant: 32),
-            iconView.heightAnchor.constraint(equalToConstant: 32),
-
-            contentStack.topAnchor.constraint(equalTo: topAnchor, constant: 12),
-            contentStack.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -12),
-            contentStack.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 16),
-            contentStack.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -16)
-        ])
-    }
-
-    private func apply(_ configuration: VTRobotCellContentConfiguration) {
-        let robot = configuration.robot
-        titleLabel.text = robot.name
-        subtitleLabel.text = Self.subtitle(for: robot)
-        serviceLabel.text = "SERVICE".localized() + ": \(robot.serviceName)"
-        idLabel.text = "ID".localized() + " : \(robot.id)"
-    }
-
-    private static func subtitle(for robot: VTMDNSRobot) -> String {
-        let modelParts = [robot.manufacturer, robot.model]
-            .compactMap { $0 }
-            .filter { !$0.isEmpty }
-
-        let model = modelParts.isEmpty ? "UNKNOWN_MODEL".localized() : modelParts.joined(separator: " ")
-        guard let version = robot.version, !version.isEmpty else { return model }
-        return "\(model) · " + "VALETUDO".localized() + " \(version)"
     }
 }

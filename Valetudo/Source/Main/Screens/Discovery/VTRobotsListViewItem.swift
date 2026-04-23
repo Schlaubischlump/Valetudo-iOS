@@ -6,6 +6,4 @@
 //
 enum VTRobotsListViewItem: Hashable, Sendable {
     case robot(VTMDNSRobot)
-    case scanning
-    case empty
 }

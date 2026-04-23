@@ -56,16 +56,27 @@ class VTSceneDelegate: UIResponder, UIWindowSceneDelegate {
             launchScreenViewController.animateDismiss { [weak self] in
                 self?.setRootViewController(robotsListNavigationController, in: window, animated: true)
             }
-            return
+        } else {
+            setRootViewController(robotsListNavigationController, in: window, animated: true)
         }
-
-        setRootViewController(robotsListNavigationController, in: window, animated: true)
+    }
+    
+    @MainActor
+    private func presentUnableToResolveAlert(for robot: VTMDNSRobot) {
+        let alert = UIAlertController(
+            title: robot.name,
+            message: "UNABLE_TO_RESOLVE_ROBOT_URL".localized(),
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "OK".localized(), style: .cancel))
+        
+        self.window?.rootViewController?.present(alert, animated: true)
     }
     
     @MainActor
     private func makePrimaryAndShowMainInterface(robot: VTMDNSRobot, in windowScene: UIWindowScene, animated: Bool) async {
         guard let robotURL = await robot.getUrl() else {
-            showRobotsListScreen(animated: true)
+            presentUnableToResolveAlert(for: robot)
             return
         }
         

@@ -6,5 +6,4 @@
 //
 enum VTRobotsListViewSection: Hashable, Sendable {
     case robots
-    case status
 }

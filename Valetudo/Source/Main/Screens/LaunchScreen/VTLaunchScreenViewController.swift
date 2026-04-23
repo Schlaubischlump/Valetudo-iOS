@@ -61,12 +61,13 @@ final class VTLaunchScreenViewController: UIViewController {
 
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-        startRobotAnimation()
+        self.startRobothAnimation()
     }
 
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         robotView.stopAnimatingBrushes()
+        robotView.stopAnimatingMopPads()
     }
 
     private func configureHierarchy() {
@@ -87,10 +88,10 @@ final class VTLaunchScreenViewController: UIViewController {
         NSLayoutConstraint.activate(iconBackgroundConstraints + [
             robotView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             robotView.centerYAnchor.constraint(equalTo: view.centerYAnchor, constant: -28),
-            robotView.widthAnchor.constraint(equalTo: view.widthAnchor, multiplier: 0.3312),
-            robotView.widthAnchor.constraint(lessThanOrEqualToConstant: 259.2),
-            robotView.widthAnchor.constraint(greaterThanOrEqualToConstant: 129.6),
-            robotView.heightAnchor.constraint(equalTo: robotView.widthAnchor, multiplier: 0.92),
+            robotView.widthAnchor.constraint(equalTo: view.widthAnchor, multiplier: 0.3),
+            robotView.widthAnchor.constraint(lessThanOrEqualToConstant: 260),
+            robotView.widthAnchor.constraint(greaterThanOrEqualToConstant: 130),
+            robotView.heightAnchor.constraint(equalTo: robotView.widthAnchor),
 
             floorLineView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             floorLineView.centerYAnchor.constraint(equalTo: robotView.bottomAnchor, constant: -8),
@@ -115,7 +116,7 @@ final class VTLaunchScreenViewController: UIViewController {
         view.insertSubview(iconBackgroundView, belowSubview: floorLineView)
 
         UIView.animate(
-            withDuration: 0.55,
+            withDuration: 0.25,
             delay: 0,
             usingSpringWithDamping: 0.92,
             initialSpringVelocity: 0.15,
@@ -127,12 +128,16 @@ final class VTLaunchScreenViewController: UIViewController {
             self.titleLabel.alpha = 0
         } completion: { _ in
             self.robotView.stopAnimatingBrushes()
+            self.robotView.stopAnimatingMopPads()
             completion()
         }
     }
 
-    private func startRobotAnimation() {
+    func startRobothAnimation() {
         robotView.startAnimatingBrushes()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak robotView] in
+            robotView?.startAnimatingMopPads()
+        }
     }
 }
 

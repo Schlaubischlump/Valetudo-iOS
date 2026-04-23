@@ -6,7 +6,80 @@
 //
 import UIKit
 
-private final class VTRobotSymbolBrushView: UIView {
+private final class VTRobotVacuumMopView: UIView {
+    private let animationKey = "robotMopSpin"
+
+    var fillColor: UIColor = .lightGray.lighter(by: 0.2) {
+        didSet { setNeedsDisplay() }
+    }
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        backgroundColor = .clear
+        isOpaque = false
+        contentMode = .redraw
+    }
+
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    override func draw(_ rect: CGRect) {
+        guard rect.width > 0, rect.height > 0 else { return }
+
+        let diameter = min(rect.width, rect.height)
+        let circleRect = CGRect(
+            x: rect.midX - diameter * 0.5,
+            y: rect.midY - diameter * 0.5,
+            width: diameter,
+            height: diameter
+        ).insetBy(dx: diameter * 0.08, dy: diameter * 0.08)
+
+        let padPath = UIBezierPath(ovalIn: circleRect)
+        fillColor.setFill()
+        padPath.fill()
+
+        guard let context = UIGraphicsGetCurrentContext() else { return }
+
+        context.saveGState()
+        padPath.addClip()
+
+        UIColor.white.withAlphaComponent(0.38).setStroke()
+        for index in -2...2 {
+            let offset = CGFloat(index) * diameter * 0.16
+            let stripePath = UIBezierPath()
+            stripePath.move(to: CGPoint(x: circleRect.minX + offset, y: circleRect.maxY))
+            stripePath.addCurve(
+                to: CGPoint(x: circleRect.maxX + offset, y: circleRect.minY),
+                controlPoint1: CGPoint(x: circleRect.midX + offset - diameter * 0.18, y: circleRect.maxY - diameter * 0.18),
+                controlPoint2: CGPoint(x: circleRect.midX + offset + diameter * 0.18, y: circleRect.minY + diameter * 0.18)
+            )
+            stripePath.lineWidth = max(1, diameter * 0.045)
+            stripePath.lineCapStyle = .round
+            stripePath.stroke()
+        }
+
+        context.restoreGState()
+    }
+
+    func startAnimating(clockwise: Bool) {
+        layer.removeAnimation(forKey: animationKey)
+
+        let animation = CABasicAnimation(keyPath: "transform.rotation.z")
+        animation.fromValue = layer.presentation()?.value(forKeyPath: "transform.rotation.z") ?? 0
+        animation.toValue = (clockwise ? 1 : -1) * 2 * CGFloat.pi
+        animation.duration = 0.45
+        animation.repeatCount = .infinity
+        animation.timingFunction = CAMediaTimingFunction(name: .linear)
+        layer.add(animation, forKey: animationKey)
+    }
+
+    func stopAnimating() {
+        layer.removeAnimation(forKey: animationKey)
+    }
+}
+
+private final class VTRobotVaccuumBrushView: UIView {
     private let animationKey = "robotBrushSpin"
 
     var lineColor: UIColor = .black {
@@ -26,23 +99,48 @@ private final class VTRobotSymbolBrushView: UIView {
     override func draw(_ rect: CGRect) {
         guard let context = UIGraphicsGetCurrentContext() else { return }
 
+        let size = min(rect.width, rect.height)
+        let centerRadius = size * 0.12
+        let bristleLength = size * 0.43
+        let bristleWidth = max(2, size * 0.1)
+
         context.saveGState()
         context.translateBy(x: rect.midX, y: rect.midY)
-        lineColor.setStroke()
 
         for index in 0..<3 {
             context.saveGState()
             context.rotate(by: CGFloat(index) * 2 * .pi / 3)
 
+            lineColor.withAlphaComponent(index == 0 ? 1 : 0.55).setStroke()
             let path = UIBezierPath()
-            path.move(to: .zero)
-            path.addLine(to: CGPoint(x: 0, y: -rect.height * 0.45))
-            path.lineWidth = max(3, rect.width * 0.12)
+            path.move(to: CGPoint(x: 0, y: -centerRadius * 0.45))
+            path.addCurve(
+                to: CGPoint(x: 0, y: -bristleLength),
+                controlPoint1: CGPoint(x: size * 0.09, y: -size * 0.18),
+                controlPoint2: CGPoint(x: -size * 0.08, y: -size * 0.32)
+            )
+            path.lineWidth = bristleWidth
             path.lineCapStyle = .round
             path.stroke()
 
             context.restoreGState()
         }
+
+        lineColor.setFill()
+        UIBezierPath(ovalIn: CGRect(
+            x: -centerRadius,
+            y: -centerRadius,
+            width: centerRadius * 2,
+            height: centerRadius * 2
+        )).fill()
+
+        UIColor.white.withAlphaComponent(0.7).setFill()
+        UIBezierPath(ovalIn: CGRect(
+            x: -size * 0.035,
+            y: -bristleLength - size * 0.035,
+            width: size * 0.07,
+            height: size * 0.07
+        )).fill()
 
         context.restoreGState()
     }
@@ -240,9 +338,23 @@ final class VTRobotVacuumView: UIView {
         static let right = Brush(rawValue: 1 << 1)
         static let all: Brush = [.left, .right]
     }
+    
+    struct MopPad: OptionSet {
+        let rawValue: Int
 
-    private let leftBrushView = VTRobotSymbolBrushView()
-    private let rightBrushView = VTRobotSymbolBrushView()
+        init(rawValue: Int) {
+            self.rawValue = rawValue
+        }
+
+        static let left = MopPad(rawValue: 1 << 0)
+        static let right = MopPad(rawValue: 1 << 1)
+        static let all: MopPad = [.left, .right]
+    }
+
+    private let leftBrushView = VTRobotVaccuumBrushView()
+    private let rightBrushView = VTRobotVaccuumBrushView()
+    private let leftMopView = VTRobotVacuumMopView()
+    private let rightMopView = VTRobotVacuumMopView()
     private let bodyView = VTRobotVacuumBodyView()
 
     var lineColor: UIColor = .black {
@@ -281,11 +393,18 @@ final class VTRobotVacuumView: UIView {
         )
         let brushDiameter = s * 0.18
         let brushSize = CGSize(width: brushDiameter, height: brushDiameter)
+        let mopDiameter = s * 0.3
+        let mopSize = CGSize(width: mopDiameter, height: mopDiameter)
 
         leftBrushView.bounds = CGRect(origin: .zero, size: brushSize)
         rightBrushView.bounds = CGRect(origin: .zero, size: brushSize)
         leftBrushView.center = CGPoint(x: drawingRect.midX - s * 0.235, y: drawingRect.midY + s * 0.365)
         rightBrushView.center = CGPoint(x: drawingRect.midX + s * 0.235, y: drawingRect.midY + s * 0.365)
+
+        leftMopView.bounds = CGRect(origin: .zero, size: mopSize)
+        rightMopView.bounds = CGRect(origin: .zero, size: mopSize)
+        leftMopView.center = CGPoint(x: mopDiameter, y: drawingRect.minY + mopDiameter/2 * 1.3)
+        rightMopView.center = CGPoint(x: drawingRect.maxX - mopDiameter, y: drawingRect.minY + mopDiameter/2 * 1.3)
     }
 
     private func configureView() {
@@ -299,6 +418,8 @@ final class VTRobotVacuumView: UIView {
         bodyView.lineColor = lineColor
         bodyView.fillColor = fillColor
 
+        addSubview(leftMopView)
+        addSubview(rightMopView)
         addSubview(leftBrushView)
         addSubview(rightBrushView)
         addSubview(bodyView)
@@ -312,13 +433,31 @@ final class VTRobotVacuumView: UIView {
             rightBrushView.startAnimating(clockwise: true)
         }
     }
-
+    
     func stopAnimatingBrushes(_ brushes: Brush = .all) {
         if brushes.contains(.left) {
             leftBrushView.stopAnimating()
         }
         if brushes.contains(.right) {
             rightBrushView.stopAnimating()
+        }
+    }
+    
+    func startAnimatingMopPads(_ mopPad: MopPad = .all) {
+        if mopPad.contains(.left) {
+            leftMopView.startAnimating(clockwise: false)
+        }
+        if mopPad.contains(.right) {
+            rightMopView.startAnimating(clockwise: true)
+        }
+    }
+
+    func stopAnimatingMopPads(_ mopPad: MopPad = .all) {
+        if mopPad.contains(.left) {
+            leftMopView.stopAnimating()
+        }
+        if mopPad.contains(.right) {
+            rightMopView.stopAnimating()
         }
     }
 }
