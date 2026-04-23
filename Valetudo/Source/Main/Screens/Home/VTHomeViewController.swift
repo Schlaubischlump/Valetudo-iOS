@@ -12,7 +12,6 @@ fileprivate let bottomPad: CGFloat = 20
 fileprivate let legendHeight: CGFloat = 45.0
 fileprivate let sheetCornerRadius: CGFloat = 39.0
 
-// TODO: Fix map resize when window size changes
 class VTHomeViewController: VTViewController {
     private let client: VTAPIClientProtocol
 

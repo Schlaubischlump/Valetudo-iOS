@@ -147,7 +147,7 @@ final class VTRobotsListViewController: VTCollectionViewController {
 
     override func updateContentUnavailableConfiguration(using state: UIContentUnavailableConfigurationState) {
         guard robots.isEmpty else {
-            contentUnavailableConfiguration = nil
+            applyContentUnavailableConfiguration(nil)
             return
         }
 
@@ -155,7 +155,7 @@ final class VTRobotsListViewController: VTCollectionViewController {
             var config = UIContentUnavailableConfiguration.loading()
             config.text = "SCANNING".localized()
             config.secondaryText = "SEARCHING_FOR_ROBOTS".localized()
-            contentUnavailableConfiguration = config
+            applyContentUnavailableConfiguration(config)
         } else {
             // Mostly a safeguard. You should never see this screen.
             var config = UIContentUnavailableConfiguration.empty()
@@ -163,8 +163,17 @@ final class VTRobotsListViewController: VTCollectionViewController {
             config.text = "NO_ROBOTS_FOUND".localized()
             config.secondaryText = "MAKE_SURE_ROBOT_IS_ONLINE".localized()
             config.imageProperties.preferredSymbolConfiguration = .init(pointSize: 36, weight: .regular)
-            contentUnavailableConfiguration = config
+            applyContentUnavailableConfiguration(config)
         }
+    }
+
+    /// Mac catalyst has a problem with setting contentUnavailableConfiguration.
+    private func applyContentUnavailableConfiguration(_ configuration: UIContentUnavailableConfiguration?) {
+        #if targetEnvironment(macCatalyst)
+        collectionView.backgroundView = configuration.map(UIContentUnavailableView.init(configuration:))
+        #else
+        contentUnavailableConfiguration = configuration
+        #endif
     }
 
     override func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
