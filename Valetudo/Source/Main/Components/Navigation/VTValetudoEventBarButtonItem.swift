@@ -7,7 +7,7 @@
 import Foundation
 import UIKit
 
-class VTValetudoEventBarButton: UIBarButtonItem {
+class VTValetudoEventBarButtonItem: UIBarButtonItem {
     private let client: any VTAPIClientProtocol
     private var observerToken: VTListenerToken?
     private weak var parentViewController: UIViewController?

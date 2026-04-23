@@ -94,8 +94,8 @@ class VTSidebarViewController: VTCollectionViewController {
         super.init(collectionViewLayout: layout)
         self.clearsSelectionOnViewWillAppear = true
         
-        self.navigationItem.rightBarButtonItem = VTValetudoEventBarButton(client: client, parentViewController: self)
-        self.navigationItem.leftBarButtonItem = VTRobotBarButton(parentViewController: self)
+        self.navigationItem.rightBarButtonItem = VTValetudoEventBarButtonItem(client: client, parentViewController: self)
+        self.navigationItem.leftBarButtonItem = VTRobotBarButtonItem(parentViewController: self)
     }
 
     required init?(coder: NSCoder) {

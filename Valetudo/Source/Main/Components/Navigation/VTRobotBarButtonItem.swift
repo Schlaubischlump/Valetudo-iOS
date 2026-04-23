@@ -6,7 +6,7 @@
 //
 import UIKit
 
-class VTRobotBarButton: UIBarButtonItem {
+class VTRobotBarButtonItem: UIBarButtonItem {
     private weak var parentViewController: UIViewController?
     
     init(parentViewController: UIViewController) {

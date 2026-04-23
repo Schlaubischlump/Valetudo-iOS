@@ -15,7 +15,7 @@ class VTSceneDelegate: UIResponder, UIWindowSceneDelegate {
         case mainInterface(URL)
     }
 
-    private static let launchScreenDisplayDuration: TimeInterval = 1.5
+    private static let launchScreenDisplayDuration: TimeInterval = 1.0
 
 	var window: UIWindow?
     private var didEnterBackground = false

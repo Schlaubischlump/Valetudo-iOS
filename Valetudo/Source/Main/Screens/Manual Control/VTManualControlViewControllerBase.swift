@@ -54,7 +54,7 @@ class VTManualControlViewControllerBase: VTViewController {
         
         enableSwitch.addTarget(self, action: #selector(didToggleManualControl(_:)), for: .valueChanged)
         navigationItem.rightBarButtonItems = [
-            VTValetudoEventBarButton(client: client, parentViewController: self),
+            VTValetudoEventBarButtonItem(client: client, parentViewController: self),
             enableSwitchToolbarButton
         ]
         
