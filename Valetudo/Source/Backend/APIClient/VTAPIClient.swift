@@ -46,6 +46,7 @@ public actor VTAPIClient: VTAPIClientProtocol {
     let logURL: URL
     let timersURL: URL
     let eventsURL: URL
+    let networkAdvertisementURL: URL
 
     // MARK: - (SSE) Server side events
     lazy var eventSockets: [VTEventEndpointEventID: any VTEventSocketProtocol] = [:]
@@ -56,8 +57,7 @@ public actor VTAPIClient: VTAPIClientProtocol {
     private let encoder = JSONEncoder()
     private let headers: [String: String] = [:] // Default empty headers. Customize if needed.
 
-    public init(baseURL: URL,
-                configuration: URLSessionConfiguration = .default)
+    init(baseURL: URL, configuration: URLSessionConfiguration = .default)
     {
         self.baseURL = baseURL
             .appendingPathComponent("api")
@@ -84,6 +84,8 @@ public actor VTAPIClient: VTAPIClientProtocol {
             .appendingPathComponent("timers")
         self.eventsURL = self.baseURL
             .appendingPathComponent("events")
+        self.networkAdvertisementURL = self.baseURL
+            .appendingPathComponent("networkadvertisement")
         
         self.session = URLSession(configuration: configuration)
     }
@@ -526,6 +528,16 @@ public actor VTAPIClient: VTAPIClientProtocol {
         let url = eventsURL.appendingPathComponent(id).appendingPathComponent("interact")
         let action = VTEventInteractionAction(interaction: interaction)
         let request = VTRequest<Void>(method: .PUT, url: url, body: action)
+        return try await send(request)
+    }
+    
+    // MARK: - 7 NetworkAdvertisement
+    
+    // MARK: - 7.1 properties
+
+    func getNetworkAdvertisementProperties() async throws -> VTNetworkAdvertisementProperties {
+        let url = networkAdvertisementURL.appendingPathComponent("properties")
+        let request = VTRequest<VTNetworkAdvertisementProperties>(method: .GET, url: url)
         return try await send(request)
     }
     

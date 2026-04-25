@@ -95,7 +95,7 @@ class VTSceneDelegate: UIResponder, UIWindowSceneDelegate {
     
     @MainActor
     private func showMainInterface(for robotURL: URL, in windowScene: UIWindowScene, animated: Bool) {
-        let apiClient = VTAPIClient(baseURL: robotURL)
+        let apiClient = makeAPIClient(baseURL: robotURL)
         let splitViewController = VTSplitViewController(client: apiClient, style: .doubleColumn)
         
         configureToolbarIfNeeded(for: windowScene)
@@ -176,11 +176,8 @@ class VTSceneDelegate: UIResponder, UIWindowSceneDelegate {
         let configuration = URLSessionConfiguration.ephemeral
         configuration.timeoutIntervalForRequest = startupTimeout
         configuration.timeoutIntervalForResource = startupTimeout
-        let apiClient = VTAPIClient(baseURL: selectedRobot.lastURL, configuration: configuration)
-        
-        print(selectedRobot.lastURL)
-        print(await apiClient.canReachValetudo())
-        
+        let apiClient = makeAPIClient(baseURL: selectedRobot.lastURL, configuration: configuration)
+                
         if await apiClient.canReachValetudo() {
             return .mainInterface(selectedRobot.lastURL)
         }

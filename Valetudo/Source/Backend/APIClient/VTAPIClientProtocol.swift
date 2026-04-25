@@ -13,8 +13,13 @@ struct VTLogLine {
     let message: String
 }
 
+public func makeAPIClient<S: VTAPIClient>(baseURL: URL, configuration: URLSessionConfiguration = .default) -> S {
+    return VTAPIClient(baseURL: baseURL, configuration: configuration) as! S
+}
+
 protocol VTAPIClientProtocol: Actor {
         
+    
     // MARK: - 1. Robot
     
     func getRobotInfo() async throws -> VTRobotInfo

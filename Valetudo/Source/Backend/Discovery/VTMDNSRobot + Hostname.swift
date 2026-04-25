@@ -31,33 +31,6 @@ fileprivate final class EndpointConnectionResolution {
 }
 
 extension VTMDNSRobot {
-    /// Performs a very small HTTP probe to verify whether a candidate URL is actually routable.
-    ///
-    /// This is used for the VPN-specific hostname heuristic below: after removing `.local` from the
-    /// advertised Bonjour hostname, we only keep the shorter hostname if the system resolver can
-    /// turn it into a working HTTP endpoint.
-    private func isReachable(_ url: URL, timeout: TimeInterval = 1.0) async -> Bool {
-        var request = URLRequest(url: url)
-        request.httpMethod = "HEAD"
-        request.timeoutInterval = timeout
-
-        let config = URLSessionConfiguration.ephemeral
-        config.timeoutIntervalForRequest = timeout
-        config.timeoutIntervalForResource = timeout
-
-        let session = URLSession(configuration: config)
-
-        do {
-            let (_, response) = try await session.data(for: request)
-            if let http = response as? HTTPURLResponse {
-                return (200...399).contains(http.statusCode)
-            }
-            return false
-        } catch {
-            return false
-        }
-    }
-    
     /// Resolves the most useful base URL for connecting to a discovered robot.
     ///
     /// Resolution strategy:
@@ -88,10 +61,15 @@ extension VTMDNSRobot {
                 hostname.removeLast(6)
             }
             
-            if let url = getUrl(fromHost: .name(hostname, nil), andPort: port) {
-                let zeroConfURL = getUrl(fromHost: .name(properties.zeroconfHostname, nil), andPort: port)
-                return await isReachable(url) ? url : zeroConfURL
+            let shortHostPort: (host: NWEndpoint.Host, port: NWEndpoint.Port) = (.name(hostname, nil), port)
+            let otherProperties = await fetchNetworkAdvertisementProperties(from: shortHostPort)
+            let isSameRobot = (otherProperties == properties)
+                        
+            if isSameRobot, let url = getUrl(fromHost: shortHostPort.host, andPort: shortHostPort.port) {
+                return url
             }
+            
+            return getUrl(fromHost: .name(properties.zeroconfHostname, nil), andPort: port)
         }
         
         return getUrl(fromHost: resolvedEndpoint.host, andPort: resolvedEndpoint.port)
@@ -149,21 +127,13 @@ extension VTMDNSRobot {
     private func fetchNetworkAdvertisementProperties(
         from endpoint: (host: NWEndpoint.Host, port: NWEndpoint.Port)
     ) async -> VTNetworkAdvertisementProperties? {
-        guard let baseURL = getUrl(fromHost: endpoint.host, andPort: endpoint.port),
-              let url = URL(string: "api/v2/networkadvertisement/properties", relativeTo: baseURL) else {
-            return nil
-        }
-
-        do {
-            let (data, response) = try await URLSession.shared.data(from: url)
-            guard let httpResponse = response as? HTTPURLResponse,
-                  (200..<300).contains(httpResponse.statusCode) else {
-                return nil
-            }
-            return try JSONDecoder().decode(VTNetworkAdvertisementProperties.self, from: data)
-        } catch {
-            return nil
-        }
+        guard let baseURL = getUrl(fromHost: endpoint.host, andPort: endpoint.port) else { return nil }
+        
+        let config = URLSessionConfiguration.ephemeral
+        config.timeoutIntervalForRequest = 1.0
+        config.timeoutIntervalForResource = 1.0
+        let client = makeAPIClient(baseURL: baseURL, configuration: config)
+        return try? await client.getNetworkAdvertisementProperties()
     }
     
     /// Builds a plain HTTP base URL from a resolved Network framework host and port.
