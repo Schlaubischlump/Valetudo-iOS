@@ -370,6 +370,10 @@ public actor VTAPIClient: VTAPIClientProtocol {
     
     // MARK: - 3. Valetudo
     
+    func canReachValetudo() async -> Bool {
+        return (try? await getBasicValetudoInfo()) != nil
+    }
+
     func getBasicValetudoInfo() async throws -> VTBasicValetudoInfo {
         let url = self.valetudoURL
         let request = VTRequest<VTBasicValetudoInfo>(method: .GET, url: url, query: nil)

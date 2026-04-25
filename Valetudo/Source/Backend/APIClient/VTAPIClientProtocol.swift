@@ -111,6 +111,7 @@ protocol VTAPIClientProtocol: Actor {
     
     // MARK: - 3. Valetudo
     
+    func canReachValetudo() async -> Bool
     func getBasicValetudoInfo() async throws -> VTBasicValetudoInfo
     
     // MARK: - 3.1 Version

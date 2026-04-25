@@ -264,6 +264,10 @@ actor VTMockAPIClient: VTAPIClientProtocol {
 
     // MARK: - 3. Valetudo
 
+    func canReachValetudo() async -> Bool {
+        true
+    }
+
     func getBasicValetudoInfo() async throws -> VTBasicValetudoInfo {
         VTBasicValetudoInfo(embedded: true, systemId: "mock-system", welcomeDialogDismissed: true)
     }

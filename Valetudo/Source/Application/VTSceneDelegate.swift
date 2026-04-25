@@ -6,8 +6,12 @@
 //  
 //
 
-import SwiftUI
 import UIKit
+
+private struct VTSelectedRobot: Codable {
+    let id: String
+    let lastURL: URL
+}
 
 class VTSceneDelegate: UIResponder, UIWindowSceneDelegate {
     private enum InitialScreen {
@@ -20,9 +24,14 @@ class VTSceneDelegate: UIResponder, UIWindowSceneDelegate {
 	var window: UIWindow?
     private var didEnterBackground = false
     
-    @AppStorage("selectedRobotID")
-    private var selectedRobotID = ""
+    @CodableAppStorage("selectedRobot")
+    private var selectedRobot: VTSelectedRobot? = nil
 
+    // Startup flow:
+    // 1. Install the custom launch screen as the initial root view controller.
+    // 2. In parallel, decide whether to restore the last robot or show the robots list
+    //    and wait for the minimum launch screen display duration.
+    // 3. Transition away from the launch screen once both steps are complete.
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
         guard let windowScene = scene as? UIWindowScene else {
             fatalError("Expected scene of type UIWindowScene but got an unexpected type")
@@ -80,7 +89,7 @@ class VTSceneDelegate: UIResponder, UIWindowSceneDelegate {
             return
         }
         
-        selectedRobotID = robot.id
+        selectedRobot = VTSelectedRobot(id: robot.id, lastURL: robotURL)
         showMainInterface(for: robotURL, in: windowScene, animated: animated)
     }
     
@@ -158,20 +167,32 @@ class VTSceneDelegate: UIResponder, UIWindowSceneDelegate {
 
     @MainActor
     private func makeInitialScreen() async -> InitialScreen {
-        guard !selectedRobotID.isEmpty else {
-            return .robotsList
-        }
-        
-        let robots = await VTMDNSClient(scanTimeout: 1.5).scanForRobots()
-        guard let robot = robots.first(where: { $0.id == selectedRobotID }) else {
-            return .robotsList
-        }
-        
-        guard let robotURL = await robot.getUrl() else {
+        guard let selectedRobot else {
             return .robotsList
         }
 
-        selectedRobotID = robot.id
+        let startupTimeout = Self.launchScreenDisplayDuration / 2
+        
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.timeoutIntervalForRequest = startupTimeout
+        configuration.timeoutIntervalForResource = startupTimeout
+        let apiClient = VTAPIClient(baseURL: selectedRobot.lastURL, configuration: configuration)
+        
+        print(selectedRobot.lastURL)
+        print(await apiClient.canReachValetudo())
+        
+        if await apiClient.canReachValetudo() {
+            return .mainInterface(selectedRobot.lastURL)
+        }
+
+        let robots = await VTMDNSClient(scanTimeout: startupTimeout).scanForRobots()
+        guard let robot = robots.first(where: { $0.id == selectedRobot.id }),
+              let robotURL = await robot.getUrl()
+        else {
+            return .robotsList
+        }
+
+        self.selectedRobot = VTSelectedRobot(id: robot.id, lastURL: robotURL)
         return .mainInterface(robotURL)
     }
     
