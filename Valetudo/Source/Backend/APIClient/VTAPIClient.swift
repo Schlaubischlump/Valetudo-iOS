@@ -117,7 +117,7 @@ public actor VTAPIClient: VTAPIClientProtocol {
     
     // MARK: - 1.2 Capabilities
     
-    func getCapabilities() async throws -> [VTCapability] {
+    public func getCapabilities() async throws -> [VTCapability] {
         let url = self.capabilitiesURL
         let capabilitiesRequest = VTRequest<[VTCapability]>(method: .GET, url: url, query: nil, body: nil)
         return try await send(capabilitiesRequest)
@@ -172,7 +172,7 @@ public actor VTAPIClient: VTAPIClientProtocol {
 
     // MARK: - 1.2.4 AutoEmptyDockManualTriggerCapability
     
-    func autoEmptyDock() async throws {
+    public func autoEmptyDock() async throws {
         let url = self.capabilitiesURL.appendingPathComponent("AutoEmptyDockManualTriggerCapability")
         let request = VTRequest<Void>(method: .PUT, url: url, query: nil, body: VTManualTriggerAction())
         try await send(request)
@@ -180,13 +180,13 @@ public actor VTAPIClient: VTAPIClientProtocol {
     
     // MARK: - 1.2.5 MopDockCleanManualTriggerCapability
     
-    func startMopDockClean() async throws {
+    public func startMopDockClean() async throws {
         let url = self.capabilitiesURL.appendingPathComponent("MopDockCleanManualTriggerCapability")
         let request = VTRequest<Void>(method: .PUT, url: url, query: nil, body: VTToggleStartStopAction(action: .start))
         try await send(request)
     }
     
-    func stopMopDockClean() async throws {
+    public func stopMopDockClean() async throws {
         let url = self.capabilitiesURL.appendingPathComponent("MopDockCleanManualTriggerCapability")
         let request = VTRequest<Void>(method: .PUT, url: url, query: nil, body: VTToggleStartStopAction(action: .stop))
         try await send(request)
@@ -194,13 +194,13 @@ public actor VTAPIClient: VTAPIClientProtocol {
     
     // MARK: - 1.2.6 MopDockDryManualTriggerCapability
     
-    func startMopDockDry() async throws {
+    public func startMopDockDry() async throws {
         let url = self.capabilitiesURL.appendingPathComponent("MopDockDryManualTriggerCapability")
         let request = VTRequest<Void>(method: .PUT, url: url, query: nil, body: VTToggleStartStopAction(action: .start))
         try await send(request)
     }
     
-    func stopMopDockDry() async throws {
+    public func stopMopDockDry() async throws {
         let url = self.capabilitiesURL.appendingPathComponent("MopDockDryManualTriggerCapability")
         let request = VTRequest<Void>(method: .PUT, url: url, query: nil, body: VTToggleStartStopAction(action: .stop))
         try await send(request)
@@ -216,7 +216,7 @@ public actor VTAPIClient: VTAPIClientProtocol {
         }
     }
     
-    func getPresets(forType type: VTPresetType) async throws -> [VTPresetValue] {
+    public func getPresets(forType type: VTPresetType) async throws -> [VTPresetValue] {
         let url = self.capabilitiesURL
             .appendingPathComponent(capabilityPath(forType: type))
             .appendingPathComponent("presets")
@@ -224,7 +224,7 @@ public actor VTAPIClient: VTAPIClientProtocol {
         return try await send(request)
     }
     
-    func setPreset(_ value: VTPresetValue, forType type: VTPresetType) async throws {
+    public func setPreset(_ value: VTPresetValue, forType type: VTPresetType) async throws {
         let data = VTPresetAction(name: value)
         let url = self.capabilitiesURL
             .appendingPathComponent(capabilityPath(forType: type))
@@ -237,7 +237,7 @@ public actor VTAPIClient: VTAPIClientProtocol {
     
     private let consumableMonitoringCapabilityPath: String = "ConsumableMonitoringCapability"
     
-    func getConsumables() async throws -> [VTConsumableStateAttribute] {
+    public func getConsumables() async throws -> [VTConsumableStateAttribute] {
         let url = self.capabilitiesURL
             .appendingPathComponent(consumableMonitoringCapabilityPath)
         let request = VTRequest<VTStateAttributeList>(method: .GET, url: url, query: nil)
@@ -246,7 +246,7 @@ public actor VTAPIClient: VTAPIClientProtocol {
         }
     }
     
-    func getPropertiesForConsumables() async throws -> [VTConsumableStateAttributeProperties] {
+    public func getPropertiesForConsumables() async throws -> [VTConsumableStateAttributeProperties] {
         let url = self.capabilitiesURL
             .appendingPathComponent(consumableMonitoringCapabilityPath)
             .appendingPathComponent("properties")
@@ -254,7 +254,7 @@ public actor VTAPIClient: VTAPIClientProtocol {
         return try await send(request).availableConsumables
     }
     
-    func resetConsumable(type: VTConsumableType) async throws {
+    public func resetConsumable(type: VTConsumableType) async throws {
         let url = self.capabilitiesURL
             .appendingPathComponent(consumableMonitoringCapabilityPath)
             .appendingPathComponent(type.rawValue)
@@ -262,7 +262,7 @@ public actor VTAPIClient: VTAPIClientProtocol {
         try await send(request)
     }
     
-    func resetConsumable(type: VTConsumableType, subtype: VTConsumableSubType) async throws {
+    public func resetConsumable(type: VTConsumableType, subtype: VTConsumableSubType) async throws {
         let url = self.capabilitiesURL
             .appendingPathComponent(consumableMonitoringCapabilityPath)
             .appendingPathComponent(type.rawValue)
@@ -275,7 +275,7 @@ public actor VTAPIClient: VTAPIClientProtocol {
     
     private let manualControlCapabilityPath: String = "ManualControlCapability"
     
-    func getManualControlIsEnabled() async throws -> Bool {
+    public func getManualControlIsEnabled() async throws -> Bool {
         let url = self.capabilitiesURL.appendingPathComponent(manualControlCapabilityPath)
         let request = VTRequest<VTManualControlState>(method: .GET, url: url, query: nil)
         if let enabled = try await send(request).enabled {
@@ -284,7 +284,7 @@ public actor VTAPIClient: VTAPIClientProtocol {
         throw VTAPIError.manualControlStateUnavailable
     }
     
-    func getManualControlSupportedMovementDirections() async throws -> [VTMoveDirection] {
+    public func getManualControlSupportedMovementDirections() async throws -> [VTMoveDirection] {
         let url = self.capabilitiesURL
             .appendingPathComponent(manualControlCapabilityPath)
             .appendingPathComponent("properties")
@@ -295,19 +295,19 @@ public actor VTAPIClient: VTAPIClientProtocol {
         throw VTAPIError.manualControlStateUnavailable
     }
     
-    func enableManualControl() async throws {
+    public func enableManualControl() async throws {
         let url = self.capabilitiesURL.appendingPathComponent(manualControlCapabilityPath)
         let request = VTRequest<Void>(method: .PUT, url: url, query: nil, body: VTManualControlAction.enable)
         try await send(request)
     }
     
-    func disableManualControl() async throws {
+    public func disableManualControl() async throws {
         let url = self.capabilitiesURL.appendingPathComponent(manualControlCapabilityPath)
         let request = VTRequest<Void>(method: .PUT, url: url, query: nil, body: VTManualControlAction.disable)
         try await send(request)
     }
     
-    func manualControlMove(direction: VTMoveDirection) async throws {
+    public func manualControlMove(direction: VTMoveDirection) async throws {
         let url = self.capabilitiesURL.appendingPathComponent(manualControlCapabilityPath)
         let action = VTManualControlAction.move(direction: direction)
         let request = VTRequest<Void>(method: .PUT, url: url, query: nil, body: action)
@@ -318,20 +318,20 @@ public actor VTAPIClient: VTAPIClientProtocol {
     
     private let highResolutionManualControlCapabilityPath: String = "HighResolutionManualControlCapability"
     
-    func getHighResolutionManualControlIsEnabled() async throws -> Bool {
+    public func getHighResolutionManualControlIsEnabled() async throws -> Bool {
         let url = self.capabilitiesURL.appendingPathComponent(highResolutionManualControlCapabilityPath)
         let request = VTRequest<VTHighResolutionManualControlState>(method: .GET, url: url, query: nil)
         return try await send(request).enabled
     }
     
-    func enableHighResolutionManualControl() async throws {
+    public func enableHighResolutionManualControl() async throws {
         let url = self.capabilitiesURL.appendingPathComponent(highResolutionManualControlCapabilityPath)
         let action: VTHighResolutionManualControlAction = .enable
         let request = VTRequest<Void>(method: .PUT, url: url, query: nil, body: action)
         try await send(request)
     }
     
-    func disableHighResolutionManualControl() async throws {
+    public func disableHighResolutionManualControl() async throws {
         let url = self.capabilitiesURL.appendingPathComponent(highResolutionManualControlCapabilityPath)
         let action: VTHighResolutionManualControlAction = .disable
         let request = VTRequest<Void>(method: .PUT, url: url, query: nil, body: action)
@@ -339,7 +339,7 @@ public actor VTAPIClient: VTAPIClientProtocol {
     }
     
     // angle: +- 180.0 and velocity: +-1.0
-    func highResolutionManualControlMove(angle: CGFloat, velocity: CGFloat) async throws {
+    public func highResolutionManualControlMove(angle: CGFloat, velocity: CGFloat) async throws {
         let url = self.capabilitiesURL.appendingPathComponent(highResolutionManualControlCapabilityPath)
         let action = VTHighResolutionManualControlAction.move(vector: .init(velocity: velocity, angle: angle))
         let request = VTRequest<Void>(method: .PUT, url: url, query: nil, body: action)
@@ -348,7 +348,7 @@ public actor VTAPIClient: VTAPIClientProtocol {
     
     // MARK: - 1.3 Properties
     
-    func getRobotProperties() async throws -> VTRobotProperties {
+    public func getRobotProperties() async throws -> VTRobotProperties {
         let url = self.robotURL.appendingPathComponent("properties")
         let request = VTRequest<VTRobotProperties>(method: .GET, url: url, query: nil)
         return try await send(request)
@@ -357,14 +357,14 @@ public actor VTAPIClient: VTAPIClientProtocol {
     // MARK: - 2. System
     
     // MARK: - 2.1. Host
-    func getHostInfo() async throws -> VTHostInfo {
+    public func getHostInfo() async throws -> VTHostInfo {
         let url = self.hostURL.appendingPathComponent("info")
         let request = VTRequest<VTHostInfo>(method: .GET, url: url, query: nil)
         return try await send(request)
     }
     
     // MARK: - 2.2. Runtime
-    func getRuntimeInfo() async throws -> VTRuntimeInfo {
+    public func getRuntimeInfo() async throws -> VTRuntimeInfo {
         let url = self.runtimeURL.appendingPathComponent("info")
         let request = VTRequest<VTRuntimeInfo>(method: .GET, url: url, query: nil)
         return try await send(request)
@@ -372,11 +372,11 @@ public actor VTAPIClient: VTAPIClientProtocol {
     
     // MARK: - 3. Valetudo
     
-    func canReachValetudo() async -> Bool {
+    public func canReachValetudo() async -> Bool {
         return (try? await getBasicValetudoInfo()) != nil
     }
 
-    func getBasicValetudoInfo() async throws -> VTBasicValetudoInfo {
+    public func getBasicValetudoInfo() async throws -> VTBasicValetudoInfo {
         let url = self.valetudoURL
         let request = VTRequest<VTBasicValetudoInfo>(method: .GET, url: url, query: nil)
         return try await send(request)
@@ -384,7 +384,7 @@ public actor VTAPIClient: VTAPIClientProtocol {
     
     // MARK: - 3.1 Version
     
-    func getValetudoVersionInfo() async throws -> VTValetudoVersionInfo {
+    public func getValetudoVersionInfo() async throws -> VTValetudoVersionInfo {
         let url = self.valetudoURL.appendingPathComponent("version")
         let request = VTRequest<VTValetudoVersionInfo>(method: .GET, url: url, query: nil)
         return try await send(request)
@@ -392,19 +392,19 @@ public actor VTAPIClient: VTAPIClientProtocol {
     
     // MARK: - 3.2 Log
     
-    func getLogProperties() async throws -> VTLogLevel {
+    public func getLogProperties() async throws -> VTLogLevel {
         let url = self.logURL.appendingPathComponent("level")
         let request = VTRequest<VTLogLevel>(method: .GET, url: url, query: nil)
         return try await send(request)
     }
     
-    func setLogLevel(_ level: String) async throws {
+    public func setLogLevel(_ level: String) async throws {
         let url = self.logURL.appendingPathComponent("level")
         let request = VTRequest<Void>(method: .PUT, url: url, query: nil, body: VTLogLevelAction(level: level))
         try await send(request)
     }
     
-    func getLog() async throws -> [VTLogLine] {
+    public func getLog() async throws -> [VTLogLine] {
         let url = self.logURL.appendingPathComponent("content")
         let request = VTRequest<String>(method: .GET, url: url, query: nil)
         let urlRequest = try await makeURLRequest(for: request)
@@ -415,19 +415,19 @@ public actor VTAPIClient: VTAPIClientProtocol {
     
     // MARK: - 4 Updater
     
-    func checkForUpdate() async throws {
+    public func checkForUpdate() async throws {
         let url = self.updaterURL
         let request = VTRequest<Void>(method: .PUT, url: url, query: nil, body: VTUpdaterAction(action: .check))
         try await send(request)
     }
     
-    func downloadUpdate() async throws {
+    public func downloadUpdate() async throws {
         let url = self.updaterURL
         let request = VTRequest<Void>(method: .PUT, url: url, query: nil, body: VTUpdaterAction(action: .download))
         try await send(request)
     }
     
-    func applyUpdate() async throws {
+    public func applyUpdate() async throws {
         let url = self.updaterURL
         let request = VTRequest<Void>(method: .PUT, url: url, query: nil, body: VTUpdaterAction(action: .apply))
         try await send(request)
@@ -435,7 +435,7 @@ public actor VTAPIClient: VTAPIClientProtocol {
     
     // MARK: 4.1 State
     
-    func getUpdaterState() async throws -> any VTUpdaterState {
+    public func getUpdaterState() async throws -> any VTUpdaterState {
         let url = self.updaterURL.appendingPathComponent("state")
         let request = VTRequest<VTUpdaterStateDecoder>(method: .GET, url: url, query: nil)
         return try await send(request).stateObject
@@ -443,13 +443,13 @@ public actor VTAPIClient: VTAPIClientProtocol {
     
     // MARK: 4.2 Config
     
-    func getUpdaterConfiguration() async throws -> VTUpdaterConfig {
+    public func getUpdaterConfiguration() async throws -> VTUpdaterConfig {
         let url = self.updaterURL.appendingPathComponent("config")
         let request = VTRequest<VTUpdaterConfig>(method: .GET, url: url, query: nil)
         return try await send(request)
     }
     
-    func setUpdaterConfiguration(_ config: VTUpdaterConfig) async throws {
+    public func setUpdaterConfiguration(_ config: VTUpdaterConfig) async throws {
         let url = self.updaterURL.appendingPathComponent("config")
         let request = VTRequest<Void>(method: .PUT, url: url, query: nil, body: config)
         try await send(request)
@@ -457,25 +457,25 @@ public actor VTAPIClient: VTAPIClientProtocol {
     
     // MARK: - 5 Timers
     
-    func getTimers() async throws -> [String: VTTimer] {
+    public func getTimers() async throws -> [String: VTTimer] {
         let request = VTRequest<[String: VTTimer]>(method: .GET, url: timersURL)
         return try await send(request)
     }
     
-    func addTimer(_ timer: VTTimer) async throws {
+    public func addTimer(_ timer: VTTimer) async throws {
         let request = VTRequest<Void>(method: .POST, url: timersURL, query: nil, body: timer)
         return try await send(request)
     }
     
     // MARK: - 5.1 {id}
     
-    func getTimer(id: String) async throws -> VTTimer {
+    public func getTimer(id: String) async throws -> VTTimer {
         let url = timersURL.appendingPathComponent(id)
         let request = VTRequest<VTTimer>(method: .GET, url: url)
         return try await send(request)
     }
     
-    func updateTimer(_ timer: VTTimer) async throws {
+    public func updateTimer(_ timer: VTTimer) async throws {
         guard let id: String = timer.id else {
             let domain = String(describing: VTTimer.self)
             throw VTAPIError.missingID(domain)
@@ -501,7 +501,7 @@ public actor VTAPIClient: VTAPIClientProtocol {
     
     // MARK: - 5.3 Properties
     
-    func getTimerProperties() async throws -> VTTimersProperties {
+    public func getTimerProperties() async throws -> VTTimersProperties {
         let url = timersURL.appendingPathComponent("properties")
         let request = VTRequest<VTTimersProperties>(method: .GET, url: url)
         return try await send(request)
@@ -509,14 +509,14 @@ public actor VTAPIClient: VTAPIClientProtocol {
     
     // MARK: - 6.0 Events
     
-    func getValetudoEvents() async throws -> [any VTValetudoEvent] {
+    public func getValetudoEvents() async throws -> [any VTValetudoEvent] {
         let request = VTRequest<[VTAnyValetudoEvent]>(method: .GET, url: eventsURL)
         return try await send(request).map(\.event)
     }
     
     // MARK: - 6.1 {id}
     
-    func getValetudoEvent(id: String) async throws -> any VTValetudoEvent {
+    public func getValetudoEvent(id: String) async throws -> any VTValetudoEvent {
         let url = eventsURL.appendingPathComponent(id)
         let request = VTRequest<VTAnyValetudoEvent>(method: .GET, url: url)
         return try await send(request).event
@@ -524,7 +524,7 @@ public actor VTAPIClient: VTAPIClientProtocol {
     
     // MARK: - 6.2 {id}/interact
     
-    func interactWithValetudoEvent(id: String, interaction: VTEventInteraction) async throws {
+    public func interactWithValetudoEvent(id: String, interaction: VTEventInteraction) async throws {
         let url = eventsURL.appendingPathComponent(id).appendingPathComponent("interact")
         let action = VTEventInteractionAction(interaction: interaction)
         let request = VTRequest<Void>(method: .PUT, url: url, body: action)
@@ -535,7 +535,7 @@ public actor VTAPIClient: VTAPIClientProtocol {
     
     // MARK: - 7.1 properties
 
-    func getNetworkAdvertisementProperties() async throws -> VTNetworkAdvertisementProperties {
+    public func getNetworkAdvertisementProperties() async throws -> VTNetworkAdvertisementProperties {
         let url = networkAdvertisementURL.appendingPathComponent("properties")
         let request = VTRequest<VTNetworkAdvertisementProperties>(method: .GET, url: url)
         return try await send(request)

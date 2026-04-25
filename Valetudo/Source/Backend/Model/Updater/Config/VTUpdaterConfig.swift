@@ -6,11 +6,11 @@
 //
 import Foundation
 
-enum VTUpdaterProvider: String, Codable, Sendable, CaseIterable, Describable {
+public enum VTUpdaterProvider: String, Codable, Sendable, CaseIterable, Describable {
     case github = "github"
     case githubNightly = "github_nightly"
     
-    var description: String {
+    public var description: String {
         switch (self) {
         case .github:        "RELEASE".localized()
         case .githubNightly: "NIGHTLY".localized()
@@ -18,6 +18,6 @@ enum VTUpdaterProvider: String, Codable, Sendable, CaseIterable, Describable {
     }
 }
 
-struct VTUpdaterConfig: Codable, Sendable {
-    let updateProvider: VTUpdaterProvider
+public struct VTUpdaterConfig: Codable, Sendable {
+    public let updateProvider: VTUpdaterProvider
 }

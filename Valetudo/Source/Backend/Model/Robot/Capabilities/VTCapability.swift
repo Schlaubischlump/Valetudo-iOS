@@ -6,7 +6,7 @@
 //
 import Foundation
 
-enum VTCapability: Equatable, Hashable, Sendable, Decodable {
+public enum VTCapability: Equatable, Hashable, Sendable, Decodable {
     case wifiConfiguration
     case wifiScan
     case basicControl
@@ -135,7 +135,7 @@ enum VTCapability: Equatable, Hashable, Sendable, Decodable {
         }
     }
     
-    init(from decoder: Decoder) throws {
+    public init(from decoder: Decoder) throws {
         let container = try decoder.singleValueContainer()
         let name = try container.decode(String.self)
         self.init(name: name)

@@ -7,18 +7,19 @@
 
 import Foundation
 
-struct VTLogLine {
+public struct VTLogLine: Sendable, Hashable {
     let timestamp: Date
     let level: String
     let message: String
 }
 
-public func makeAPIClient<S: VTAPIClient>(baseURL: URL, configuration: URLSessionConfiguration = .default) -> S {
-    return VTAPIClient(baseURL: baseURL, configuration: configuration) as! S
+/// Central point
+public func makeAPIClient(baseURL: URL, configuration: URLSessionConfiguration = .default) -> any VTAPIClientProtocol {
+    VTAPIClient(baseURL: baseURL, configuration: configuration)
 }
 
-protocol VTAPIClientProtocol: Actor {
-        
+public protocol VTAPIClientProtocol: Actor {
+    
     
     // MARK: - 1. Robot
     
@@ -38,7 +39,7 @@ protocol VTAPIClientProtocol: Actor {
     
     @discardableResult
     func registerEventObserver<E: Decodable & Equatable, O>(for endpoint: VTEventEndpoint<E, O>) async -> (VTListenerToken, AsyncStream<VTEventAction<O>>)
-
+    
     func removeEventObserver<E: Decodable & Equatable, O>(token: VTListenerToken, for endpoint: VTEventEndpoint<E, O>) async
     
     // MARK: - 1.2 Capabilities
@@ -112,7 +113,7 @@ protocol VTAPIClientProtocol: Actor {
     
     // MARK: - 2.2. Runtime
     func getRuntimeInfo() async throws -> VTRuntimeInfo
-
+    
     
     // MARK: - 3. Valetudo
     
@@ -152,7 +153,7 @@ protocol VTAPIClientProtocol: Actor {
     func getTimers() async throws -> [String: VTTimer]
     
     func addTimer(_ timer: VTTimer) async throws
-        
+    
     // MARK: - 5.1 {id}
     
     func getTimer(id: String) async throws -> VTTimer
@@ -170,7 +171,7 @@ protocol VTAPIClientProtocol: Actor {
     func getTimerProperties() async throws -> VTTimersProperties
     
     // MARK: 6.0 Events
-
+    
     func getValetudoEvents() async throws -> [any VTValetudoEvent]
     
     // MARK: 6.1 {id}
@@ -180,4 +181,10 @@ protocol VTAPIClientProtocol: Actor {
     // MARK: 6.1 {id}/interact
     
     func interactWithValetudoEvent(id: String, interaction: VTEventInteraction) async throws
+    
+    // MARK: - 7 NetworkAdvertisement
+    
+    // MARK: - 7.1 properties
+    
+    func getNetworkAdvertisementProperties() async throws -> VTNetworkAdvertisementProperties
 }

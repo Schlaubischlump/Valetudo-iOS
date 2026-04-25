@@ -6,7 +6,7 @@
 //
 import Foundation
 
-struct VTLogLevel: Decodable, Sendable {
+public struct VTLogLevel: Decodable, Sendable {
     let current: String
     let presets: [String]
 }

@@ -373,6 +373,12 @@ actor VTMockAPIClient: VTAPIClientProtocol {
     func interactWithValetudoEvent(id: String, interaction: VTEventInteraction) async throws {
         events.removeAll { $0.id == id }
     }
+    
+    // MARK: - 7. NetworkAdvertisement
+    
+    func getNetworkAdvertisementProperties() async throws -> VTNetworkAdvertisementProperties {
+        return VTNetworkAdvertisementProperties(port: 80, zeroconfHostname: "127.0.0.0")
+    }
 
     // MARK: - Helpers
 

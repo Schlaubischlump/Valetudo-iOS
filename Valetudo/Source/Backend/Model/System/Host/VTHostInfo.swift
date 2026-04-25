@@ -6,7 +6,7 @@
 //
 import Foundation
 
-struct VTMemory: Codable, Sendable {
+public struct VTMemory: Codable, Sendable {
     let total: Double
     let free: Double
     let valetudo_current: Double
@@ -29,7 +29,7 @@ struct VTMemory: Codable, Sendable {
     }
 }
 
-struct VTLoad: Codable, Sendable {
+public struct VTLoad: Codable, Sendable {
     let one: Double
     let five: Double
     let fifteen: Double
@@ -41,7 +41,7 @@ struct VTLoad: Codable, Sendable {
     }
 }
 
-struct VTUsage: Codable, Sendable {
+public struct VTUsage: Codable, Sendable {
     let user: Double
     let nice: Double
     let sys: Double
@@ -49,11 +49,11 @@ struct VTUsage: Codable, Sendable {
     let irq: Double
 }
 
-struct VTCPU: Codable, Sendable {
+public struct VTCPU: Codable, Sendable {
     let usage: VTUsage
 }
 
-struct VTHostInfo: Codable, Sendable {
+public struct VTHostInfo: Codable, Sendable {
     let hostname: String
     let arch: String
     let mem: VTMemory

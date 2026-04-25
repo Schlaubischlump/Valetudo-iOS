@@ -6,7 +6,7 @@
 //
 import Foundation
 
-struct VTBasicValetudoInfo: Decodable, Sendable {
+public struct VTBasicValetudoInfo: Decodable, Sendable {
     let embedded: Bool
     let systemId: String
     let welcomeDialogDismissed: Bool

@@ -6,7 +6,7 @@
 //
 import Foundation
 
-extension VTAPIClient {
+public extension VTAPIClient {
     
     private func sseSocket<E: Decodable, O: Sendable>(
         forEndpoint endpoint: VTEventEndpoint<E, O>,
@@ -76,7 +76,7 @@ extension VTAPIClient {
         return (token, asyncStream.mapStream { action in action.map { endpoint.transform($0) } })
     }
 
-    public func removeEventObserver<E: Decodable & Equatable & Sendable, O>(token: VTListenerToken, for endpoint: VTEventEndpoint<E, O>) async {
+    func removeEventObserver<E: Decodable & Equatable & Sendable, O>(token: VTListenerToken, for endpoint: VTEventEndpoint<E, O>) async {
         let socket: (any VTEventSocketProtocol)? = if endpoint.useSSE {
             sseSocket(forEndpoint: endpoint, createIfNeeded: false)
         } else {

@@ -6,7 +6,7 @@
 //
 import Foundation
 
-struct VTValetudoVersionInfo: Decodable, Sendable {
+public struct VTValetudoVersionInfo: Decodable, Sendable {
     let release: String
     let commit: String
 }

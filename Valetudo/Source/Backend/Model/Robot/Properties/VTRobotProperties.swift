@@ -6,7 +6,7 @@
 //
 import Foundation
 
-typealias VTRobotProperties = [String: String]
+public typealias VTRobotProperties = [String: String]
 
 extension VTRobotProperties {
     var firmwareVersion: String? {

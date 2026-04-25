@@ -6,19 +6,19 @@
 //
 import Foundation
 
-struct VTTimer: Encodable, Decodable, Equatable, Sendable, Hashable {
-    struct Action: Codable, Equatable, Sendable, Hashable {
-        let type: ActionType
-        let params: Params
+public struct VTTimer: Encodable, Decodable, Equatable, Sendable, Hashable {
+    public struct Action: Codable, Equatable, Sendable, Hashable {
+        public let type: ActionType
+        public let params: Params
         
-        static let fullCleanup = Action(type: .fullCleanup, params: .empty)
-        static let segmentedCleanup = Action(type: .segmentCleanup, params: .empty)
+        public static let fullCleanup = Action(type: .fullCleanup, params: .empty)
+        public static let segmentedCleanup = Action(type: .segmentCleanup, params: .empty)
 
-        enum ActionType: String, CaseIterable, Codable, Sendable, Hashable, Describable {
+        public enum ActionType: String, CaseIterable, Codable, Sendable, Hashable, Describable {
             case fullCleanup = "full_cleanup"
             case segmentCleanup = "segment_cleanup"
             
-            var description: String {
+            public var description: String {
                 return switch (self) {
                 case .fullCleanup: "FULL_CLEANUP".localized()
                 case .segmentCleanup: "SEGMENT_CLEANUP".localized()
@@ -26,14 +26,14 @@ struct VTTimer: Encodable, Decodable, Equatable, Sendable, Hashable {
             }
         }
         
-        struct Params: Codable, Equatable, Sendable, Hashable {
-            let zoneId: String?
-            let segmentIds: [String]?
-            let gotoId: String?
-            let iterations: Int?
-            let customOrder: Bool?
+        public struct Params: Codable, Equatable, Sendable, Hashable {
+            public let zoneId: String?
+            public let segmentIds: [String]?
+            public let gotoId: String?
+            public let iterations: Int?
+            public let customOrder: Bool?
 
-            static let empty = Params(zoneId: nil, segmentIds: nil, gotoId: nil, iterations: nil, customOrder: nil)
+            public static let empty = Params(zoneId: nil, segmentIds: nil, gotoId: nil, iterations: nil, customOrder: nil)
             
             private enum CodingKeys: String, CodingKey {
                 case zoneId = "zone_id"
@@ -43,7 +43,7 @@ struct VTTimer: Encodable, Decodable, Equatable, Sendable, Hashable {
                 case customOrder = "custom_order"
             }
             
-            func copy(segmentIds: [String], iterations: Int, customOrder: Bool) -> Params {
+            public func copy(segmentIds: [String], iterations: Int, customOrder: Bool) -> Params {
                 Params(
                     zoneId: self.zoneId,
                     segmentIds: segmentIds,
@@ -53,7 +53,7 @@ struct VTTimer: Encodable, Decodable, Equatable, Sendable, Hashable {
                 )
             }
             
-            func copy(customOrder: Bool) -> Params {
+            public func copy(customOrder: Bool) -> Params {
                 Params(
                     zoneId: self.zoneId,
                     segmentIds: self.segmentIds,
@@ -63,7 +63,7 @@ struct VTTimer: Encodable, Decodable, Equatable, Sendable, Hashable {
                 )
             }
             
-            func copy(iterations: Int) -> Params {
+            public func copy(iterations: Int) -> Params {
                 Params(
                     zoneId: self.zoneId,
                     segmentIds: self.segmentIds,
@@ -74,7 +74,7 @@ struct VTTimer: Encodable, Decodable, Equatable, Sendable, Hashable {
             }
             
             
-            func copy(segmentIDs: [String]) -> Params {
+            public func copy(segmentIDs: [String]) -> Params {
                 Params(
                     zoneId: self.zoneId,
                     segmentIds: segmentIDs,
@@ -86,30 +86,30 @@ struct VTTimer: Encodable, Decodable, Equatable, Sendable, Hashable {
         }
     }
 
-    struct PreAction: Codable, Equatable, Sendable, Hashable {
-        let type: PreActionType
-        let params: Params
+    public struct PreAction: Codable, Equatable, Sendable, Hashable {
+        public let type: PreActionType
+        public let params: Params
         
-        enum PreActionType: String, CaseIterable, Codable, Sendable, Hashable {
+        public enum PreActionType: String, CaseIterable, Codable, Sendable, Hashable {
             case fanSpeedControl = "fan_speed_control"
             case waterUsageControl = "water_usage_control"
             case operationModeControl = "operation_mode_control"
         }
 
-        struct Params: Codable, Equatable, Sendable, Hashable {
+        public struct Params: Codable, Equatable, Sendable, Hashable {
             let value: VTPresetValue?
         }
     }
 
-    let id: String?
-    let enabled: Bool
-    let label: String
-    let dow: [Int]
-    let hour: Int
-    let minute: Int
-    let action: Action
-    let preActions: [PreAction]
-    let metaData: [String: VTAnyCodable]?
+    public let id: String?
+    public let enabled: Bool
+    public let label: String
+    public let dow: [Int]
+    public let hour: Int
+    public let minute: Int
+    public let action: Action
+    public let preActions: [PreAction]
+    public let metaData: [String: VTAnyCodable]?
 
     init() {
         self.id = nil
@@ -156,12 +156,12 @@ struct VTTimer: Encodable, Decodable, Equatable, Sendable, Hashable {
         case metaData = "metaData"
     }
     
-    var weekdays: [VTWeekday] {
+    public var weekdays: [VTWeekday] {
         dow.compactMap { VTWeekday(rawValue: $0) }
     }
 }
 
-extension VTTimer {
+public extension VTTimer {
     func copy(
         enabled: Bool? = nil,
         label: String? = nil,

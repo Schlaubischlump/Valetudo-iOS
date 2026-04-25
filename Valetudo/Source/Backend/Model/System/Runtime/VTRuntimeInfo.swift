@@ -6,7 +6,7 @@
 //
 import Foundation
 
-struct VTRuntimeInfo: Codable, Sendable {
+public struct VTRuntimeInfo: Codable, Sendable {
     let uptime: Int
     let argv: [String]
     let execArgv: [String]

@@ -6,7 +6,7 @@
 //
 import Foundation
 
-enum VTWeekday: Int, CaseIterable, Codable, Hashable, Sendable, Describable {
+public enum VTWeekday: Int, CaseIterable, Codable, Hashable, Sendable, Describable {
     case sunday = 0
     case monday
     case tuesday
@@ -15,24 +15,24 @@ enum VTWeekday: Int, CaseIterable, Codable, Hashable, Sendable, Describable {
     case friday
     case saturday
     
-    static var allNormalizedCases: [VTWeekday] {
+    public static var allNormalizedCases: [VTWeekday] {
         VTWeekday.allCases.shiftedLeft()
     }
     
     /// Normalized index when the week starts at Monday instead of Sunday
-    var normalizedIndex: Int {
+    public var normalizedIndex: Int {
         (rawValue + 6) % 7
     }
     
-    var index: Int {
+    public var index: Int {
         return rawValue
     }
     
-    var description: String {
+    public var description: String {
         Calendar.current.shortWeekdaySymbols[index]
     }
     
-    init?(normalizedIndex: Int) {
+    public init?(normalizedIndex: Int) {
         guard let day = VTWeekday(rawValue: (normalizedIndex + 1) % 7) else {
             return nil
         }
