@@ -1,4 +1,5 @@
 import Foundation
+import CoreImage
 import Network
 
 fileprivate enum VTHTTPMethod: String {
@@ -9,10 +10,17 @@ fileprivate enum VTHTTPMethod: String {
 }
 
 fileprivate struct VTRequest<Response> {
+    enum MimeType: String {
+        case json = "application/json"
+        case jpeg = "image/jpeg"
+    }
+    
     var method: VTHTTPMethod
     var url: URL?
     var query: [String: String]?
     var body: Encodable?
+    var contentType: MimeType = .json
+    var accept: MimeType = .json
 }
 
 enum VTAPIError: Error, LocalizedError {
@@ -346,6 +354,50 @@ public actor VTAPIClient: VTAPIClientProtocol {
         try await send(request)
     }
     
+    // MARK: - 1.2.11 ObstacleImagesCapability
+
+    public func getObstacleImagesCapabilityIsEnabled() async throws -> Bool {
+        let url = self.capabilitiesURL
+            .appendingPathComponent("ObstacleImagesCapability")
+        let request = VTRequest<VTObstacleImagesState>(method: .GET, url: url)
+        return try await send(request).enabled
+    }
+    
+    public func enableObstacleImagesCapability() async throws {
+        let url = self.capabilitiesURL
+            .appendingPathComponent("ObstacleImagesCapability")
+        let request = VTRequest<Void>(method: .PUT, url: url, body: VTObstacleImagesAction(action: .enabled))
+        return try await send(request)
+    }
+    
+    public func disableObstacleImagesCapability() async throws {
+        let url = self.capabilitiesURL
+            .appendingPathComponent("ObstacleImagesCapability")
+        let request = VTRequest<Void>(method: .PUT, url: url, body: VTObstacleImagesAction(action: .disable))
+        return try await send(request)
+    }
+    
+    public func getObstacleImage(id: String) async throws -> CIImage {
+        let url = self.capabilitiesURL
+            .appendingPathComponent("ObstacleImagesCapability")
+            .appendingPathComponent("img")
+            .appendingPathComponent(id)
+        let request = VTRequest<Data>(method: .GET, url: url, accept: .jpeg)
+        let binary = try await send(request)
+        if let image = CIImage(data: binary) {
+            return image
+        }
+        throw VTAPIError.unknown(URLError(.cannotDecodeContentData))
+    }
+    
+    public func getObstacleImagesCapabilityProperties() async throws -> VTObstacleImagesProperties {
+        let url = self.capabilitiesURL
+            .appendingPathComponent("ObstacleImagesCapability")
+            .appendingPathComponent("properties")
+        let request = VTRequest<VTObstacleImagesProperties>(method: .GET, url: url)
+        return try await send(request)
+    }
+    
     // MARK: - 1.3 Properties
     
     public func getRobotProperties() async throws -> VTRobotProperties {
@@ -547,11 +599,21 @@ public actor VTAPIClient: VTAPIClientProtocol {
         try await send(request, decode)
     }
 
+    private func send(_ request: VTRequest<Data>) async throws -> Data {
+        try await send(request, { data in data })
+    }
+    
     private func send(_ request: VTRequest<Void>) async throws -> Void {
         try await send(request, { _ in () })
     }
 
-    private func makeRequest(url: URL, method: String, body: Encodable?) async throws -> URLRequest {
+    private func makeRequest(
+        url: URL,
+        method: String,
+        contentType: String,
+        accept: String,
+        body: Encodable?
+    ) async throws -> URLRequest {
         var request = URLRequest(url: url)
         request.allHTTPHeaderFields = headers
         request.httpMethod = method
@@ -559,10 +621,10 @@ public actor VTAPIClient: VTAPIClientProtocol {
         if let body = body {
             let encoded = try encoder.encode(body)
             request.httpBody = encoded
-            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            request.setValue(contentType, forHTTPHeaderField: "Content-Type")
         }
 
-        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        request.setValue(accept, forHTTPHeaderField: "Accept")
         return request
     }
 
@@ -588,7 +650,13 @@ public actor VTAPIClient: VTAPIClientProtocol {
             throw URLError(.badURL)
         }
 
-        return try await makeRequest(url: finalURL, method: request.method.rawValue, body: request.body)
+        return try await makeRequest(
+            url: finalURL,
+            method: request.method.rawValue,
+            contentType: request.contentType.rawValue,
+            accept: request.accept.rawValue,
+            body: request.body
+        )
     }
 
     private func send(_ request: URLRequest) async throws -> (Data, URLResponse) {

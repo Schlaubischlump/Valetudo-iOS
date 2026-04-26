@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import CoreImage
 
 public struct VTLogLine: Sendable, Hashable {
     let timestamp: Date
@@ -101,6 +102,14 @@ public protocol VTAPIClientProtocol: Actor {
     func disableHighResolutionManualControl() async throws
     // angle: +- 180.0 and velocity: +-1.0
     func highResolutionManualControlMove(angle: CGFloat, velocity: CGFloat) async throws
+    
+    // MARK: - 1.2.11 ObstacleImagesCapability
+
+    func getObstacleImagesCapabilityIsEnabled() async throws -> Bool
+    func enableObstacleImagesCapability() async throws
+    func disableObstacleImagesCapability() async throws
+    func getObstacleImage(id: String) async throws -> CIImage
+    func getObstacleImagesCapabilityProperties() async throws -> VTObstacleImagesProperties
     
     // MARK: - 1.3 Properties
     

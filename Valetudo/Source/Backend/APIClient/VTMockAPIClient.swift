@@ -6,6 +6,7 @@
 //
 import CoreGraphics
 import Foundation
+import CoreImage
 
 extension VTStateAttributeList {
     init(attributes: [any VTStateAttribute]) {
@@ -29,6 +30,7 @@ actor VTMockAPIClient: VTAPIClientProtocol {
     private var updaterConfig = VTUpdaterConfig(updateProvider: .github)
     private var manualControlEnabled = false
     private var highResolutionManualControlEnabled = false
+    private var obstacleImagesEnabled = true
     private var presetSelections = VTMockAPIClient.defaultPresetSelections
     private var observerTasks: [VTListenerToken: Task<Void, Never>] = [:]
     private var nextEventNumber = 1
@@ -229,6 +231,34 @@ actor VTMockAPIClient: VTAPIClientProtocol {
 
     func highResolutionManualControlMove(angle: CGFloat, velocity: CGFloat) async throws {}
 
+    // MARK: - 1.2.11 ObstacleImagesCapability
+    
+    func getObstacleImagesCapabilityIsEnabled() async throws -> Bool {
+        obstacleImagesEnabled
+    }
+    
+    func enableObstacleImagesCapability() async throws {
+        obstacleImagesEnabled = true
+    }
+    
+    func disableObstacleImagesCapability() async throws {
+        obstacleImagesEnabled = false
+    }
+    
+    func getObstacleImage(id: String) async throws -> CIImage {
+        let tint: CIColor = switch id {
+        case "fc9a6d96-359c-53b5-93eb-d98918efcb57": .init(red: 0.30, green: 0.60, blue: 0.95)
+        case "7d50387c-244d-53c4-8bff-179868c82bec": .init(red: 0.96, green: 0.61, blue: 0.20)
+        default: .init(red: 0.55, green: 0.55, blue: 0.55)
+        }
+        
+        return CIImage(color: tint).cropped(to: CGRect(x: 0, y: 0, width: 220, height: 220))
+    }
+    
+    func getObstacleImagesCapabilityProperties() async throws -> VTObstacleImagesProperties {
+        return VTObstacleImagesProperties(fileFormat: .ok, dimensions: .init(width: 0, height: 0))
+    }
+    
     // MARK: - 1.3 Properties
 
     func getRobotProperties() async throws -> VTRobotProperties {

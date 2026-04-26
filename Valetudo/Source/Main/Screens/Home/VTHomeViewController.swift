@@ -50,6 +50,7 @@ class VTHomeViewController: VTViewController {
     // MARK: - Cached data
     private var robotInfo: VTRobotInfo?
     private var robotState: VTStateAttributeList?
+    private var obstacleImagesCapabilityIsEnabled = false
     
     private var segmentLayer: [VTLayer] {
         mapView?.data.segmentLayer ?? []
@@ -196,18 +197,42 @@ class VTHomeViewController: VTViewController {
     }
     
     private func hideEntityPopup() {
-        guard let vc = presentedViewController as? VTCalloutViewController else { return }
+        guard let vc = calloutPresenter.presentedViewController as? VTCalloutViewController else { return }
         vc.dismiss(animated: true)
+    }
+    
+    private var calloutPresenter: UIViewController {
+        (self.presentedViewController as? VTRobotControlViewController) ?? self
+    }
+    
+    private func presentCallout(_ vc: VTCalloutViewController, at point: CGPoint) {
+        guard let popover = vc.popoverPresentationController else { return }
+        
+        popover.sourceView = mapView
+        popover.sourceRect = CGRect(origin: point, size: .one)
+        popover.permittedArrowDirections = .any
+        popover.delegate = self
+        
+        let presenter = calloutPresenter
+        if let presentedCallout = presenter.presentedViewController as? VTCalloutViewController {
+            presentedCallout.dismiss(animated: false) {
+                presenter.present(vc, animated: true)
+            }
+        } else {
+            presenter.present(vc, animated: true)
+        }
     }
     
     private func showEntityPopup(
         entity: VTEntity,
         at point: CGPoint
-    ) -> Bool {
+    ) async -> Bool {
         guard mapInteractionEnabled else { return false }
         
         var title: String = ""
         var subtitle: String = ""
+        var image: UIImage?
+        var showsImageCallout: Bool = false
         
         switch (entity.type) {
         case .charger_location:
@@ -220,24 +245,48 @@ class VTHomeViewController: VTViewController {
             } else {
                 subtitle = ""
             }
+        case .obstacle:
+            title = "OBSTACLE".localized()
+            subtitle = entity.label ?? ""
+            if let label = entity.label,
+               let range = label.range(of: " (", options: .backwards), label.hasSuffix(")") {
+                    title = String(label[..<range.lowerBound])
+                    subtitle = String(label[range.upperBound..<label.index(before: label.endIndex)])
+            }
+            showsImageCallout = obstacleImagesCapabilityIsEnabled
         default : return false
         }
         
-        let vc = VTCalloutViewController(
-            title: title,
-            subtitle: subtitle
-        )
-
-        if let popover = vc.popoverPresentationController {
-            popover.sourceView = mapView
-            popover.sourceRect = CGRect(origin: point, size: .one)
-            popover.permittedArrowDirections = .any
-            popover.delegate = self
-            
-            // if we present a bottom sheet on iOS we need to use that to present our callouts
-            let presented = (self.presentedViewController as? VTRobotControlViewController) ?? self
-            presented.present(vc, animated: true)
+        let vc = if showsImageCallout {
+            VTCalloutViewController(
+                title: title,
+                subtitle: subtitle,
+                image: image,
+                isLoadingImage: true
+            )
+        } else {
+            VTCalloutViewController(
+                title: title,
+                subtitle: subtitle
+            )
         }
+        presentCallout(vc, at: point)
+        
+        guard showsImageCallout,
+              entity.type == .obstacle,
+              let id = entity.id,
+              let obstacleImage = try? await client.getObstacleImage(id: id)
+        else {
+            return true
+        }
+        
+        image = UIImage(ciImage: obstacleImage)
+        vc.update(
+            title: title,
+            subtitle: subtitle,
+            image: image,
+            isLoadingImage: false
+        )
         return true
     }
 
@@ -282,6 +331,7 @@ class VTHomeViewController: VTViewController {
         let mapData = try await client.getMap()
         robotInfo = try? await client.getRobotInfo()
         robotState = try? await client.getStateAttributes()
+        obstacleImagesCapabilityIsEnabled = (try? await client.getObstacleImagesCapabilityIsEnabled()) ?? false
                 
         if let state = robotState {
             robotStatusView.update(
