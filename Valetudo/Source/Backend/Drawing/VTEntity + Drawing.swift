@@ -16,14 +16,6 @@ extension VTEntity {
     var angleInDegree: CGFloat {
         CGFloat(metaData["angle"]?.intValue ?? 0)
     }
-    
-    var label: String? {
-        metaData["label"]?.stringValue
-    }
-    
-    var id: String? {
-        metaData["id"]?.stringValue
-    }
 }
 
 extension VTEntity: Comparable {

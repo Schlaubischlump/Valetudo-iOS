@@ -11,6 +11,9 @@ public struct VTEntity: Decodable, Sendable {
     public let metaData: [String: VTAnyCodable]
     public let type: VTEntityType
     public let points: [Int]
+    
+    var label: String? { metaData["label"]?.stringValue }
+    var id: String? { metaData["id"]?.stringValue }
 }
 
 extension VTEntity: Equatable {}
