@@ -8,6 +8,7 @@ import UIKit
 
 final class VTActionCellContentView: UIView, UIContentView {
     private var currentConfiguration: VTActionCellContentConfiguration!
+    private var actionButton = VTOutlineButton(title: "", tintColor: .tintColor)
 
     private let iconImageView: UIImageView = {
         let imageView = UIImageView()
@@ -30,8 +31,22 @@ final class VTActionCellContentView: UIView, UIContentView {
         label.numberOfLines = 0
         return label
     }()
-
-    private lazy var actionButton = VTOutlineButton(title: "", tintColor: tintColor)
+    
+    private lazy var textStack: UIStackView = {
+        let stack = UIStackView(arrangedSubviews: [titleLabel, subtitleLabel])
+        stack.axis = .vertical
+        stack.spacing = 4
+        return stack
+    }()
+    
+    private lazy var container: UIStackView = {
+        let stack = UIStackView(arrangedSubviews: [iconImageView, textStack, actionButton])
+        stack.axis = .horizontal
+        stack.alignment = .center
+        stack.spacing = 12
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        return stack
+    }()
 
     var configuration: UIContentConfiguration {
         get { currentConfiguration }
@@ -54,19 +69,9 @@ final class VTActionCellContentView: UIView, UIContentView {
     private func setupViews() {
         backgroundColor = .clear
 
-        let textStack = UIStackView(arrangedSubviews: [titleLabel, subtitleLabel])
-        textStack.axis = .vertical
-        textStack.spacing = 4
-
         iconImageView.translatesAutoresizingMaskIntoConstraints = false
         textStack.translatesAutoresizingMaskIntoConstraints = false
         actionButton.translatesAutoresizingMaskIntoConstraints = false
-
-        let container = UIStackView(arrangedSubviews: [iconImageView, textStack, actionButton])
-        container.axis = .horizontal
-        container.alignment = .center
-        container.spacing = 12
-        container.translatesAutoresizingMaskIntoConstraints = false
 
         addSubview(container)
 
@@ -97,7 +102,22 @@ final class VTActionCellContentView: UIView, UIContentView {
         iconImageView.image = configuration.image?.withRenderingMode(.alwaysTemplate)
         iconImageView.tintColor = .label
         iconImageView.isHidden = configuration.image == nil
-        actionButton.configuration?.title = configuration.buttonTitle
+        replaceActionButton(
+            title: configuration.buttonTitle,
+            style: configuration.buttonStyle ?? .normal
+        )
+    }
+    
+    private func replaceActionButton(title: String, style: VTButtonStyle) {
+        container.removeArrangedSubview(actionButton)
+        actionButton.removeFromSuperview()
+
+        actionButton = VTOutlineButton(title: title, tintColor: tintColor, style: style)
+        actionButton.translatesAutoresizingMaskIntoConstraints = false
+        actionButton.setContentHuggingPriority(.required, for: .horizontal)
+        actionButton.setContentCompressionResistancePriority(.required, for: .horizontal)
+        actionButton.addTarget(self, action: #selector(didTapAction), for: .touchUpInside)
+        container.addArrangedSubview(actionButton)
     }
 
     @objc private func didTapAction() {

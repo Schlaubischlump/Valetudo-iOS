@@ -6,12 +6,16 @@
 //
 import UIKit
 
+fileprivate let kMappingPass = "MAPPING_PASS"
+fileprivate let kMapReset = "MAP_RESET"
+
 final class VTMapOptionsViewController: VTCollectionViewController {
-    private typealias DataSource = UICollectionViewDiffableDataSource<VTMapOptionsSection, VTMapOptionsItem>
-    private typealias Snapshot = NSDiffableDataSourceSnapshot<VTMapOptionsSection, VTMapOptionsItem>
+    private typealias DataSource = UICollectionViewDiffableDataSource<VTMapOptionsSection, VTAnyItem>
+    private typealias Snapshot = NSDiffableDataSourceSnapshot<VTMapOptionsSection, VTAnyItem>
 
     private let client: VTAPIClientProtocol
     private var dataSource: DataSource!
+    private var availableCapabilities = Set<VTCapability>()
 
     #if !targetEnvironment(macCatalyst)
     private let refreshControl = UIRefreshControl()
@@ -70,7 +74,29 @@ final class VTMapOptionsViewController: VTCollectionViewController {
     }
 
     private func configureDataSource() {
-        let cellRegistration = UICollectionView.CellRegistration<UICollectionViewListCell, VTMapOptionsItem> { _, _, _ in
+        let cellRegistration = VTCellRegistration { [weak self] cell, _, wrappedItem in
+            guard let self else { return }
+            guard let item = wrappedItem.base as? VTActionItem else {
+                fatalError("Unsupported map options item: \(wrappedItem.base)")
+            }
+
+            cell.contentConfiguration = VTActionCellContentConfiguration(
+                id: item.id,
+                title: item.title,
+                subtitle: item.subtitle,
+                image: item.image,
+                buttonTitle: item.buttonTitle,
+                buttonStyle: item.buttonStyle,
+                onAction: { [weak self] in
+                switch item.id {
+                case kMappingPass:
+                    self?.didTapMappingPass()
+                case kMapReset:
+                    self?.didTapMapReset()
+                default:
+                    break
+                }
+            })
         }
 
         dataSource = DataSource(collectionView: collectionView) { collectionView, indexPath, item in
@@ -102,8 +128,33 @@ final class VTMapOptionsViewController: VTCollectionViewController {
 
     @MainActor
     private func reloadData(animated: Bool) async {
+        availableCapabilities = Set((try? await client.getCapabilities()) ?? [])
+
         var snapshot = Snapshot()
         snapshot.appendSections([.main])
+        if availableCapabilities.contains(.mappingPass) {
+            snapshot.appendItems([
+                .action(
+                    kMappingPass,
+                    title: "MAP_OPTIONS_MAPPING_PASS_TITLE".localized(),
+                    subtitle: "MAP_OPTIONS_MAPPING_PASS_SUBTITLE".localized(),
+                    image: UIImage(systemName: "map.fill"),
+                    buttonTitle: "MAP_OPTIONS_MAPPING_PASS_BUTTON".localized()
+                )
+            ], toSection: .main)
+        }
+        if availableCapabilities.contains(.mapReset) {
+            snapshot.appendItems([
+                .action(
+                    kMapReset,
+                    title: "MAP_OPTIONS_RESET_TITLE".localized(),
+                    subtitle: "MAP_OPTIONS_RESET_SUBTITLE".localized(),
+                    image: .mapReset,
+                    buttonTitle: "MAP_OPTIONS_MAPPING_PASS_BUTTON".localized(),
+                    buttonStyle: .destructive
+                )
+            ], toSection: .main)
+        }
         await dataSource.apply(snapshot, animatingDifferences: animated)
 
         #if !targetEnvironment(macCatalyst)
@@ -111,5 +162,25 @@ final class VTMapOptionsViewController: VTCollectionViewController {
             refreshControl.endRefreshing()
         }
         #endif
+    }
+
+    private func didTapMappingPass() {
+        Task {
+            do {
+                try await client.startMappingPass()
+            } catch {
+                log(message: "MappingPassCapability start failed: \(error.localizedDescription)", forSubsystem: .mapOptions, level: .error)
+            }
+        }
+    }
+
+    private func didTapMapReset() {
+        Task {
+            do {
+                try await client.resetMap()
+            } catch {
+                log(message: "MapResetCapability trigger failed: \(error.localizedDescription)", forSubsystem: .mapOptions, level: .error)
+            }
+        }
     }
 }

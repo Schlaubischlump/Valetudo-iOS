@@ -268,6 +268,16 @@ actor VTMockAPIClient: VTAPIClientProtocol {
     func getMapResetProperties() async throws -> [String : VTAnyCodable] {
         return [:]
     }
+
+    // MARK: - 1.2.13 MappingPassCapability
+
+    func startMappingPass() async throws {
+
+    }
+
+    func getMappingPassProperties() async throws -> [String : VTAnyCodable] {
+        return [:]
+    }
     
     // MARK: - 1.3 Properties
 

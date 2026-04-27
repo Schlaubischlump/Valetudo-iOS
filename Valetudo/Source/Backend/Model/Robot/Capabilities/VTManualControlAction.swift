@@ -5,7 +5,7 @@
 //  Created by David Klopp on 17.09.25.
 //
 
-public enum VTManualControlActionType: String, Encodable, Sendable {
+enum VTManualControlActionType: String, Encodable, Sendable {
     case enable
     case disable
     case move
@@ -18,7 +18,7 @@ public enum VTMoveDirection: String, Codable, Sendable {
     case rotateCounterclockwise = "rotate_counterclockwise"
 }
 
-public struct VTManualControlAction: Encodable, Sendable {
+struct VTManualControlAction: Encodable, Sendable {
     let action: VTManualControlActionType
     let movementCommand: VTMoveDirection?
 

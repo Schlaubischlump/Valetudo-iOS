@@ -420,6 +420,26 @@ public actor VTAPIClient: VTAPIClientProtocol {
         return dictValue
     }
     
+    // MARK: - 1.2.13 MappingPassCapability
+    
+    public func startMappingPass() async throws {
+        let url = self.capabilitiesURL
+            .appendingPathComponent("MappingPassCapability")
+        let request = VTRequest<Void>(method: .PUT, url: url, body: VTMappingPassAction())
+        return try await send(request)
+    }
+    
+    public func getMappingPassProperties() async throws -> [String: VTAnyCodable] {
+        let url = self.capabilitiesURL
+            .appendingPathComponent("MappingPassCapability")
+            .appendingPathComponent("properties")
+        let request = VTRequest<VTAnyCodable>(method: .GET, url: url)
+        guard let dictValue = try await send(request).dictionaryValue else {
+            throw VTAPIError.noDictionary
+        }
+        return dictValue
+    }
+    
     // MARK: - 1.3 Properties
     
     public func getRobotProperties() async throws -> VTRobotProperties {

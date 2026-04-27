@@ -13,6 +13,7 @@ enum VTSubsystem: String {
     case consumable
     case valetudoLog
     case map
+    case mapOptions
     case robotControl
     case timer
     case valetudoEvent

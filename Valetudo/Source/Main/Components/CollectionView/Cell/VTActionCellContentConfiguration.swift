@@ -12,6 +12,7 @@ struct VTActionCellContentConfiguration: UIContentConfiguration, Hashable {
     var subtitle: String
     var image: UIImage?
     var buttonTitle: String
+    var buttonStyle: VTButtonStyle? = nil
     var onAction: (() -> Void)? = nil
 
     func makeContentView() -> UIView & UIContentView {
@@ -27,7 +28,8 @@ struct VTActionCellContentConfiguration: UIContentConfiguration, Hashable {
         lhs.title == rhs.title &&
         lhs.subtitle == rhs.subtitle &&
         lhs.image == rhs.image &&
-        lhs.buttonTitle == rhs.buttonTitle
+        lhs.buttonTitle == rhs.buttonTitle &&
+        lhs.buttonStyle == rhs.buttonStyle
     }
 
     func hash(into hasher: inout Hasher) {
@@ -36,5 +38,6 @@ struct VTActionCellContentConfiguration: UIContentConfiguration, Hashable {
         hasher.combine(subtitle)
         hasher.combine(image)
         hasher.combine(buttonTitle)
+        hasher.combine(buttonStyle)
     }
 }

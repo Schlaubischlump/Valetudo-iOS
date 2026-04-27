@@ -6,12 +6,21 @@
 //
 import UIKit
 
+enum VTButtonStyle {
+    case normal
+    case destructive
+}
+
 @MainActor
 final class VTOutlineButton: UIButton {
-    init(title: String, tintColor: UIColor) {
+    init(title: String, tintColor: UIColor, style: VTButtonStyle = .normal) {
         var config = UIButton.Configuration.bordered()
         config.title = title
-        config.baseForegroundColor = tintColor
+        let effectiveTintColor = switch style {
+        case .normal: tintColor
+        case .destructive: UIColor.systemRed
+        }
+        config.baseForegroundColor = effectiveTintColor
         config.baseBackgroundColor = .clear
         config.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in
             var outgoing = incoming
@@ -24,7 +33,7 @@ final class VTOutlineButton: UIButton {
 
         configuration = config
 
-        layer.borderColor = tintColor.cgColor
+        layer.borderColor = effectiveTintColor.cgColor
         layer.borderWidth = 2.0
         layer.cornerRadius = 4
         configurationUpdateHandler = { button in
@@ -32,16 +41,16 @@ final class VTOutlineButton: UIButton {
 
             if button.isHighlighted {
                 config?.baseForegroundColor = .white
-                config?.baseBackgroundColor = tintColor
+                config?.baseBackgroundColor = effectiveTintColor
             } else {
-                config?.baseForegroundColor = tintColor
+                config?.baseForegroundColor = effectiveTintColor
                 config?.baseBackgroundColor = .clear
             }
 
             button.configuration = config
         }
 
-        self.tintColor = tintColor
+        self.tintColor = effectiveTintColor
     }
 
     required init?(coder: NSCoder) {

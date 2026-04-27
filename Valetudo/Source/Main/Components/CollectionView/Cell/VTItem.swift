@@ -64,9 +64,8 @@ struct VTActionItem: VTItem {
     let title: String
     let subtitle: String
     let image: UIImage?
-    let imageTintColor: UIColor?
     let buttonTitle: String
-    let showsButton: Bool
+    let buttonStyle: VTButtonStyle?
 }
 
 
@@ -139,9 +138,8 @@ struct VTAnyItem: Hashable, Sendable {
         title: String,
         subtitle: String,
         image: UIImage?,
-        imageTintColor: UIColor? = nil,
         buttonTitle: String,
-        showsButton: Bool = true
+        buttonStyle: VTButtonStyle? = nil
     ) -> VTAnyItem {
         VTAnyItem(
             VTActionItem(
@@ -149,9 +147,8 @@ struct VTAnyItem: Hashable, Sendable {
                 title: title,
                 subtitle: subtitle,
                 image: image,
-                imageTintColor: imageTintColor,
                 buttonTitle: buttonTitle,
-                showsButton: showsButton
+                buttonStyle: buttonStyle
             )
         )
     }

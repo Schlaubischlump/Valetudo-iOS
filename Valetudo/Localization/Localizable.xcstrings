@@ -870,6 +870,61 @@
         }
       }
     },
+    "MAP_OPTIONS_MAPPING_PASS_BUTTON" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "GO"
+          }
+        }
+      }
+    },
+    "MAP_OPTIONS_MAPPING_PASS_SUBTITLE" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Create a new map"
+          }
+        }
+      }
+    },
+    "MAP_OPTIONS_MAPPING_PASS_TITLE" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mapping Pass"
+          }
+        }
+      }
+    },
+    "MAP_OPTIONS_RESET_SUBTITLE" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete the current map"
+          }
+        }
+      }
+    },
+    "MAP_OPTIONS_RESET_TITLE" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Map Reset"
+          }
+        }
+      }
+    },
     "MAP_OPTIONS_SUBTITLE" : {
       "extractionState" : "manual",
       "localizations" : {

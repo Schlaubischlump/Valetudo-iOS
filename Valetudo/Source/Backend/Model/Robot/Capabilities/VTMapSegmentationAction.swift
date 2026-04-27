@@ -10,7 +10,7 @@ enum VTMapSegmentationActionType: String, Encodable, Hashable, Sendable {
     case startSegmentAction = "start_segment_action"
 }
 
-public struct VTMapSegmentationAction: Encodable, Hashable, Sendable {
+struct VTMapSegmentationAction: Encodable, Hashable, Sendable {
     let action: VTMapSegmentationActionType = .startSegmentAction
     let segmentIDs: [String]
     let iterations: Int

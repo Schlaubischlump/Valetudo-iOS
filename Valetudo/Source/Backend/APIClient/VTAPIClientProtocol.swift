@@ -114,6 +114,10 @@ public protocol VTAPIClientProtocol: Actor {
     // MARK: - 1.2.12 MapResetCapability
     func resetMap() async throws
     func getMapResetProperties() async throws -> [String: VTAnyCodable]
+
+    // MARK: - 1.2.13 MappingPassCapability
+    func startMappingPass() async throws
+    func getMappingPassProperties() async throws -> [String: VTAnyCodable]
     
     // MARK: - 1.3 Properties
     

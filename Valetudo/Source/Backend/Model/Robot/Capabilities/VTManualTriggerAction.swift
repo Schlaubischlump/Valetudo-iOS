@@ -7,7 +7,7 @@
 import Foundation
 
 
-public struct VTManualTriggerAction: Encodable, Hashable, Sendable  {
+struct VTManualTriggerAction: Encodable, Hashable, Sendable  {
     let action = "trigger"
 
     enum CodingKeys: String, CodingKey {
