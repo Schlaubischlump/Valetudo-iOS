@@ -16,6 +16,7 @@ class VTValetudoEventBarButtonItem: UIBarButtonItem {
         self.client = client
         self.parentViewController = parentViewController
         super.init()
+        title = "EVENTS".localized()
         image = .bellFill
         target = self
         action = #selector(showEventsPopup(_:))
@@ -35,6 +36,11 @@ class VTValetudoEventBarButtonItem: UIBarButtonItem {
     }
 
     @objc func showEventsPopup(_ sender: UIBarButtonItem) {
+        guard let topViewController = parentViewController?.presentedViewController ?? parentViewController,
+              let sourceView = topViewController.viewIfLoaded,
+              sourceView.window != nil
+        else { return }
+
         let vc = VTValetudoEventsViewController(client: client)
         vc.title = "EVENTS".localized()
 
@@ -46,8 +52,7 @@ class VTValetudoEventBarButtonItem: UIBarButtonItem {
         popover.permittedArrowDirections = .any
         popover.delegate = vc
 
-        let topViewController = parentViewController?.presentedViewController ?? parentViewController
-        topViewController?.present(nav, animated: true)
+        topViewController.present(nav, animated: true)
     }
 
     @MainActor

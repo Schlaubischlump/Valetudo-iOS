@@ -6,10 +6,24 @@
 //
 import UIKit
 
-class VTSplitViewController: UISplitViewController, UISplitViewControllerDelegate {
+private let kInspectorTag = 101
+
+class VTSplitViewController: UISplitViewController, UISplitViewControllerDelegate, UINavigationControllerDelegate {
     let client: VTAPIClientProtocol
 
     lazy var sidebar: VTSidebarViewController = .init(client: client)
+    private lazy var sidebarNavigationController = UINavigationController(rootViewController: sidebar)
+    private lazy var inspectorToggleBarButtonItem: UIBarButtonItem = {
+        let item = UIBarButtonItem(
+            image: .sidebarRight,
+            style: .plain,
+            target: self,
+            action: #selector(didTapInspectorToggle)
+        )
+        item.title = "CONTROL".localized()
+        item.tag = kInspectorTag
+        return item
+    }()
 
     let detail: UINavigationController = .init(rootViewController: UIViewController())
     let inspector: UIViewController
@@ -29,6 +43,7 @@ class VTSplitViewController: UISplitViewController, UISplitViewControllerDelegat
         super.viewDidLoad()
 
         delegate = self
+        detail.delegate = self
         primaryBackgroundStyle = .sidebar
         preferredDisplayMode = .oneBesideSecondary
         preferredPrimaryColumnWidth = 250
@@ -43,12 +58,17 @@ class VTSplitViewController: UISplitViewController, UISplitViewControllerDelegat
             subtitle: "VALETUDO_SUBTITLE".localized()
         )
 
-        let sidebarNavController = UINavigationController(rootViewController: sidebar)
-        setViewController(sidebarNavController, for: .primary)
+        setViewController(sidebarNavigationController, for: .primary)
         setViewController(detail, for: .secondary)
         setViewController(inspector, for: .inspector)
 
         updateDetail(for: .home, animated: false) // Select default
+        updateNavigationChrome()
+    }
+
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        updateNavigationChrome()
     }
 
     func updateDetail(for item: VTSidebarItem, animated: Bool) {
@@ -66,9 +86,48 @@ class VTSplitViewController: UISplitViewController, UISplitViewControllerDelegat
         }
         vc.title = item.title
         detail.setViewControllers([vc], animated: animated)
+        updateNavigationChrome()
 
         if isCompact {
             showDetailViewController(detail, sender: self)
         }
+    }
+
+    func navigationController(_: UINavigationController, willShow viewController: UIViewController, animated _: Bool) {
+        updateDetailNavigationButtons(for: viewController)
+    }
+
+    @objc
+    private func didTapInspectorToggle() {
+        if isShowing(.inspector) {
+            hide(.inspector)
+        } else {
+            show(.inspector)
+        }
+        updateNavigationChrome()
+    }
+
+    private func updateNavigationChrome() {
+        sidebar.setShowsEventButton(isCompact && sidebarNavigationController.topViewController === sidebar)
+
+        if let topViewController = detail.topViewController {
+            updateDetailNavigationButtons(for: topViewController)
+        }
+    }
+
+    private func updateDetailNavigationButtons(for viewController: UIViewController) {
+        var rightItems = viewController.navigationItem.rightBarButtonItems ?? []
+
+        if rightItems.isEmpty, let rightItem = viewController.navigationItem.rightBarButtonItem {
+            rightItems = [rightItem]
+        }
+
+        rightItems.removeAll { $0.tag == inspectorToggleBarButtonItem.tag }
+
+        if !isCompact {
+            rightItems.append(inspectorToggleBarButtonItem)
+        }
+
+        viewController.navigationItem.rightBarButtonItems = rightItems.isEmpty ? nil : rightItems
     }
 }

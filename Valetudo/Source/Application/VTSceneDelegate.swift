@@ -20,6 +20,7 @@ class VTSceneDelegate: UIResponder, UIWindowSceneDelegate {
     }
 
     private static let launchScreenDisplayDuration: TimeInterval = 1.0
+    private static let minimumWindowSize = CGSize(width: 800, height: 500)
 
     var window: UIWindow?
     private var didEnterBackground = false
@@ -36,6 +37,8 @@ class VTSceneDelegate: UIResponder, UIWindowSceneDelegate {
         guard let windowScene = scene as? UIWindowScene else {
             fatalError("Expected scene of type UIWindowScene but got an unexpected type")
         }
+
+        windowScene.sizeRestrictions?.minimumSize = Self.minimumWindowSize
 
         let window = UIWindow(windowScene: windowScene)
         self.window = window

@@ -221,6 +221,17 @@
         }
       }
     },
+    "CONTROL" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Control"
+          }
+        }
+      }
+    },
     "COPY" : {
       "extractionState" : "manual",
       "localizations" : {

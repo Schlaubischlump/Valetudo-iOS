@@ -44,6 +44,7 @@ public extension UIImage {
     static let arrowUpTrashFill = UIImage(systemName: "arrow.up.trash.fill")
     static let puzzlepieceExtensionFill = UIImage(systemName: "puzzlepiece.extension.fill")
     static let chartBarFill = UIImage(systemName: "chart.bar.fill")
+    static let sidebarRight = UIImage(systemName: "sidebar.right")
     static let appLogo = UIImage(named: "Logo")
 
     static let operationModeVacuumAndMop = UIImage.combine(left: .dropFill, right: .fanFill)

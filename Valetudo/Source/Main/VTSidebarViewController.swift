@@ -87,6 +87,7 @@ class VTSidebarViewController: VTCollectionViewController {
     var didSelectItem: ((VTSidebarItem) -> Void)?
 
     private var client: VTAPIClientProtocol
+    private lazy var valetudoEventBarButtonItem = VTValetudoEventBarButtonItem(client: client, parentViewController: self)
 
     init(client: VTAPIClientProtocol) {
         self.client = client
@@ -96,7 +97,6 @@ class VTSidebarViewController: VTCollectionViewController {
         super.init(collectionViewLayout: layout)
         clearsSelectionOnViewWillAppear = true
 
-        navigationItem.rightBarButtonItem = VTValetudoEventBarButtonItem(client: client, parentViewController: self)
         navigationItem.leftBarButtonItem = VTRobotBarButtonItem(parentViewController: self)
     }
 
@@ -144,6 +144,10 @@ class VTSidebarViewController: VTCollectionViewController {
             forSupplementaryViewOfKind: UICollectionView.elementKindSectionHeader,
             withReuseIdentifier: VTSidebarHeaderView.reuseIdentifier
         )
+    }
+
+    func setShowsEventButton(_ showsEventButton: Bool) {
+        navigationItem.rightBarButtonItem = showsEventButton ? valetudoEventBarButtonItem : nil
     }
 
     @MainActor
