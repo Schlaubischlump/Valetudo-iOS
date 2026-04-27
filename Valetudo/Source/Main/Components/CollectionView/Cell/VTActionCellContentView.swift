@@ -94,11 +94,10 @@ final class VTActionCellContentView: UIView, UIContentView {
 
         titleLabel.text = configuration.title
         subtitleLabel.text = configuration.subtitle
-        iconImageView.image = configuration.image
-        iconImageView.tintColor = configuration.imageTintColor
+        iconImageView.image = configuration.image?.withRenderingMode(.alwaysTemplate)
+        iconImageView.tintColor = .label
         iconImageView.isHidden = configuration.image == nil
         actionButton.configuration?.title = configuration.buttonTitle
-        actionButton.isHidden = !configuration.showsButton
     }
 
     @objc private func didTapAction() {

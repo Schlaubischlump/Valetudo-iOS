@@ -11,9 +11,7 @@ struct VTActionCellContentConfiguration: UIContentConfiguration, Hashable {
     var title: String
     var subtitle: String
     var image: UIImage?
-    var imageTintColor: UIColor? = nil
     var buttonTitle: String
-    var showsButton: Bool = true
     var onAction: (() -> Void)? = nil
 
     func makeContentView() -> UIView & UIContentView {
@@ -29,9 +27,7 @@ struct VTActionCellContentConfiguration: UIContentConfiguration, Hashable {
         lhs.title == rhs.title &&
         lhs.subtitle == rhs.subtitle &&
         lhs.image == rhs.image &&
-        lhs.imageTintColor == rhs.imageTintColor &&
-        lhs.buttonTitle == rhs.buttonTitle &&
-        lhs.showsButton == rhs.showsButton
+        lhs.buttonTitle == rhs.buttonTitle
     }
 
     func hash(into hasher: inout Hasher) {
@@ -39,8 +35,6 @@ struct VTActionCellContentConfiguration: UIContentConfiguration, Hashable {
         hasher.combine(title)
         hasher.combine(subtitle)
         hasher.combine(image)
-        hasher.combine(imageTintColor)
         hasher.combine(buttonTitle)
-        hasher.combine(showsButton)
     }
 }
