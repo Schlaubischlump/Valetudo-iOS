@@ -7,8 +7,8 @@
 import UIKit
 
 class VTSystemInformationViewControllerBase: VTCollectionViewController {
-    typealias VTSystemInformationDataSource = UICollectionViewDiffableDataSource<VTSystemInformationSection, VTSystemInformationItem>
-    typealias VTSystemInformationSnapshot = NSDiffableDataSourceSnapshot<VTSystemInformationSection, VTSystemInformationItem>
+    typealias VTSystemInformationDataSource = UICollectionViewDiffableDataSource<VTSystemInformationSection, VTAnyItem>
+    typealias VTSystemInformationSnapshot = NSDiffableDataSourceSnapshot<VTSystemInformationSection, VTAnyItem>
 
     let client: VTAPIClientProtocol
     var dataSource: VTSystemInformationDataSource!
@@ -18,6 +18,7 @@ class VTSystemInformationViewControllerBase: VTCollectionViewController {
         var listConfig = UICollectionLayoutListConfiguration(appearance: .insetGrouped)
         listConfig.showsSeparators = true
         listConfig.headerMode = .supplementary
+        listConfig.backgroundColor = .adaptiveGroupedBackground
         let layout = UICollectionViewCompositionalLayout.list(using: listConfig)
         super.init(collectionViewLayout: layout)
 
@@ -25,13 +26,13 @@ class VTSystemInformationViewControllerBase: VTCollectionViewController {
         navigationItem.rightBarButtonItem = VTValetudoEventBarButtonItem(client: client, parentViewController: self)
     }
 
-    @available(*, unavailable)
     required init?(coder _: NSCoder) {
         fatalError("init(coder:) not implemented")
     }
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        
         configureCollectionView()
         configureDataSource()
     }
@@ -45,7 +46,6 @@ class VTSystemInformationViewControllerBase: VTCollectionViewController {
     }
 
     func configureCollectionView() {
-        // collectionView.backgroundColor = .systemGroupedBackground
         collectionView.register(
             VTHeaderView.self,
             forSupplementaryViewOfKind: UICollectionView.elementKindSectionHeader,
@@ -54,35 +54,45 @@ class VTSystemInformationViewControllerBase: VTCollectionViewController {
     }
 
     func configureDataSource() {
-        let linkCellRegistration = UICollectionView.CellRegistration<UICollectionViewListCell, VTSystemInformationItem> { cell, _, item in
-            switch item {
-            case let .link(title, _):
-                var listContent = cell.defaultContentConfiguration()
-                listContent.text = title
-                cell.contentConfiguration = listContent
+        let linkCellRegistration = VTCellRegistration { cell, _, wrappedItem in
+            switch wrappedItem.base {
+            case let item as VTSystemInformationLinkItem:
+                cell.contentConfiguration = VTKeyValueCellContentConfiguration(
+                    id: item.id,
+                    title: item.title,
+                    value: nil,
+                    usesHorizontalLayout: false
+                )
+                cell.backgroundConfiguration = .adaptiveListCell()
                 cell.accessories = [.disclosureIndicator()]
             default:
                 break
             }
         }
 
-        let keyValueCellRegistration = UICollectionView.CellRegistration<UICollectionViewListCell, VTSystemInformationItem> { cell, _, item in
-            switch item {
-            case let .keyValuePair(title, subtitle):
-                var listContent = cell.defaultContentConfiguration()
-                listContent.text = title
-                listContent.secondaryText = subtitle
-                cell.contentConfiguration = listContent
+        let keyValueCellRegistration = VTCellRegistration { cell, _, wrappedItem in
+            switch wrappedItem.base {
+            case let item as VTKeyValueItem:
+                cell.contentConfiguration = VTKeyValueCellContentConfiguration(
+                    id: item.id,
+                    title: item.title,
+                    value: item.value,
+                    usesHorizontalLayout: self.currentViewDesign == .regular
+                )
+                cell.backgroundConfiguration = .adaptiveListCell()
+                cell.accessories = []
             default:
                 break
             }
         }
 
-        let segmentedBarRegistration = UICollectionView.CellRegistration<UICollectionViewListCell, VTSystemInformationItem> { cell, _, item in
-            switch item {
-            case var .segmentedBar(config):
+        let segmentedBarRegistration = VTCellRegistration { cell, _, wrappedItem in
+            switch wrappedItem.base {
+            case let item as VTSystemInformationSegmentedBarItem:
+                var config = item.config
                 config.availableWidth = cell.contentView.frame.width
                 cell.contentConfiguration = config
+                cell.backgroundConfiguration = .adaptiveListCell()
                 cell.accessories = []
             default:
                 break
@@ -90,13 +100,15 @@ class VTSystemInformationViewControllerBase: VTCollectionViewController {
         }
 
         dataSource = VTSystemInformationDataSource(collectionView: collectionView) { collectionView, indexPath, item in
-            switch item {
-            case .keyValuePair:
+            switch item.base {
+            case is VTKeyValueItem:
                 collectionView.dequeueConfiguredReusableCell(using: keyValueCellRegistration, for: indexPath, item: item)
-            case .link:
+            case is VTSystemInformationLinkItem:
                 collectionView.dequeueConfiguredReusableCell(using: linkCellRegistration, for: indexPath, item: item)
-            case .segmentedBar:
+            case is VTSystemInformationSegmentedBarItem:
                 collectionView.dequeueConfiguredReusableCell(using: segmentedBarRegistration, for: indexPath, item: item)
+            default:
+                fatalError("Unsupported system information item: \(item.base)")
             }
         }
 
@@ -120,6 +132,15 @@ class VTSystemInformationViewControllerBase: VTCollectionViewController {
         fatalError("Not implemented!")
     }
 
+    override func viewDesignDidChange(to _: VTViewDesign) {
+        var snapshot = dataSource.snapshot()
+        let identifiers = snapshot.itemIdentifiers
+        guard !identifiers.isEmpty else { return }
+
+        snapshot.reconfigureItems(identifiers)
+        dataSource.apply(snapshot, animatingDifferences: false)
+    }
+
     @MainActor
     override func reconnectAndRefresh() async {
         Task { await self.reloadData(animated: false) }
@@ -129,19 +150,16 @@ class VTSystemInformationViewControllerBase: VTCollectionViewController {
 
     override func collectionView(_: UICollectionView, shouldSelectItemAt indexPath: IndexPath) -> Bool {
         guard let item = dataSource.itemIdentifier(for: indexPath) else { return false }
-        return switch item {
-        case .link: true
-        case _: false
-        }
+        return item.base is VTSystemInformationLinkItem
     }
 
     override func collectionView(_: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         guard let item = dataSource.itemIdentifier(for: indexPath) else { return }
 
-        switch item {
-        case let .link(title, children):
-            let vc = VTSystemInformationDetailedViewController(client: client, data: children)
-            vc.navigationItem.title = title
+        switch item.base {
+        case let linkItem as VTSystemInformationLinkItem:
+            let vc = VTSystemInformationDetailedViewController(client: client, data: linkItem.children)
+            vc.navigationItem.title = linkItem.title
             navigationController?.pushViewController(vc, animated: true)
         default:
             break
@@ -150,9 +168,6 @@ class VTSystemInformationViewControllerBase: VTCollectionViewController {
 
     override func collectionView(_: UICollectionView, shouldHighlightItemAt indexPath: IndexPath) -> Bool {
         guard let item = dataSource.itemIdentifier(for: indexPath) else { return false }
-        return switch item {
-        case .link: true
-        case _: false
-        }
+        return item.base is VTSystemInformationLinkItem
     }
 }

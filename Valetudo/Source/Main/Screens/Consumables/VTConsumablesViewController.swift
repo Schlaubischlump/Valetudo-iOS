@@ -32,7 +32,7 @@ class VTConsumablesViewController: VTCollectionViewController {
         var listConfig = UICollectionLayoutListConfiguration(appearance: .insetGrouped)
         listConfig.showsSeparators = true
         listConfig.footerMode = .supplementary
-        listConfig.backgroundColor = .clear
+        listConfig.backgroundColor = .adaptiveGroupedBackground
         let layout = UICollectionViewCompositionalLayout.list(using: listConfig)
         super.init(collectionViewLayout: layout)
 
@@ -90,7 +90,7 @@ class VTConsumablesViewController: VTCollectionViewController {
                     }
                 }
             }
-            cell.backgroundConfiguration = .clear()
+            cell.backgroundConfiguration = .adaptiveListCell()
         }
 
         dataSource = VTConsumablesDataSource(collectionView: collectionView) { collectionView, indexPath, item in

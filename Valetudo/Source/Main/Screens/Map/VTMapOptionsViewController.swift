@@ -57,6 +57,7 @@ final class VTMapOptionsViewController: VTCollectionViewController {
         var listConfig = UICollectionLayoutListConfiguration(appearance: .insetGrouped)
         listConfig.showsSeparators = true
         listConfig.footerMode = .supplementary
+        listConfig.backgroundColor = .adaptiveGroupedBackground
 
         let layout = UICollectionViewCompositionalLayout.list(using: listConfig)
         collectionView.setCollectionViewLayout(layout, animated: false)
@@ -99,6 +100,7 @@ final class VTMapOptionsViewController: VTCollectionViewController {
                     }
                 }
             )
+            cell.backgroundConfiguration = .adaptiveListCell()
         }
 
         dataSource = DataSource(collectionView: collectionView) { collectionView, indexPath, item in

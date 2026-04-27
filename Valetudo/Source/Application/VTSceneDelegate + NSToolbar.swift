@@ -8,7 +8,7 @@
 
 import UIKit
 
-#if targetEnvironment(macCatalyst)
+/*#if targetEnvironment(macCatalyst)
     import AppKit
 
     extension VTSceneDelegate: NSToolbarDelegate {
@@ -28,4 +28,4 @@ import UIKit
             NSToolbarItem(itemIdentifier: itemIdentifier)
         }
     }
-#endif
+#endif*/

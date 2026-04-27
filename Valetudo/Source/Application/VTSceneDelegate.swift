@@ -53,7 +53,7 @@ class VTSceneDelegate: UIResponder, UIWindowSceneDelegate {
         guard let window,
               let windowScene = window.windowScene else { return }
 
-        clearToolbarIfNeeded(for: windowScene)
+        //clearToolbarIfNeeded(for: windowScene)
 
         let robotsListNavigationController = makeRobotsListNavigationController(for: windowScene)
         guard animated else {
@@ -98,7 +98,7 @@ class VTSceneDelegate: UIResponder, UIWindowSceneDelegate {
         let apiClient = makeAPIClient(baseURL: robotURL)
         let splitViewController = VTSplitViewController(client: apiClient, style: .doubleColumn)
 
-        configureToolbarIfNeeded(for: windowScene)
+        //configureToolbarIfNeeded(for: windowScene)
 
         guard let window else { return }
         guard animated else {
@@ -193,7 +193,7 @@ class VTSceneDelegate: UIResponder, UIWindowSceneDelegate {
         return .mainInterface(robotURL)
     }
 
-    private func configureToolbarIfNeeded(for windowScene: UIWindowScene) {
+    /*private func configureToolbarIfNeeded(for windowScene: UIWindowScene) {
         #if targetEnvironment(macCatalyst)
             let toolbar = NSToolbar(identifier: NSToolbar.Identifier("VTSceneDelegate.Toolbar"))
             toolbar.delegate = self
@@ -209,7 +209,7 @@ class VTSceneDelegate: UIResponder, UIWindowSceneDelegate {
         #if targetEnvironment(macCatalyst)
             windowScene.titlebar?.toolbar = nil
         #endif
-    }
+    }*/
 
     func sceneDidEnterBackground(_: UIScene) {
         didEnterBackground = true

@@ -101,6 +101,7 @@ final class VTTimerDetailViewController: VTCollectionViewController {
         var listConfig = UICollectionLayoutListConfiguration(appearance: .insetGrouped)
         listConfig.showsSeparators = true
         listConfig.headerMode = .supplementary
+        listConfig.backgroundColor = .adaptiveGroupedBackground
         let layout = UICollectionViewCompositionalLayout.list(using: listConfig)
         collectionView.setCollectionViewLayout(layout, animated: false)
     }
@@ -362,7 +363,9 @@ final class VTTimerDetailViewController: VTCollectionViewController {
             default: fatalError("Unsupported item type: \(type(of: wrappedItem.base))")
             }
 
-            return collectionView.dequeueConfiguredReusableCell(using: registration, for: indexPath, item: wrappedItem)
+            let cell = collectionView.dequeueConfiguredReusableCell(using: registration, for: indexPath, item: wrappedItem)
+            cell.backgroundConfiguration = .adaptiveListCell()
+            return cell
         }
 
         // Header

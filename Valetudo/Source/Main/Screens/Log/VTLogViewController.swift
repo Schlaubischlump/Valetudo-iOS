@@ -28,6 +28,7 @@ final class VTLogViewController: VTCollectionViewController, UISearchResultsUpda
         var listConfig = UICollectionLayoutListConfiguration(appearance: .insetGrouped)
         listConfig.showsSeparators = true
         listConfig.headerMode = .supplementary
+        listConfig.backgroundColor = .adaptiveGroupedBackground
         let layout = UICollectionViewCompositionalLayout.list(using: listConfig)
         super.init(collectionViewLayout: layout)
 
@@ -173,6 +174,7 @@ final class VTLogViewController: VTCollectionViewController, UISearchResultsUpda
                     }
                 }
                 cell.contentConfiguration = config
+                cell.backgroundConfiguration = .adaptiveListCell()
 
             default:
                 break
@@ -184,6 +186,7 @@ final class VTLogViewController: VTCollectionViewController, UISearchResultsUpda
             case let .logLine(date, level, message):
                 let config = VTLogLineCellContentConfiguration(timestamp: date, level: level, message: message)
                 cell.contentConfiguration = config
+                cell.backgroundConfiguration = .adaptiveListCell()
             default:
                 break
             }

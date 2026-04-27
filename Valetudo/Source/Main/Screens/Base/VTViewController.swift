@@ -6,7 +6,10 @@
 //
 import UIKit
 
-class VTViewController: UIViewController {
+class VTViewController: UIViewController, VTViewControllerProtocol {
+    var lastKnownViewWidth: CGFloat = 0
+    var lastKnownViewDesign: VTViewDesign?
+
     @objc
     private func sceneWillEnterForeground(_: Notification) {
         Task {
@@ -27,8 +30,26 @@ class VTViewController: UIViewController {
         )
     }
 
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        recomputeViewMetricsChange()
+    }
+
     @MainActor
     func reconnectAndRefresh() async {
+        // Override me
+    }
+
+    func viewDesign(forAvailableWidth width: CGFloat, traitCollection: UITraitCollection) -> VTViewDesign {
+        guard width >= 520, traitCollection.horizontalSizeClass != .compact else { return .compact }
+        return .regular
+    }
+
+    func viewMetricsDidChange() {
+        // Override me
+    }
+
+    func viewDesignDidChange(to _: VTViewDesign) {
         // Override me
     }
 }

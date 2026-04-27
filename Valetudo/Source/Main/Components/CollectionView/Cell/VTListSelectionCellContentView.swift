@@ -30,6 +30,7 @@ final class VTListSelectionCellContentView<T: Hashable & Equatable & Sendable & 
     init(configuration: VTListSelectionCellContentConfiguration<T>) {
         var layoutConfig = UICollectionLayoutListConfiguration(appearance: .insetGrouped)
         layoutConfig.headerMode = .supplementary
+        layoutConfig.backgroundColor = .adaptiveGroupedBackground
 
         // let compositionalLayout = UICollectionViewCompositionalLayout.list(using: layoutConfig)
         let compositionalLayout = UICollectionViewCompositionalLayout { _, env in
@@ -101,6 +102,7 @@ final class VTListSelectionCellContentView<T: Hashable & Equatable & Sendable & 
             var content = UIListContentConfiguration.cell()
             content.text = item.description
             cell.contentConfiguration = content
+            cell.backgroundConfiguration = .adaptiveListCell()
             let section = Section(rawValue: indexPath.section)
             cell.accessories = section == .enabled ?
                 (allowReordering ? [.reorder(displayed: .always)] : [])

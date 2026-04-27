@@ -28,6 +28,7 @@ final class VTRobotsListViewController: VTCollectionViewController {
     init() {
         var listConfig = UICollectionLayoutListConfiguration(appearance: .insetGrouped)
         listConfig.showsSeparators = true
+        listConfig.backgroundColor = .adaptiveGroupedBackground
 
         let layout = UICollectionViewCompositionalLayout.list(using: listConfig)
         super.init(collectionViewLayout: layout)
@@ -73,7 +74,7 @@ final class VTRobotsListViewController: VTCollectionViewController {
         let robotCell = UICollectionView.CellRegistration<UICollectionViewListCell, VTMDNSRobot> { cell, _, robot in
             cell.contentConfiguration = VTRobotCellContentConfiguration(robot: robot)
             cell.accessories = [.disclosureIndicator(displayed: .always)]
-            cell.backgroundConfiguration = .listCell()
+            cell.backgroundConfiguration = .adaptiveListCell()
         }
 
         dataSource = DataSource(collectionView: collectionView) { collectionView, indexPath, item in

@@ -57,8 +57,8 @@ final class VTSystemInformationViewController: VTSystemInformationViewController
         sections[indexPath.section]
     }
 
-    private func memoryItem(for memory: VTMemory) -> VTSystemInformationItem {
-        .segmentedBar(config: .init(
+    private func memoryItem(for memory: VTMemory) -> VTAnyItem {
+        .systemInformationSegmentedBar("HOST_MEMORY", config: .init(
             title: "SYSTEM_MEMORY".localized(),
             bars: [
                 [
@@ -77,8 +77,8 @@ final class VTSystemInformationViewController: VTSystemInformationViewController
         ))
     }
 
-    private func cpuItem(for cpus: [VTCPU]) -> VTSystemInformationItem {
-        .segmentedBar(config: .init(
+    private func cpuItem(for cpus: [VTCPU]) -> VTAnyItem {
+        .systemInformationSegmentedBar("HOST_CPU", config: .init(
             title: "CPU_USAGE".localized(),
             bars: cpus.map { cpu in
                 [
@@ -103,8 +103,6 @@ final class VTSystemInformationViewController: VTSystemInformationViewController
         let hostInfo = try? await client.getHostInfo()
         let memory = hostInfo?.mem ?? .zero
         let cpus = hostInfo?.cpus ?? []
-
-        // TODO: Stable identifiers without embedding the data would allow us to animate the changes
 
         var snapshot = dataSource.snapshot()
         // drop memory and cpu item based on their index, since we have no stable identifier for them
@@ -172,45 +170,45 @@ final class VTSystemInformationViewController: VTSystemInformationViewController
             switch section {
             case .robot:
                 snapshot.appendItems([
-                    .keyValuePair(title: "MANUFACTURER".localized(), subtitle: manufacturer),
-                    .keyValuePair(title: "MODEL".localized(), subtitle: modelName),
-                    .keyValuePair(title: "VALETUDO_IMPLEMENTATION".localized(), subtitle: implementation),
-                    .keyValuePair(title: "FIRMWARE".localized(), subtitle: firmwareVersion),
+                    .keyValue("ROBOT_MANUFACTURER", title: "MANUFACTURER".localized(), value: manufacturer),
+                    .keyValue("ROBOT_MODEL", title: "MODEL".localized(), value: modelName),
+                    .keyValue("ROBOT_IMPLEMENTATION", title: "VALETUDO_IMPLEMENTATION".localized(), value: implementation),
+                    .keyValue("ROBOT_FIRMWARE", title: "FIRMWARE".localized(), value: firmwareVersion),
                 ], toSection: section)
             case .valetudo:
                 snapshot.appendItems([
-                    .keyValuePair(title: "RELEASE".localized(), subtitle: release),
-                    .keyValuePair(title: "COMMIT".localized(), subtitle: commit),
-                    .keyValuePair(title: "EMBEDDED".localized(), subtitle: embedded ? "true" : "false"),
-                    .keyValuePair(title: "SYSTEM_ID".localized(), subtitle: systemId),
+                    .keyValue("VALETUDO_RELEASE", title: "RELEASE".localized(), value: release),
+                    .keyValue("VALETUDO_COMMIT", title: "COMMIT".localized(), value: commit),
+                    .keyValue("VALETUDO_EMBEDDED", title: "EMBEDDED".localized(), value: embedded ? "true" : "false"),
+                    .keyValue("VALETUDO_SYSTEM_ID", title: "SYSTEM_ID".localized(), value: systemId),
                 ], toSection: section)
             case .host:
                 snapshot.appendItems([
-                    .keyValuePair(title: "HOSTNAME".localized(), subtitle: hostname),
-                    .keyValuePair(title: "ARCH".localized(), subtitle: arch),
-                    .keyValuePair(title: "UPTIME".localized(), subtitle: hostUptime),
+                    .keyValue("HOST_HOSTNAME", title: "HOSTNAME".localized(), value: hostname),
+                    .keyValue("HOST_ARCH", title: "ARCH".localized(), value: arch),
+                    .keyValue("HOST_UPTIME", title: "UPTIME".localized(), value: hostUptime),
                     memoryItem(for: memory),
                     cpuItem(for: cpus),
                 ], toSection: section)
             case .runtime:
                 snapshot.appendItems([
-                    .keyValuePair(title: "VALETUDO_UPTIME".localized(), subtitle: valetudoUptime),
-                    .keyValuePair(title: "UID".localized(), subtitle: uid),
-                    .keyValuePair(title: "GID".localized(), subtitle: gid),
-                    .keyValuePair(title: "PID".localized(), subtitle: pid),
-                    .keyValuePair(title: "ARGV".localized(), subtitle: argv),
-                    .link(title: "DEPENDENCIES".localized(), children: [
+                    .keyValue("RUNTIME_UPTIME", title: "VALETUDO_UPTIME".localized(), value: valetudoUptime),
+                    .keyValue("RUNTIME_UID", title: "UID".localized(), value: uid),
+                    .keyValue("RUNTIME_GID", title: "GID".localized(), value: gid),
+                    .keyValue("RUNTIME_PID", title: "PID".localized(), value: pid),
+                    .keyValue("RUNTIME_ARGV", title: "ARGV".localized(), value: argv),
+                    .systemInformationLink("RUNTIME_DEPENDENCIES", title: "DEPENDENCIES".localized(), children: [
                         .main: [
-                            .keyValuePair(title: "EXEC_PATH".localized(), subtitle: execPath),
-                            .keyValuePair(title: "EXEC_ARGV".localized(), subtitle: execArgv),
+                            .keyValue("DEPENDENCIES_EXEC_PATH", title: "EXEC_PATH".localized(), value: execPath),
+                            .keyValue("DEPENDENCIES_EXEC_ARGV", title: "EXEC_ARGV".localized(), value: execArgv),
                         ],
-                        .dependencies: versions.sorted(by: { $0.key < $1.key }).map {
-                            .keyValuePair(title: $0, subtitle: $1)
+                        .dependencies: versions.sorted(by: { $0.key < $1.key }).map { key, value in
+                            .keyValue("DEPENDENCY_\(key)", title: key, value: value)
                         },
                     ]),
-                    .link(title: "ENVIRONMENT".localized(), children: [
-                        .keys: env.sorted(by: { $0.key < $1.key }).map {
-                            .keyValuePair(title: $0, subtitle: $1)
+                    .systemInformationLink("RUNTIME_ENVIRONMENT", title: "ENVIRONMENT".localized(), children: [
+                        .keys: env.sorted(by: { $0.key < $1.key }).map { key, value in
+                            .keyValue("ENV_\(key)", title: key, value: value)
                         },
                     ]),
                 ], toSection: section)

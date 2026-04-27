@@ -59,6 +59,12 @@ struct VTProgressItem: VTItem {
     let progress: CGFloat
 }
 
+struct VTKeyValueItem: VTItem {
+    let id: String
+    let title: String
+    let value: String?
+}
+
 struct VTActionItem: VTItem {
     let id: String
     let title: String
@@ -130,6 +136,10 @@ struct VTAnyItem: Hashable {
 
     static func progress(_ id: String, message: String, progress: CGFloat) -> VTAnyItem {
         VTAnyItem(VTProgressItem(id: id, message: message, progress: progress))
+    }
+
+    static func keyValue(_ id: String, title: String, value: String?) -> VTAnyItem {
+        VTAnyItem(VTKeyValueItem(id: id, title: title, value: value))
     }
 
     static func action(

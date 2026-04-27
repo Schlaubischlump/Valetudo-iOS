@@ -45,6 +45,7 @@ class VTUpdaterViewController: VTCollectionViewController {
         listConfig.showsSeparators = true
         listConfig.headerMode = .supplementary
         listConfig.footerMode = .supplementary
+        listConfig.backgroundColor = .adaptiveGroupedBackground
         let layout = UICollectionViewCompositionalLayout.list(using: listConfig)
         super.init(collectionViewLayout: layout)
 
@@ -101,19 +102,32 @@ class VTUpdaterViewController: VTCollectionViewController {
         Task { await self.reloadData(animated: false) }
     }
 
+    override func viewDesignDidChange(to _: VTViewDesign) {
+        var snapshot = dataSource.snapshot()
+        let identifiers = snapshot.itemIdentifiers
+        guard !identifiers.isEmpty else { return }
+
+        snapshot.reconfigureItems(identifiers)
+        dataSource.apply(snapshot, animatingDifferences: false)
+    }
+
     private func configureDataSource() {
         let currentVersionRegistration = VTCellRegistration { cell, _, wrappedItem in
             switch wrappedItem.base {
             case let item as VTCurrentVersionItem:
-                var listContent = cell.defaultContentConfiguration()
-                listContent.text = "VERSION".localized()
-                listContent.secondaryText = item.versionString
-                cell.contentConfiguration = listContent
+                cell.contentConfiguration = VTKeyValueCellContentConfiguration(
+                    id: item.id,
+                    title: "VERSION".localized(),
+                    value: item.versionString,
+                    usesHorizontalLayout: self.currentViewDesign == .regular
+                )
             case let item as VTCurrentCommitItem:
-                var listContent = cell.defaultContentConfiguration()
-                listContent.text = "COMMIT".localized()
-                listContent.secondaryText = item.commitString
-                cell.contentConfiguration = listContent
+                cell.contentConfiguration = VTKeyValueCellContentConfiguration(
+                    id: item.id,
+                    title: "COMMIT".localized(),
+                    value: item.commitString,
+                    usesHorizontalLayout: self.currentViewDesign == .regular
+                )
             default:
                 break
             }
@@ -253,7 +267,9 @@ class VTUpdaterViewController: VTCollectionViewController {
             default: fatalError("Unsupported item type: \(type(of: wrappedItem.base))")
             }
 
-            return collectionView.dequeueConfiguredReusableCell(using: registration, for: indexPath, item: wrappedItem)
+            let cell = collectionView.dequeueConfiguredReusableCell(using: registration, for: indexPath, item: wrappedItem)
+            cell.backgroundConfiguration = .adaptiveListCell()
+            return cell
         }
 
         dataSource.supplementaryViewProvider = { collectionView, kind, indexPath in

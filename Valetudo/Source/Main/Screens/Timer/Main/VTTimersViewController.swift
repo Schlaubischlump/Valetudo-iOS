@@ -67,6 +67,7 @@ final class VTTimersViewController: VTCollectionViewController {
         var listConfig = UICollectionLayoutListConfiguration(appearance: .insetGrouped)
         listConfig.showsSeparators = true
         listConfig.headerMode = .supplementary
+        listConfig.backgroundColor = .adaptiveGroupedBackground
         listConfig.trailingSwipeActionsConfigurationProvider = { [weak self] indexPath in
             guard let item = self?.dataSource.itemIdentifier(for: indexPath),
                   case let .timer(timer) = item else { return nil }
@@ -147,6 +148,7 @@ final class VTTimersViewController: VTCollectionViewController {
             }
 
             cell.contentConfiguration = config
+            cell.backgroundConfiguration = .adaptiveListCell()
             cell.setNeedsLayout()
             cell.layoutIfNeeded()
         }

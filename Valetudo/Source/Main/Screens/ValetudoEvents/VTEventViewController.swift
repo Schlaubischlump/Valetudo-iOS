@@ -64,6 +64,7 @@ final class VTValetudoEventsViewController: VTCollectionViewController {
 
     private func configureCollectionView() {
         var config = UICollectionLayoutListConfiguration(appearance: .plain)
+        config.backgroundColor = .adaptiveGroupedBackground
         config.trailingSwipeActionsConfigurationProvider = { [weak self] indexPath in
             guard let item = self?.dataSource.itemIdentifier(for: indexPath) else { return nil }
             if item.processed {
@@ -120,6 +121,7 @@ final class VTValetudoEventsViewController: VTCollectionViewController {
             }
 
             cell.contentConfiguration = content
+            cell.backgroundConfiguration = .adaptiveListCell()
         }
 
         dataSource = UICollectionViewDiffableDataSource<Int, VTValetudoEventItem>(

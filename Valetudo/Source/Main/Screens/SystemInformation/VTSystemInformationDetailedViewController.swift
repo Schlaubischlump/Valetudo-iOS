@@ -10,7 +10,7 @@ import UIKit
  * Detailed view controller for dependencies and environment.
  */
 final class VTSystemInformationDetailedViewController: VTSystemInformationViewControllerBase {
-    private let data: [VTSystemInformationSection: [VTSystemInformationItem]]
+    private let data: [VTSystemInformationSection: [VTAnyItem]]
 
     private lazy var sortedSections: [VTSystemInformationSection] = data.keys.sorted(by: {
         switch ($0, $1) {
@@ -20,7 +20,7 @@ final class VTSystemInformationDetailedViewController: VTSystemInformationViewCo
         }
     })
 
-    init(client: VTAPIClientProtocol, data: [VTSystemInformationSection: [VTSystemInformationItem]]) {
+    init(client: VTAPIClientProtocol, data: [VTSystemInformationSection: [VTAnyItem]]) {
         self.data = data
         super.init(client: client)
     }
