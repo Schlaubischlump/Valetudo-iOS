@@ -26,13 +26,14 @@ class VTSystemInformationViewControllerBase: VTCollectionViewController {
         navigationItem.rightBarButtonItem = VTValetudoEventBarButtonItem(client: client, parentViewController: self)
     }
 
+    @available(*, unavailable)
     required init?(coder _: NSCoder) {
         fatalError("init(coder:) not implemented")
     }
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        
+
         configureCollectionView()
         configureDataSource()
     }

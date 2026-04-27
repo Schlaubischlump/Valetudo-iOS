@@ -46,7 +46,7 @@ final class VTTimerCellView: UIView, UIContentView {
     // MARK: - Setup
 
     private func setupViews() {
-        //backgroundColor = .secondarySystemGroupedBackground
+        // backgroundColor = .secondarySystemGroupedBackground
         layer.cornerRadius = 16
         clipsToBounds = true
 

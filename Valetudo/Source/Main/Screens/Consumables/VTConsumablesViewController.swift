@@ -90,7 +90,11 @@ class VTConsumablesViewController: VTCollectionViewController {
                     }
                 }
             }
-            cell.backgroundConfiguration = .adaptiveListCell()
+            #if targetEnvironment(macCatalyst)
+                cell.backgroundConfiguration = .adaptiveListCell()
+            #else
+                cell.backgroundConfiguration = .clear()
+            #endif
         }
 
         dataSource = VTConsumablesDataSource(collectionView: collectionView) { collectionView, indexPath, item in

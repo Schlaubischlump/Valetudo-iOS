@@ -10,7 +10,7 @@ extension UIBackgroundConfiguration {
     static func adaptiveListCell() -> UIBackgroundConfiguration {
         var config = UIBackgroundConfiguration.listCell()
         #if targetEnvironment(macCatalyst)
-        config.backgroundColor = .macOSCellBackground
+            config.backgroundColor = .macOSCellBackground
         #endif
         return config
     }
