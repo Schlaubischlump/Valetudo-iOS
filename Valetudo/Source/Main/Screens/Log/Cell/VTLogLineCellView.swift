@@ -117,7 +117,7 @@ extension VTLogLineCellView: UIContextMenuInteractionDelegate {
         
         return UIContextMenuConfiguration(identifier: nil, previewProvider: nil) { _ in
             let title = "COPY".localized()
-            let copyAction = UIAction(title: title, image: UIImage(systemName: "doc.on.doc")) { _ in
+            let copyAction = UIAction(title: title, image: .docOnDoc) { _ in
                 UIPasteboard.general.string = text
             }
             return UIMenu(title: "", children: [copyAction])

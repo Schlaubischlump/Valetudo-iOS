@@ -44,13 +44,11 @@ struct VTOperationModeItem: VTSegmentedItem {
     let presetValue: VTPresetValue
     var title: String { presetValue.description.capitalized }
     var icon: UIImage? {
-        guard let fanImage = UIImage(systemName: "fan.fill"),
-              let waterImage = UIImage(systemName: "drop.fill") else { return nil }
         return switch presetValue {
-        case .vacuum:           fanImage
-        case .mop:              waterImage
-        case .vacuumAndMop:     UIImage.combine(left: waterImage, right: fanImage)
-        case .vacuumThenMop:    UIImage.combine(left: fanImage, right: waterImage, op: "→")
+        case .vacuum:           .fanFill
+        case .mop:              .dropFill
+        case .vacuumAndMop:     .operationModeVacuumAndMop
+        case .vacuumThenMop:    .operationModeVacuumThenMop
         default: nil
         }
     }
@@ -66,7 +64,7 @@ struct VTRepeatItem: CaseIterable, VTSegmentedItem {
     
     let iterations: Int
     var title: String { "× \(iterations)" }
-    var icon: UIImage? { .textImage("× \(iterations)") }
+    var icon: UIImage? { .repeatCount(iterations) }
 }
 
 
@@ -148,26 +146,26 @@ class VTRobotControlViewController: VTViewController {
     
     let modeRow = VTSegmentedControlRow<VTOperationModeItem>(
         title: VTPresetType.operationMode.description.capitalized,
-        titleIcon: UIImage(systemName: "filemenu.and.selection")
+        titleIcon: .filemenuAndSelection
     )
     
     private let fanRow = VTSegmentedControlRow<VTFanItem>(
         title: VTPresetType.fanSpeed.description.capitalized,
-        titleIcon: UIImage(systemName: "fan.fill"),
+        titleIcon: .fanFill,
     )
     private let waterRow = VTSegmentedControlRow<VTWaterGradeItem>(
         title: VTPresetType.waterGrade.description.capitalized,
-        titleIcon: UIImage(systemName: "drop.fill"),
+        titleIcon: .dropFill,
     )
     private let iterationsRow = VTSegmentedControlRow<VTRepeatItem>(
         title: "ITERATIONS".localized(),
-        titleIcon: UIImage(systemName: "repeat"),
+        titleIcon: .repeatSymbol,
     )
 
     private let dockControls = {
         let dockControls = VTStackedControlRow<VTControlButton>(
             title: "CHARGER".localized(),
-            titleIcon: UIImage(systemName: "dock.arrow.down.rectangle")
+            titleIcon: .dockArrowDownRectangle
         )
         dockControls.translatesAutoresizingMaskIntoConstraints = false
         dockControls.axis = .horizontal
@@ -175,15 +173,15 @@ class VTRobotControlViewController: VTViewController {
         // TODO: Conditionally add these items based on the Capability of the robot
         let cleanButton = VTToggleControlButton(
             title: "CLEAN".localizedUppercase(),
-            icon: UIImage(systemName: "water.waves")
+            icon: .waterWaves
         )
         let dryButton = VTToggleControlButton(
             title: "DRY".localizedUppercase(),
-            icon: UIImage(systemName: "heat.waves.and.fan")
+            icon: .heatWavesAndFan
         )
         let emptyButton = VTControlButton(
             title: "EMPTY".localizedUppercase(),
-            icon: UIImage(systemName: "arrow.up.trash.fill")
+            icon: .arrowUpTrashFill
         )
 
         cleanButton.heightAnchor.constraint(equalToConstant: 50).isActive = true
@@ -207,7 +205,7 @@ class VTRobotControlViewController: VTViewController {
     private let attachmentsControls = {
         let attachmentsControls = VTStackedControlRow<VTControlButton>(
             title: "ATTACHMENTS".localized(),
-            titleIcon: UIImage(systemName: "puzzlepiece.extension.fill")
+            titleIcon: .puzzlepieceExtensionFill
         )
         attachmentsControls.axis = .vertical
         attachmentsControls.translatesAutoresizingMaskIntoConstraints = false
@@ -217,7 +215,7 @@ class VTRobotControlViewController: VTViewController {
     private let statisticsControls = {
         let statisticsControls = VTStackedControlRow<VTControlLabel>(
             title: "CURRENT_STATISTICS".localized(),
-            titleIcon: UIImage(systemName: "chart.bar.fill")
+            titleIcon: .chartBarFill
         )
         statisticsControls.axis = .horizontal
         statisticsControls.translatesAutoresizingMaskIntoConstraints = false

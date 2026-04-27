@@ -299,7 +299,7 @@ class VTUpdaterViewController: VTCollectionViewController {
         let unknownState: VTAnyItem = .updateState(
             kUpdateUnknown,
             title: "UPDATE_UNKNOWN".localized(),
-            image: UIImage(systemName: "questionmark.circle.fill"),
+            image: .questionmarkCircleFill,
             tintColor: .secondaryLabel
         )
         guard let state else { return unknownState }        
@@ -308,7 +308,7 @@ class VTUpdaterViewController: VTCollectionViewController {
             return .updateState(
                 kUpToDate,
                 title: "UP_TO_DATE".localized(),
-                image: UIImage(systemName: "checkmark.circle.fill"),
+                image: .checkmarkCircleFill,
                 tintColor: .systemGreen
             )
         case _ as VTUpdaterIdleState:
@@ -317,7 +317,7 @@ class VTUpdaterViewController: VTCollectionViewController {
             return .updateState(
                 kUpdatError,
                 title: "UPDATE_ERROR".localized(),
-                image: UIImage(systemName: "xmark.circle.fill"),
+                image: .xmarkCircleFill,
                 tintColor: .systemRed
             )
         case let downloadingState as VTUpdaterDownloadingState:
@@ -335,14 +335,14 @@ class VTUpdaterViewController: VTCollectionViewController {
             return .updateState(
                 kUpdateDisabled,
                 title: "UPDATE_DISABLED".localized(),
-                image: UIImage(systemName: "circle.slash.fill"),
+                image: .circleSlashFill,
                 tintColor: .secondaryLabel
             )
         case let approvalPendingState as VTUpdaterApprovalPendingState:
             return .updateAvailable(
                 kUpdateAvailable,
                 title: "VALETUDO".localized(),
-                image: UIImage(named: "Logo"),
+                image: .appLogo,
                 version: approvalPendingState.version,
                 changelog: approvalPendingState.changelog
             )
@@ -353,7 +353,7 @@ class VTUpdaterViewController: VTCollectionViewController {
                 return .installUpdate(
                     kInstallUpdate,
                     title: "INSTALL".localized(),
-                    image: UIImage(systemName: "arrow.trianglehead.2.counterclockwise"),
+                    image: .arrowTrianglehead2Counterclockwise,
                     version: applyPendingState.version
                 )
             }

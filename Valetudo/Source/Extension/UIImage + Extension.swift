@@ -7,10 +7,46 @@
 import UIKit
 
 public extension UIImage {
-    static let mapReset: UIImage? = {
-        guard let image = UIImage(systemName: "map.fill") else { return nil }
+    static let plusCircleFill = UIImage(systemName: "plus.circle.fill")
+    static let xmark = UIImage(systemName: "xmark")
+    static let playFill = UIImage(systemName: "play.fill")
+    static let stopFill = UIImage(systemName: "stop.fill")
+    static let houseFill = UIImage(systemName: "house.fill")
+    static let mapFill = UIImage(systemName: "map.fill")
+    static let mapSlash: UIImage? = {
+        guard let image = UIImage.mapFill else { return nil }
         return image.slashed(fillColor: .black, lineWidth: 1.25)
     }()
+    static let chartLineTextClipboardFill = UIImage(systemName: "chart.line.text.clipboard.fill")
+    static let roboticVacuumFill = UIImage(systemName: "robotic.vacuum.fill")
+    static let clockFill = UIImage(systemName: "clock.fill")
+    static let textPageFill = UIImage(systemName: "text.page.fill")
+    static let infoCircleFill = UIImage(systemName: "info.circle.fill")
+    static let squareAndArrowDownFill = UIImage(systemName: "square.and.arrow.down.fill")
+    static let arrowUpAndDownAndArrowLeftAndRight = UIImage(systemName: "arrow.up.and.down.and.arrow.left.and.right")
+    static let trash = UIImage(systemName: "trash")
+    static let wifiSlash = UIImage(systemName: "wifi.slash")
+    static let questionmarkCircleFill = UIImage(systemName: "questionmark.circle.fill")
+    static let checkmarkCircleFill = UIImage(systemName: "checkmark.circle.fill")
+    static let xmarkCircleFill = UIImage(systemName: "xmark.circle.fill")
+    static let circleSlashFill = UIImage(systemName: "circle.slash.fill")
+    static let arrowTrianglehead2Counterclockwise = UIImage(systemName: "arrow.trianglehead.2.counterclockwise")
+    static let docOnDoc = UIImage(systemName: "doc.on.doc")
+    static let bellFill = UIImage(systemName: "bell.fill")
+    static let filemenuAndSelection = UIImage(systemName: "filemenu.and.selection")
+    static let fanFill = UIImage(systemName: "fan.fill")
+    static let dropFill = UIImage(systemName: "drop.fill")
+    static let repeatSymbol = UIImage(systemName: "repeat")
+    static let dockArrowDownRectangle = UIImage(systemName: "dock.arrow.down.rectangle")
+    static let waterWaves = UIImage(systemName: "water.waves")
+    static let heatWavesAndFan = UIImage(systemName: "heat.waves.and.fan")
+    static let arrowUpTrashFill = UIImage(systemName: "arrow.up.trash.fill")
+    static let puzzlepieceExtensionFill = UIImage(systemName: "puzzlepiece.extension.fill")
+    static let chartBarFill = UIImage(systemName: "chart.bar.fill")
+    static let appLogo = UIImage(named: "Logo")
+    
+    static let operationModeVacuumAndMop = UIImage.combine(left: .dropFill, right: .fanFill)
+    static let operationModeVacuumThenMop = UIImage.combine(left: .fanFill, right: .dropFill, op: "→")
     
     convenience init?(color: UIColor) {
         let rect = CGRect(origin: .zero, size: .one)
@@ -33,6 +69,10 @@ public extension UIImage {
         color: UIColor = .black
     ) -> UIImage {
         .combine(op: text, opFont: font, opColor: color, spacing: 0)
+    }
+    
+    static func repeatCount(_ iterations: Int) -> UIImage {
+        .textImage("× \(iterations)")
     }
     
     /// Combines two images with an optional text operator rendered between them.

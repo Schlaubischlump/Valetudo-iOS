@@ -138,7 +138,7 @@ final class VTMapOptionsViewController: VTCollectionViewController {
                     kMappingPass,
                     title: "MAP_OPTIONS_MAPPING_PASS_TITLE".localized(),
                     subtitle: "MAP_OPTIONS_MAPPING_PASS_SUBTITLE".localized(),
-                    image: UIImage(systemName: "map.fill"),
+                    image: .mapFill,
                     buttonTitle: "MAP_OPTIONS_MAPPING_PASS_BUTTON".localized()
                 )
             ], toSection: .main)
@@ -149,7 +149,7 @@ final class VTMapOptionsViewController: VTCollectionViewController {
                     kMapReset,
                     title: "MAP_OPTIONS_RESET_TITLE".localized(),
                     subtitle: "MAP_OPTIONS_RESET_SUBTITLE".localized(),
-                    image: .mapReset,
+                    image: .mapSlash,
                     buttonTitle: "MAP_OPTIONS_MAPPING_PASS_BUTTON".localized(),
                     buttonStyle: .destructive
                 )

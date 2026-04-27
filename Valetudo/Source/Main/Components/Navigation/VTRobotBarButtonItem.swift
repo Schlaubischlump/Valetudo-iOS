@@ -12,7 +12,7 @@ class VTRobotBarButtonItem: UIBarButtonItem {
     init(parentViewController: UIViewController) {
         self.parentViewController = parentViewController
         super.init()
-        self.image = UIImage(systemName: "robotic.vacuum.fill")
+        self.image = .roboticVacuumFill
         self.target = self
         self.action = #selector(goBackToRobotsListScreen(_:))
     }

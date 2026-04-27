@@ -40,7 +40,7 @@ final class VTImageCalloutView: VTCalloutView {
         backgroundColor = .clear
         
         var configuration = UIButton.Configuration.filled()
-        configuration.image = UIImage(systemName: "xmark")
+        configuration.image = .xmark
         configuration.buttonSize = .small
         configuration.cornerStyle = .capsule
         configuration.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 8, bottom: 8, trailing: 8)

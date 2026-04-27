@@ -38,7 +38,7 @@ class VTSplitViewController: UISplitViewController, UISplitViewControllerDelegat
             self.updateDetail(for: item, animated: self.isCompact)
         }
         sidebar.navigationItem.titleView = VTNavigationTitleView(
-            image: UIImage(named: "Logo"),
+            image: .appLogo,
             title: "VALETUDO".localized(),
             subtitle: "VALETUDO_SUBTITLE".localized()
         )

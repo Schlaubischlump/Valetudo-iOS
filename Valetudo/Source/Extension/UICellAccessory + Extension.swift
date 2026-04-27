@@ -15,7 +15,7 @@ extension UICellAccessory {
         color: UIColor = .tintColor
     ) -> UICellAccessory {
 
-        let imageView = UIImageView(image: UIImage(systemName: "plus.circle.fill"))
+        let imageView = UIImageView(image: .plusCircleFill)
 
         imageView.tintColor = color
         imageView.preferredSymbolConfiguration = UIImage.SymbolConfiguration(

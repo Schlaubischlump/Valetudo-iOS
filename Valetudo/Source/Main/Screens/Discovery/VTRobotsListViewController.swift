@@ -159,7 +159,7 @@ final class VTRobotsListViewController: VTCollectionViewController {
         } else {
             // Mostly a safeguard. You should never see this screen.
             var config = UIContentUnavailableConfiguration.empty()
-            config.image = UIImage(systemName: "wifi.slash")
+            config.image = .wifiSlash
             config.text = "NO_ROBOTS_FOUND".localized()
             config.secondaryText = "MAKE_SURE_ROBOT_IS_ONLINE".localized()
             config.imageProperties.preferredSymbolConfiguration = .init(pointSize: 36, weight: .regular)

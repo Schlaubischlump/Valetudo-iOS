@@ -16,7 +16,7 @@ class VTValetudoEventBarButtonItem: UIBarButtonItem {
         self.client = client
         self.parentViewController = parentViewController
         super.init()
-        self.image = UIImage(systemName: "bell.fill")
+        self.image = .bellFill
         self.target = self
         self.action = #selector(showEventsPopup(_:))
         Task { await startEventObservation() }

@@ -51,15 +51,15 @@ enum VTSidebarItem: Hashable {
 
     var icon: UIImage? {
         switch self {
-        case .home:                                        return UIImage(systemName: "house.fill")
-        case .map:                                         return UIImage(systemName: "map.fill")
-        case .consumables:                                 return UIImage(systemName: "chart.line.text.clipboard.fill")
-        case .robot:                                       return UIImage(systemName: "robotic.vacuum.fill")
-        case .timers:                                      return UIImage(systemName: "clock.fill")
-        case .log:                                         return UIImage(systemName: "text.page.fill")
-        case .systemInformation:                           return UIImage(systemName: "info.circle.fill")
-        case .updater:                                     return UIImage(systemName: "square.and.arrow.down.fill")
-        case .manualControl, .highResolutionManualControl: return UIImage(systemName: "arrow.up.and.down.and.arrow.left.and.right")
+        case .home:                                        return .houseFill
+        case .map:                                         return .mapFill
+        case .consumables:                                 return .chartLineTextClipboardFill
+        case .robot:                                       return .roboticVacuumFill
+        case .timers:                                      return .clockFill
+        case .log:                                         return .textPageFill
+        case .systemInformation:                           return .infoCircleFill
+        case .updater:                                     return .squareAndArrowDownFill
+        case .manualControl, .highResolutionManualControl: return .arrowUpAndDownAndArrowLeftAndRight
         }
     }
 }

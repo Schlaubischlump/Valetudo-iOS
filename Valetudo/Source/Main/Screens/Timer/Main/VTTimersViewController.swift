@@ -78,7 +78,7 @@ final class VTTimersViewController: VTCollectionViewController {
                 }
             }
             
-            delete.image = UIImage(systemName: "trash")
+            delete.image = .trash
             
             return UISwipeActionsConfiguration(actions: [delete])
         }
@@ -315,7 +315,7 @@ extension VTTimersViewController {
               let id = timer.id else { return nil }
 
         return UIContextMenuConfiguration(identifier: id as NSString, previewProvider: nil) { _ in
-            let delete = UIAction(title: "DELETE".localized(), image: UIImage(systemName: "trash"), attributes: .destructive) { [weak self] _ in
+            let delete = UIAction(title: "DELETE".localized(), image: .trash, attributes: .destructive) { [weak self] _ in
                 Task {
                     await self?.deleteTimer(timer)
                 }

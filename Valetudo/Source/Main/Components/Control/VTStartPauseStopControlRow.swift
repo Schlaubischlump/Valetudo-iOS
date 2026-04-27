@@ -46,9 +46,9 @@ final class VTStartPauseStopControlRow: UIStackView {
         }
     }
         
-    private var startPauseButton = VTControlButton(title: nil, icon: UIImage(systemName: "play.fill"))
-    private var stopButton = VTControlButton(title: nil, icon: UIImage(systemName: "stop.fill"))
-    private var homeButton = VTControlButton(title: nil, icon: UIImage(systemName: "house.fill"))
+    private var startPauseButton = VTControlButton(title: nil, icon: .playFill)
+    private var stopButton = VTControlButton(title: nil, icon: .stopFill)
+    private var homeButton = VTControlButton(title: nil, icon: .houseFill)
     
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -141,7 +141,6 @@ final class VTStartPauseStopControlRow: UIStackView {
         onHomeClicked?()
     }
 }
-
 
 
 

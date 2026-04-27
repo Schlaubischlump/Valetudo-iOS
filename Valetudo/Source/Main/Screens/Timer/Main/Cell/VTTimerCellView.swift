@@ -58,7 +58,7 @@ final class VTTimerCellView: UIView, UIContentView {
         titleLabel.textColor = .label
 
         let runButton = UIButton(type: .system)
-        runButton.setImage(UIImage(systemName: "play.fill"), for: .normal)
+        runButton.setImage(.playFill, for: .normal)
         runButton.tintColor = .systemGreen
         runButton.addTarget(self, action: #selector(run), for: .touchUpInside)
         
