@@ -58,6 +58,7 @@ public enum VTAnyCodable: Codable, Sendable, Hashable, Equatable {
         }
     }
     
+    /// This is a best effort decoding strategy. E.g we might end up decoding a float value as an int or a data value as a string. 
     public init(from decoder: Decoder) throws {
         let container = try decoder.singleValueContainer()
         if let int = try? container.decode(Int.self) {

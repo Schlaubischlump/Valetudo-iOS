@@ -6,8 +6,12 @@
 //
 import Foundation
 
-public struct VTMapSegmentationAction: Encodable {
-    let action: String = "start_segment_action"
+enum VTMapSegmentationActionType: String, Encodable, Hashable, Sendable {
+    case startSegmentAction = "start_segment_action"
+}
+
+public struct VTMapSegmentationAction: Encodable, Hashable, Sendable {
+    let action: VTMapSegmentationActionType = .startSegmentAction
     let segmentIDs: [String]
     let iterations: Int
     let customOrder: Bool

@@ -6,11 +6,6 @@
 //
 import Foundation
 
-
-public struct VTResetAction: Encodable {
+public struct VTResetAction: Encodable, Hashable, Sendable {
     let action = "reset"
-
-    enum CodingKeys: String, CodingKey {
-        case action
-    }
 }

@@ -259,6 +259,16 @@ actor VTMockAPIClient: VTAPIClientProtocol {
         return VTObstacleImagesProperties(fileFormat: .ok, dimensions: .init(width: 0, height: 0))
     }
     
+    // MARK: - 1.2.12 MapResetCapability
+    
+    func resetMap() async throws {
+        
+    }
+    
+    func getMapResetProperties() async throws -> [String : VTAnyCodable] {
+        return [:]
+    }
+    
     // MARK: - 1.3 Properties
 
     func getRobotProperties() async throws -> VTRobotProperties {

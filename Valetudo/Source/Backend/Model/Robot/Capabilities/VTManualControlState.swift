@@ -6,7 +6,7 @@
 //
 import Foundation
 
-struct VTManualControlState: Decodable {
+struct VTManualControlState: Decodable, Hashable, Sendable  {
     let enabled: Bool?
     let supportedMovementCommands: [VTMoveDirection]?
 }

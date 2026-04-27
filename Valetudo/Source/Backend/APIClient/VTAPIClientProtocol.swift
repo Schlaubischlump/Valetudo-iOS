@@ -111,6 +111,10 @@ public protocol VTAPIClientProtocol: Actor {
     func getObstacleImage(id: String) async throws -> CIImage
     func getObstacleImagesCapabilityProperties() async throws -> VTObstacleImagesProperties
     
+    // MARK: - 1.2.12 MapResetCapability
+    func resetMap() async throws
+    func getMapResetProperties() async throws -> [String: VTAnyCodable]
+    
     // MARK: - 1.3 Properties
     
     func getRobotProperties() async throws -> VTRobotProperties

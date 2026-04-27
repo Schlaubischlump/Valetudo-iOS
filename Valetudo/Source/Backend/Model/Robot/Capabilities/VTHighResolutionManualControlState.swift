@@ -6,6 +6,6 @@
 //
 import Foundation
 
-struct VTHighResolutionManualControlState: Decodable {
+struct VTHighResolutionManualControlState: Decodable, Hashable, Sendable {
     let enabled: Bool
 }

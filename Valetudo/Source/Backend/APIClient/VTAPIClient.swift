@@ -28,6 +28,7 @@ enum VTAPIError: Error, LocalizedError {
     case unknown(Error)
     case missingID(String)
     case manualControlStateUnavailable
+    case noDictionary
     
     var errorDescription: String? {
         return switch self {
@@ -35,6 +36,7 @@ enum VTAPIError: Error, LocalizedError {
         case .manualControlStateUnavailable: "Could not read the manual control state."
         case .missingID(let domain): "Missing id for \(domain)."
         case .unknown(let error): error.localizedDescription
+        case .noDictionary: "Unexpected non-dictionary response"
         }
     }
 }
@@ -396,6 +398,26 @@ public actor VTAPIClient: VTAPIClientProtocol {
             .appendingPathComponent("properties")
         let request = VTRequest<VTObstacleImagesProperties>(method: .GET, url: url)
         return try await send(request)
+    }
+    
+    // MARK: - 1.2.12 MapResetCapability
+    
+    public func resetMap() async throws {
+        let url = self.capabilitiesURL
+            .appendingPathComponent("MapResetCapability")
+        let request = VTRequest<Void>(method: .PUT, url: url, body: VTResetAction())
+        return try await send(request)
+    }
+    
+    public func getMapResetProperties() async throws -> [String: VTAnyCodable] {
+        let url = self.capabilitiesURL
+            .appendingPathComponent("MapResetCapability")
+            .appendingPathComponent("properties")
+        let request = VTRequest<VTAnyCodable>(method: .GET, url: url)
+        guard let dictValue = try await send(request).dictionaryValue else {
+            throw VTAPIError.noDictionary
+        }
+        return dictValue
     }
     
     // MARK: - 1.3 Properties

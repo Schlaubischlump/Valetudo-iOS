@@ -6,13 +6,13 @@
 //
 import Foundation
 
-enum VTHighResolutionManualControlActionType: String, Encodable {
+enum VTHighResolutionManualControlActionType: String, Encodable, Hashable, Sendable {
     case enable
     case disable
     case move
 }
 
-struct VTHighResolutionManualControlVector: Sendable, Codable {
+struct VTHighResolutionManualControlVector: Codable, Hashable, Sendable {
     let velocity: CGFloat
     let angle: CGFloat
     //let metaData: [String: VTAnyDecodable]? we would need an any encodable here
@@ -23,7 +23,7 @@ struct VTHighResolutionManualControlVector: Sendable, Codable {
     }
 }
 
-struct VTHighResolutionManualControlAction: Encodable {
+struct VTHighResolutionManualControlAction: Encodable, Hashable, Sendable  {
     let action: VTHighResolutionManualControlActionType
     let vector: VTHighResolutionManualControlVector?
 
