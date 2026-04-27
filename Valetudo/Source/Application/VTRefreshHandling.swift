@@ -2,7 +2,7 @@
 //  VTRefreshSupport.swift
 //  Valetudo
 //
-//  Created by Codex on 13.11.25.
+//  Created by David Klopp on 13.11.25.
 //
 
 import UIKit

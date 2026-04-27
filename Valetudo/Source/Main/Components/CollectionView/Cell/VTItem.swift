@@ -59,6 +59,16 @@ struct VTProgressItem: VTItem {
     let progress: CGFloat
 }
 
+struct VTActionItem: VTItem {
+    let id: String
+    let title: String
+    let subtitle: String
+    let image: UIImage?
+    let imageTintColor: UIColor?
+    let buttonTitle: String
+    let showsButton: Bool
+}
+
 
 /// Protocol conformance to Hashable is not enough for the typechecker to understand that this type is indeed Hashable.
 /// That means, UICollectionView diffable datasource can not be polymorphic over `any Hashable`.
@@ -122,6 +132,28 @@ struct VTAnyItem: Hashable, Sendable {
     
     static func progress(_ id: String, message: String, progress: CGFloat) -> VTAnyItem {
         VTAnyItem(VTProgressItem(id: id, message: message, progress: progress))
+    }
+
+    static func action(
+        _ id: String,
+        title: String,
+        subtitle: String,
+        image: UIImage?,
+        imageTintColor: UIColor? = nil,
+        buttonTitle: String,
+        showsButton: Bool = true
+    ) -> VTAnyItem {
+        VTAnyItem(
+            VTActionItem(
+                id: id,
+                title: title,
+                subtitle: subtitle,
+                image: image,
+                imageTintColor: imageTintColor,
+                buttonTitle: buttonTitle,
+                showsButton: showsButton
+            )
+        )
     }
 }
 

@@ -2,7 +2,7 @@
 //  CodableAppStorage.swift
 //  Valetudo
 //
-//  Created by Codex on 05.08.25.
+//  Created by David Klopp on 05.08.25.
 //
 
 import Foundation

@@ -31,36 +31,7 @@ class VTConsumablesContentView: UIView, UIContentView {
     }()
     
     private lazy var resetButton = {
-        let tint = self.tintColor
-        
-        var config = UIButton.Configuration.bordered()
-        config.title = "RESET"
-        config.baseForegroundColor = tintColor
-        config.baseBackgroundColor = .clear
-        config.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in
-            var outgoing = incoming
-            outgoing.font = .systemFont(ofSize: UIFont.systemFontSize, weight: .bold)
-            return outgoing
-        }
-        config.contentInsets = .init(top: 6, leading: 12, bottom: 6, trailing: 12)
-        
-        let resetButton = UIButton(configuration: config)
-        resetButton.layer.borderColor = tintColor.cgColor
-        resetButton.layer.borderWidth = 2.0
-        resetButton.layer.cornerRadius = 4
-        
-        resetButton.configurationUpdateHandler = { button in
-            var config = button.configuration
-            if button.isHighlighted {
-                config?.baseForegroundColor = .white
-                config?.baseBackgroundColor = tint
-            } else {
-                config?.baseForegroundColor = tint
-                config?.baseBackgroundColor = .clear
-            }
-            button.configuration = config
-        }
-        
+        let resetButton = VTOutlineButton(title: "RESET".localized(), tintColor: tintColor)
         return resetButton
     }()
     
@@ -124,7 +95,7 @@ class VTConsumablesContentView: UIView, UIContentView {
         currentConfiguration = configuration
         
         titleLabel.text = configuration.title
-        remainingLabel.text = "Remaining: \(configuration.remaining)"
+        remainingLabel.text = "Remaining: ".localized() + "\(configuration.remaining)"
         progressView.progress = configuration.progress
         resetButton.isHidden = !configuration.showsReset
     }
