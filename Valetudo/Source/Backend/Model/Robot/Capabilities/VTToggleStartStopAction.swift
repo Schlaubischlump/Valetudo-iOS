@@ -6,11 +6,11 @@
 //
 import Foundation
 
-enum VTToggleStartStopActionType: String, Encodable, Hashable, Sendable {
-    case start = "start"
-    case stop  = "stop"
+enum VTToggleStartStopActionType: String, Encodable, Hashable {
+    case start
+    case stop
 }
 
-struct VTToggleStartStopAction: Encodable, Hashable, Sendable{
+struct VTToggleStartStopAction: Encodable, Hashable {
     let action: VTToggleStartStopActionType
 }

@@ -31,7 +31,8 @@ final class VTUpdateStateCellView: UIView, UIContentView {
         apply(configuration: configuration)
     }
 
-    required init?(coder: NSCoder) {
+    @available(*, unavailable)
+    required init?(coder _: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
 
@@ -49,9 +50,9 @@ final class VTUpdateStateCellView: UIView, UIContentView {
             stack.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -16),
             stack.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 16),
             stack.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -16),
-            
+
             checkmarkImageView.widthAnchor.constraint(equalToConstant: 40),
-            checkmarkImageView.heightAnchor.constraint(equalToConstant: 40)
+            checkmarkImageView.heightAnchor.constraint(equalToConstant: 40),
         ])
     }
 

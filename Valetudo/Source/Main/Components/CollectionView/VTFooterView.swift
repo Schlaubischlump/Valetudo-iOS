@@ -19,11 +19,14 @@ final class VTFooterView: UICollectionReusableView {
             textView.leadingAnchor.constraint(equalTo: leadingAnchor),
             textView.trailingAnchor.constraint(equalTo: trailingAnchor),
             textView.topAnchor.constraint(equalTo: topAnchor, constant: 20),
-            textView.bottomAnchor.constraint(equalTo: bottomAnchor)
+            textView.bottomAnchor.constraint(equalTo: bottomAnchor),
         ])
     }
 
-    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+    @available(*, unavailable)
+    required init?(coder _: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
 
     func configure(attributedText: NSAttributedString) {
         textView.configure(with: attributedText)
@@ -41,5 +44,3 @@ final class VTFooterView: UICollectionReusableView {
         configure(attributedText: NSAttributedString(string: ""))
     }
 }
-
-

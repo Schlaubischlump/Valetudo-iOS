@@ -12,10 +12,10 @@ struct VTLogLineCellContentConfiguration: UIContentConfiguration {
     let message: String
 
     func makeContentView() -> UIView & UIContentView {
-        return VTLogLineCellView(configuration: self)
+        VTLogLineCellView(configuration: self)
     }
 
-    func updated(for state: UIConfigurationState) -> VTLogLineCellContentConfiguration {
+    func updated(for _: UIConfigurationState) -> VTLogLineCellContentConfiguration {
         self
     }
 }

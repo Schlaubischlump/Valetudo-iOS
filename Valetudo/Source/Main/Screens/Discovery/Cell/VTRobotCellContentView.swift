@@ -62,13 +62,14 @@ final class VTRobotCellContentView: UIView, UIContentView {
     }
 
     init(configuration: VTRobotCellContentConfiguration) {
-        self.currentConfiguration = configuration
+        currentConfiguration = configuration
         super.init(frame: .zero)
         setupViews()
         apply(configuration)
     }
 
-    required init?(coder: NSCoder) {
+    @available(*, unavailable)
+    required init?(coder _: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
 
@@ -94,7 +95,7 @@ final class VTRobotCellContentView: UIView, UIContentView {
             contentStack.topAnchor.constraint(equalTo: topAnchor, constant: 12),
             contentStack.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -12),
             contentStack.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 16),
-            contentStack.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -16)
+            contentStack.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -16),
         ])
     }
 
@@ -108,7 +109,7 @@ final class VTRobotCellContentView: UIView, UIContentView {
 
     private static func subtitle(for robot: VTMDNSRobot) -> String {
         let modelParts = [robot.manufacturer, robot.model]
-            .compactMap { $0 }
+            .compactMap(\.self)
             .filter { !$0.isEmpty }
 
         let model = modelParts.isEmpty ? "UNKNOWN_MODEL".localized() : modelParts.joined(separator: " ")

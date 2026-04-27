@@ -10,22 +10,22 @@ public struct VTTimer: Encodable, Decodable, Equatable, Sendable, Hashable {
     public struct Action: Codable, Equatable, Sendable, Hashable {
         public let type: ActionType
         public let params: Params
-        
+
         public static let fullCleanup = Action(type: .fullCleanup, params: .empty)
         public static let segmentedCleanup = Action(type: .segmentCleanup, params: .empty)
 
         public enum ActionType: String, CaseIterable, Codable, Sendable, Hashable, Describable {
             case fullCleanup = "full_cleanup"
             case segmentCleanup = "segment_cleanup"
-            
+
             public var description: String {
-                return switch (self) {
+                switch self {
                 case .fullCleanup: "FULL_CLEANUP".localized()
                 case .segmentCleanup: "SEGMENT_CLEANUP".localized()
                 }
             }
         }
-        
+
         public struct Params: Codable, Equatable, Sendable, Hashable {
             public let zoneId: String?
             public let segmentIds: [String]?
@@ -34,7 +34,7 @@ public struct VTTimer: Encodable, Decodable, Equatable, Sendable, Hashable {
             public let customOrder: Bool?
 
             public static let empty = Params(zoneId: nil, segmentIds: nil, gotoId: nil, iterations: nil, customOrder: nil)
-            
+
             private enum CodingKeys: String, CodingKey {
                 case zoneId = "zone_id"
                 case segmentIds = "segment_ids"
@@ -42,45 +42,44 @@ public struct VTTimer: Encodable, Decodable, Equatable, Sendable, Hashable {
                 case iterations
                 case customOrder = "custom_order"
             }
-            
+
             public func copy(segmentIds: [String], iterations: Int, customOrder: Bool) -> Params {
                 Params(
-                    zoneId: self.zoneId,
+                    zoneId: zoneId,
                     segmentIds: segmentIds,
-                    gotoId: self.gotoId,
+                    gotoId: gotoId,
                     iterations: iterations,
-                    customOrder: customOrder,
+                    customOrder: customOrder
                 )
             }
-            
+
             public func copy(customOrder: Bool) -> Params {
                 Params(
-                    zoneId: self.zoneId,
-                    segmentIds: self.segmentIds,
-                    gotoId: self.gotoId,
-                    iterations: self.iterations,
-                    customOrder: customOrder,
+                    zoneId: zoneId,
+                    segmentIds: segmentIds,
+                    gotoId: gotoId,
+                    iterations: iterations,
+                    customOrder: customOrder
                 )
             }
-            
+
             public func copy(iterations: Int) -> Params {
                 Params(
-                    zoneId: self.zoneId,
-                    segmentIds: self.segmentIds,
-                    gotoId: self.gotoId,
+                    zoneId: zoneId,
+                    segmentIds: segmentIds,
+                    gotoId: gotoId,
                     iterations: iterations,
-                    customOrder: self.customOrder,
+                    customOrder: customOrder
                 )
             }
-            
-            
+
             public func copy(segmentIDs: [String]) -> Params {
                 Params(
-                    zoneId: self.zoneId,
+                    zoneId: zoneId,
                     segmentIds: segmentIDs,
-                    gotoId: self.gotoId,
-                    iterations: self.iterations,
-                    customOrder: self.customOrder,
+                    gotoId: gotoId,
+                    iterations: iterations,
+                    customOrder: customOrder
                 )
             }
         }
@@ -89,7 +88,7 @@ public struct VTTimer: Encodable, Decodable, Equatable, Sendable, Hashable {
     public struct PreAction: Codable, Equatable, Sendable, Hashable {
         public let type: PreActionType
         public let params: Params
-        
+
         public enum PreActionType: String, CaseIterable, Codable, Sendable, Hashable {
             case fanSpeedControl = "fan_speed_control"
             case waterUsageControl = "water_usage_control"
@@ -112,17 +111,17 @@ public struct VTTimer: Encodable, Decodable, Equatable, Sendable, Hashable {
     public let metaData: [String: VTAnyCodable]?
 
     init() {
-        self.id = nil
-        self.enabled = true
-        self.label = "Timer"
-        self.dow = []
-        self.hour = 9
-        self.minute = 13
-        self.action = .fullCleanup
-        self.preActions = []
-        self.metaData = nil
+        id = nil
+        enabled = true
+        label = "Timer"
+        dow = []
+        hour = 9
+        minute = 13
+        action = .fullCleanup
+        preActions = []
+        metaData = nil
     }
-    
+
     init(id: String?,
          enabled: Bool,
          label: String,
@@ -131,8 +130,8 @@ public struct VTTimer: Encodable, Decodable, Equatable, Sendable, Hashable {
          minute: Int,
          action: VTTimer.Action,
          preActions: [VTTimer.PreAction],
-         metaData: [String : VTAnyCodable]? = nil
-    ) {
+         metaData: [String: VTAnyCodable]? = nil)
+    {
         self.id = id
         self.enabled = enabled
         self.label = label
@@ -143,7 +142,7 @@ public struct VTTimer: Encodable, Decodable, Equatable, Sendable, Hashable {
         self.preActions = preActions
         self.metaData = metaData
     }
-    
+
     private enum CodingKeys: String, CodingKey {
         case id
         case enabled
@@ -153,9 +152,9 @@ public struct VTTimer: Encodable, Decodable, Equatable, Sendable, Hashable {
         case minute
         case action
         case preActions = "pre_actions"
-        case metaData = "metaData"
+        case metaData
     }
-    
+
     public var weekdays: [VTWeekday] {
         dow.compactMap { VTWeekday(rawValue: $0) }
     }
@@ -170,10 +169,10 @@ public extension VTTimer {
         minute: Int? = nil,
         action: Action? = nil,
         preActions: [PreAction]? = nil,
-        metaData: [String: VTAnyCodable]? = nil,
+        metaData: [String: VTAnyCodable]? = nil
     ) -> VTTimer {
         VTTimer(
-            id: self.id,
+            id: id,
             enabled: enabled ?? self.enabled,
             label: label ?? self.label,
             dow: dow ?? self.dow,
@@ -184,16 +183,16 @@ public extension VTTimer {
             metaData: metaData ?? self.metaData
         )
     }
-    
+
     func isActiveWeekday(_ weekday: VTWeekday) -> Bool {
-        self.dow.contains(weekday.index)
+        dow.contains(weekday.index)
     }
-    
+
     func update(weekday: VTWeekday, enabled: Bool) -> VTTimer {
         if enabled {
-            copy(dow: (self.dow + [weekday.index]).sorted())
+            copy(dow: (dow + [weekday.index]).sorted())
         } else {
-            copy(dow: self.dow.filter { $0 != weekday.index })
+            copy(dow: dow.filter { $0 != weekday.index })
         }
     }
 }

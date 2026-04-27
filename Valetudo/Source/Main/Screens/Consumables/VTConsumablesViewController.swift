@@ -6,27 +6,27 @@
 //
 import UIKit
 
-
 class VTConsumablesViewController: VTCollectionViewController {
     fileprivate typealias VTConsumablesDataSource = UICollectionViewDiffableDataSource<VTConsumablesSection, VTConsumableItem>
     fileprivate typealias VTConsumablesDatasourceSnapshot = NSDiffableDataSourceSnapshot<VTConsumablesSection, VTConsumableItem>
-    
-    // You can remove this once tuples support hashability in swift
+
+    /// You can remove this once tuples support hashability in swift
     private struct VTConsumableID: Hashable {
         let type: VTConsumableType
         let subType: VTConsumableSubType
     }
-    // optional meta data, in particular the max value, for items
+
+    /// optional meta data, in particular the max value, for items
     private var itemProperties: [VTConsumableID: VTConsumableStateAttributeProperties] = [:]
-    
+
     private var dataSource: VTConsumablesDataSource!
     private var items: [VTConsumableItem] = []
-    
+
     private let client: VTAPIClientProtocol
     private var observerToken: VTListenerToken?
-    
+
     private let refreshControl = UIRefreshControl()
-    
+
     init(client: VTAPIClientProtocol) {
         self.client = client
         var listConfig = UICollectionLayoutListConfiguration(appearance: .insetGrouped)
@@ -35,13 +35,14 @@ class VTConsumablesViewController: VTCollectionViewController {
         listConfig.backgroundColor = .clear
         let layout = UICollectionViewCompositionalLayout.list(using: listConfig)
         super.init(collectionViewLayout: layout)
-        
+
         collectionView.delaysContentTouches = false
         navigationItem.subtitle = "CONSUMABLES_SUBTITLE".localized()
         navigationItem.rightBarButtonItem = VTValetudoEventBarButtonItem(client: client, parentViewController: self)
     }
 
-    required init?(coder: NSCoder) {
+    @available(*, unavailable)
+    required init?(coder _: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
 
@@ -58,19 +59,19 @@ class VTConsumablesViewController: VTCollectionViewController {
             withReuseIdentifier: VTFooterView.reuseIdentifier
         )
         collectionView.backgroundColor = .systemBackground
-        
+
         configureRefreshControlIfSupported(refreshControl, action: #selector(didPullToRefresh))
     }
-    
+
     @objc private func didPullToRefresh() {
         Task {
             await self.reloadData(animated: true)
         }
     }
-    
+
     private func configureDataSource() {
-        let client = self.client
-        
+        let client = client
+
         let cellRegistration = UICollectionView.CellRegistration<UICollectionViewListCell, VTConsumableItem> { cell, _, item in
             cell.contentConfiguration = VTConsumablesCellContentConfiguration(
                 title: item.title,
@@ -91,11 +92,11 @@ class VTConsumablesViewController: VTCollectionViewController {
             }
             cell.backgroundConfiguration = .clear()
         }
-        
+
         dataSource = VTConsumablesDataSource(collectionView: collectionView) { collectionView, indexPath, item in
-            return collectionView.dequeueConfiguredReusableCell(using: cellRegistration, for: indexPath, item: item)
+            collectionView.dequeueConfiguredReusableCell(using: cellRegistration, for: indexPath, item: item)
         }
-        
+
         dataSource.supplementaryViewProvider = { collectionView, kind, indexPath in
             guard kind == UICollectionView.elementKindSectionFooter else { return nil }
             let footer = collectionView.dequeueReusableSupplementaryView(
@@ -107,40 +108,40 @@ class VTConsumablesViewController: VTCollectionViewController {
             return footer
         }
     }
-    
+
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        
+
         Task {
             await reloadData(animated: false)
-            
+
             /*
-             // Valetudo 2025.10.0: Consumables are no longer state attributes
-            let (token, stream) = await client.registerEventObserver(for: .stateAttributes)
-            observerToken = token
-            
-            for await event in stream {
-                switch event {
-                case .didReceiveData(let stateAttributes):
-                    print("State attributes: \(stateAttributes.consumableStateAttributes)")
-                    updateItems(with: stateAttributes.consumableStateAttributes, animated: true)
-                case .didReceiveError(let msg):
-                    log(message: msg, forSubsystem: .stateAttribute, level: .error)
-                    // TODO: Show error
-                default:
-                    break
-                }
-            }*/
+              // Valetudo 2025.10.0: Consumables are no longer state attributes
+             let (token, stream) = await client.registerEventObserver(for: .stateAttributes)
+             observerToken = token
+
+             for await event in stream {
+                 switch event {
+                 case .didReceiveData(let stateAttributes):
+                     print("State attributes: \(stateAttributes.consumableStateAttributes)")
+                     updateItems(with: stateAttributes.consumableStateAttributes, animated: true)
+                 case .didReceiveError(let msg):
+                     log(message: msg, forSubsystem: .stateAttribute, level: .error)
+                     // TODO: Show error
+                 default:
+                     break
+                 }
+             }*/
         }
     }
-    
+
     @MainActor
     override func reconnectAndRefresh() async {
         Task { await self.reloadData(animated: false) }
     }
 
     func reloadData(animated: Bool) async {
-        let metaData = (try? await client.getPropertiesForConsumables()) ?? []
+        let metaData = await (try? client.getPropertiesForConsumables()) ?? []
         itemProperties = Dictionary(uniqueKeysWithValues: metaData.compactMap { prop in
             if prop.maxValue != nil {
                 (VTConsumableID(type: prop.type, subType: prop.subType), prop)
@@ -149,13 +150,13 @@ class VTConsumablesViewController: VTCollectionViewController {
             }
         })
         let attrs = try? await client.getConsumables()
-        
-        if self.refreshControl.isRefreshing {
-            self.refreshControl.endRefreshing()
+
+        if refreshControl.isRefreshing {
+            refreshControl.endRefreshing()
         }
         updateItems(with: attrs ?? [], animated: animated)
     }
-    
+
     private func updateItems(with attributes: [VTConsumableStateAttribute], animated: Bool) {
         items = attributes.map { attr in
             let id = VTConsumableID(type: attr.type, subType: attr.subType)
@@ -169,12 +170,12 @@ class VTConsumablesViewController: VTCollectionViewController {
                 type: attr.type,
                 subType: attr.subType,
                 remaining: attr.remaining,
-                maxValue:maxValue
+                maxValue: maxValue
             )
         }
         applySnapshot(animated: animated)
     }
-    
+
     @MainActor
     private func applySnapshot(animated: Bool) {
         var snapshot = VTConsumablesDatasourceSnapshot()
@@ -182,13 +183,13 @@ class VTConsumablesViewController: VTCollectionViewController {
         snapshot.appendItems(items)
         dataSource.apply(snapshot, animatingDifferences: animated)
     }
-    
+
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
-        
+
         if let token = observerToken {
             // capture a strong reference, since we know the client will outlive self
-            let client = self.client
+            let client = client
             Task { await client.removeEventObserver(token: token, for: .map) }
         }
     }

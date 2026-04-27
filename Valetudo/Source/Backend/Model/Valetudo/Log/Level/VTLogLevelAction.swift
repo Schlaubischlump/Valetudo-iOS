@@ -6,6 +6,6 @@
 //
 import Foundation
 
-struct VTLogLevelAction: Encodable, Sendable {
+struct VTLogLevelAction: Encodable {
     let level: String
 }

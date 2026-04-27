@@ -1,5 +1,5 @@
 //
-//  VTSelectionItem.swift
+//  Describable.swift
 //  Valetudo
 //
 //  Created by David Klopp on 05.10.25.
@@ -13,9 +13,13 @@ public protocol Describable {
 }
 
 extension String: Describable {
-    public var description: String { self }
+    public var description: String {
+        self
+    }
 }
 
 extension Int: Describable {
-    public var description: String { "\(self)" }
+    public var description: String {
+        "\(self)"
+    }
 }

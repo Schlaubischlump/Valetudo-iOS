@@ -11,19 +11,19 @@ public struct VTMemory: Codable, Sendable {
     let free: Double
     let valetudo_current: Double
     let valetudo_max: Double
-    
+
     var system: Double {
         total - free - valetudo_current
     }
-    
+
     var real_valetudo_max: Double {
         valetudo_max - valetudo_current
     }
-    
+
     var real_free: Double {
         free - real_valetudo_max
     }
-    
+
     static var zero: VTMemory {
         VTMemory(total: 1.0, free: 0.0, valetudo_current: 0.0, valetudo_max: 0.0)
     }
@@ -34,7 +34,7 @@ public struct VTLoad: Codable, Sendable {
     let five: Double
     let fifteen: Double
 
-    private enum CodingKeys: String, CodingKey, Sendable {
+    private enum CodingKeys: String, CodingKey {
         case one = "1"
         case five = "5"
         case fifteen = "15"

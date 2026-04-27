@@ -6,13 +6,13 @@
 //
 import Foundation
 
-enum VTAttachment: String, Decodable, Sendable {
+enum VTAttachment: String, Decodable {
     case dustbin
     case watertank
     case mop
 }
 
-struct VTModelDetails: Decodable, Sendable {
+struct VTModelDetails: Decodable {
     let supportedAttachments: [VTAttachment]
 }
 
@@ -22,5 +22,7 @@ public struct VTRobotInfo: Decodable, Sendable, Describable {
     let modelDetails: VTModelDetails
     let implementation: String
 
-    public var description: String { "\(manufacturer) \(modelName)" }
+    public var description: String {
+        "\(manufacturer) \(modelName)"
+    }
 }

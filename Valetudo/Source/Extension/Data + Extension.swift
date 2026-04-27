@@ -8,7 +8,7 @@ import Foundation
 
 extension Data {
     func ipString(addressFamily: Int32, maxLength: Int32) -> String? {
-        self.withUnsafeBytes { rawBuffer in
+        withUnsafeBytes { rawBuffer in
             guard let baseAddress = rawBuffer.baseAddress else { return nil }
 
             var outputBuffer = [CChar](repeating: 0, count: Int(maxLength))

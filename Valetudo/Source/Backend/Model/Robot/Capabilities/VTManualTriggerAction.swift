@@ -6,11 +6,6 @@
 //
 import Foundation
 
-
-struct VTManualTriggerAction: Encodable, Hashable, Sendable  {
+struct VTManualTriggerAction: Encodable, Hashable {
     let action = "trigger"
-
-    enum CodingKeys: String, CodingKey {
-        case action
-    }
 }

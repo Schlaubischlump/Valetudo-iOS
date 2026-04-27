@@ -8,13 +8,13 @@ import Foundation
 
 enum VTTimersSection: Hashable {
     case timer(id: String)
-    
+
     var id: String {
         switch self {
-        case .timer(let id): id
+        case let .timer(id): id
         }
     }
-    
+
     var title: String? {
         "TIMER".localized()
     }

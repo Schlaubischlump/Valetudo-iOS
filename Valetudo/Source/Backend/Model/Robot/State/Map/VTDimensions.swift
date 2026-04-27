@@ -4,8 +4,8 @@
 //
 //  Created by David Klopp on 17.05.25.
 //
-import Foundation
 import CoreGraphics
+import Foundation
 
 public struct VTDimensions: Decodable, Sendable {
     public let x: VTRangeDimension

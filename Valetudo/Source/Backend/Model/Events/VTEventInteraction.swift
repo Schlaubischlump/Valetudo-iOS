@@ -13,6 +13,6 @@ public enum VTEventInteraction: String, Encodable, Hashable, Equatable, Sendable
     case reset
 }
 
-struct VTEventInteractionAction: Encodable, Hashable, Equatable, Sendable {
+struct VTEventInteractionAction: Encodable, Hashable, Equatable {
     let interaction: VTEventInteraction
 }

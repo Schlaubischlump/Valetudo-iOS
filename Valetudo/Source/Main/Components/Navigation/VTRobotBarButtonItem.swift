@@ -8,24 +8,25 @@ import UIKit
 
 class VTRobotBarButtonItem: UIBarButtonItem {
     private weak var parentViewController: UIViewController?
-    
+
     init(parentViewController: UIViewController) {
         self.parentViewController = parentViewController
         super.init()
-        self.image = .roboticVacuumFill
-        self.target = self
-        self.action = #selector(goBackToRobotsListScreen(_:))
+        image = .roboticVacuumFill
+        target = self
+        action = #selector(goBackToRobotsListScreen(_:))
     }
-    
-    required init?(coder: NSCoder) {
+
+    @available(*, unavailable)
+    required init?(coder _: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-    
-    @objc func goBackToRobotsListScreen(_ sender: Any) {
+
+    @objc func goBackToRobotsListScreen(_: Any) {
         guard let sceneDelegate = parentViewController?.view.window?.windowScene?.delegate as? VTSceneDelegate else {
             return
         }
-        
+
         sceneDelegate.showRobotsListScreen(animated: true)
     }
 }

@@ -3,15 +3,15 @@
 //  Valetudo
 //
 //  Created by David Klopp on 18.03.25.
-//  
+//
 //
 
 import UIKit
 
 @main
 class VTAppDelegate: UIResponder, UIApplicationDelegate {
-    func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        return true
+    func application(_: UIApplication, didFinishLaunchingWithOptions _: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+        true
     }
 
     override func buildMenu(with builder: UIMenuBuilder) {

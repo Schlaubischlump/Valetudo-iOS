@@ -1,24 +1,24 @@
 //
-//  VTMoveCapability.swift
+//  VTManualControlAction.swift
 //  Valetudo
 //
 //  Created by David Klopp on 17.09.25.
 //
 
-enum VTManualControlActionType: String, Encodable, Sendable {
+enum VTManualControlActionType: String, Encodable {
     case enable
     case disable
     case move
 }
 
 public enum VTMoveDirection: String, Codable, Sendable {
-    case forward = "forward"
-    case backward = "backward"
+    case forward
+    case backward
     case rotateClockwise = "rotate_clockwise"
     case rotateCounterclockwise = "rotate_counterclockwise"
 }
 
-struct VTManualControlAction: Encodable, Sendable {
+struct VTManualControlAction: Encodable {
     let action: VTManualControlActionType
     let movementCommand: VTMoveDirection?
 
@@ -26,12 +26,10 @@ struct VTManualControlAction: Encodable, Sendable {
         self.action = action
         self.movementCommand = movementCommand
     }
-    
-    public static let enable  = VTManualControlAction(action: .enable, movementCommand: nil)
-    public static let disable = VTManualControlAction(action: .disable, movementCommand: nil)
+
+    static let enable = VTManualControlAction(action: .enable, movementCommand: nil)
+    static let disable = VTManualControlAction(action: .disable, movementCommand: nil)
     static func move(direction: VTMoveDirection) -> VTManualControlAction {
         VTManualControlAction(action: .move, movementCommand: direction)
     }
 }
-
-

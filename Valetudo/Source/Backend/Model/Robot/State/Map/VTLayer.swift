@@ -8,29 +8,44 @@ import Foundation
 
 public struct VTLayer: Decodable, Sendable {
     public enum Material: String {
-        case generic = "generic"
-        case tile = "tile"
-        case wood = "wood"
+        case generic
+        case tile
+        case wood
         case woodHorizontal = "wood_horizontal"
         case woodVertical = "wood_vertical"
     }
-    
+
     public let __class: String
     public let metaData: [String: VTAnyCodable]
     public let type: VTLayerType
     public let pixels: [Int]
     public let compressedPixels: [Int]?
     public let dimensions: VTDimensions
-    
+
     public var material: Material {
         guard let materialString = metaData["material"]?.stringValue else { return .generic }
         return Material(rawValue: materialString) ?? .generic
     }
-    public var active: Bool? { metaData["active"]?.boolValue }
-    public var source: String? { metaData["source"]?.stringValue }
-    public var area: Int? { metaData["area"]?.intValue }
-    public var name: String? { metaData["name"]?.stringValue }
-    public var segmentId: String? { metaData["segmentId"]?.stringValue }
+
+    public var active: Bool? {
+        metaData["active"]?.boolValue
+    }
+
+    public var source: String? {
+        metaData["source"]?.stringValue
+    }
+
+    public var area: Int? {
+        metaData["area"]?.intValue
+    }
+
+    public var name: String? {
+        metaData["name"]?.stringValue
+    }
+
+    public var segmentId: String? {
+        metaData["segmentId"]?.stringValue
+    }
 }
 
 extension VTLayer: Equatable, Hashable {
@@ -46,6 +61,6 @@ extension VTLayer: Equatable, Hashable {
 
 extension VTLayer: Describable {
     public var description: String {
-        self.name ?? self.segmentId ?? "UNKNOWN".localized()
+        name ?? segmentId ?? "UNKNOWN".localized()
     }
 }

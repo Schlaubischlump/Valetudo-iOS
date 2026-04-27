@@ -6,16 +6,16 @@
 //
 import CoreGraphics
 
-extension CGPoint {    
+extension CGPoint {
     func scaleBy(x: CGFloat, y: CGFloat) -> CGPoint {
-        return CGPoint(x: self.x * x, y: self.y * y)
+        CGPoint(x: self.x * x, y: self.y * y)
     }
-    
+
     func downScaledBy(x: CGFloat, y: CGFloat) -> CGPoint {
-        return CGPoint(x: self.x / x, y: self.y / y)
+        CGPoint(x: self.x / x, y: self.y / y)
     }
-    
+
     func insetBy(dx: CGFloat, dy: CGFloat) -> CGPoint {
-        return CGPoint(x: self.x - dx, y: self.y - dy)
+        CGPoint(x: x - dx, y: y - dy)
     }
 }

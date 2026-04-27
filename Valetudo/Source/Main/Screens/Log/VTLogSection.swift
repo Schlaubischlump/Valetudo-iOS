@@ -9,11 +9,11 @@ import Foundation
 enum VTLogSection: Int, CaseIterable {
     case main
     case log
-    
+
     var title: String? {
-        switch (self) {
-        case .main:    nil
-        case .log:  "LOG".localized()
+        switch self {
+        case .main: nil
+        case .log: "LOG".localized()
         }
     }
 }

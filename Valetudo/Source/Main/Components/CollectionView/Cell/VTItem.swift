@@ -68,11 +68,10 @@ struct VTActionItem: VTItem {
     let buttonStyle: VTButtonStyle?
 }
 
-
 /// Protocol conformance to Hashable is not enough for the typechecker to understand that this type is indeed Hashable.
 /// That means, UICollectionView diffable datasource can not be polymorphic over `any Hashable`.
 /// That is why we use a type erasure instead that wraps our items and is indeed Hashable.
-struct VTAnyItem: Hashable, Sendable {
+struct VTAnyItem: Hashable {
     private let _hash: @Sendable (inout Hasher) -> Void
     private let _isEqual: @Sendable (Any) -> Bool
 
@@ -80,8 +79,8 @@ struct VTAnyItem: Hashable, Sendable {
     let id: String
 
     init<T: VTItem>(_ item: T) {
-        self.base = item
-        self.id = item.id
+        base = item
+        id = item.id
 
         _hash = { hasher in item.hash(into: &hasher) }
         _isEqual = { other in
@@ -98,9 +97,9 @@ struct VTAnyItem: Hashable, Sendable {
         hasher.combine(id) // identity
         _hash(&hasher)
     }
-    
+
     // MARK: - Factory
-    
+
     static func checkbox(_ id: String, title: String, enabled: Bool) -> VTAnyItem {
         VTAnyItem(VTCheckboxItem(id: id, title: title, enabled: enabled))
     }
@@ -124,11 +123,11 @@ struct VTAnyItem: Hashable, Sendable {
     static func listSelection<T: Hashable & Sendable>(_ id: String, active: [T], options: [T]) -> VTAnyItem {
         VTAnyItem(VTListSelectionItem(id: id, active: active, options: options))
     }
-    
+
     static func loading(_ id: String, message: String) -> VTAnyItem {
         VTAnyItem(VTLoadingItem(id: id, message: message))
     }
-    
+
     static func progress(_ id: String, message: String, progress: CGFloat) -> VTAnyItem {
         VTAnyItem(VTProgressItem(id: id, message: message, progress: progress))
     }

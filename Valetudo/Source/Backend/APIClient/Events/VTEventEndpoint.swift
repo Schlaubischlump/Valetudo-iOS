@@ -6,7 +6,6 @@
 //
 import Foundation
 
-
 /// The Valetudo event identifiers used to route endpoint payloads.
 ///
 /// Raw values match the event names emitted by Valetudo and are used to filter incoming SSE
@@ -21,7 +20,6 @@ enum VTEventEndpointEventID: String {
     /// The Valetudo interaction event.
     case valetudoEvent = "ValetudoEventUpdated"
 }
-
 
 /// A typed descriptor for a Valetudo event stream endpoint.
 ///
@@ -38,12 +36,12 @@ public struct VTEventEndpoint<E: Decodable & Equatable & Sendable, O: Sendable>:
     public static var stateAttributes: VTEventEndpoint<VTStateAttributeList, VTStateAttributeList> {
         .init(type: VTStateAttributeList.self, eventID: .stateAttributes, useSSE: true)
     }
-    
+
     /// An endpoint that emits complete map updates.
     public static var map: VTEventEndpoint<VTMapData, VTMapData> {
         .init(type: VTMapData.self, eventID: .map, useSSE: true)
     }
-    
+
     /// An endpoint that emits Valetudo interaction events.
     ///
     /// The endpoint decodes the wire payload as type-erased event wrappers, then unwraps them
@@ -51,20 +49,20 @@ public struct VTEventEndpoint<E: Decodable & Equatable & Sendable, O: Sendable>:
     public static var valetudoEvent: VTEventEndpoint<[VTAnyValetudoEvent], [any VTValetudoEvent]> {
         .init(
             decodableType: [VTAnyValetudoEvent].self,
-            outputType: [(any VTValetudoEvent)].self,
+            outputType: [any VTValetudoEvent].self,
             eventID: .valetudoEvent,
             useSSE: false
         ) { anyEvents in
             anyEvents.map(\.event)
         }
     }
-    
-    internal let decodableType: E.Type
-    internal let outputType: O.Type
-    internal let eventID: VTEventEndpointEventID
-    internal let useSSE: Bool
-    internal let transform: (@Sendable (E) -> O)
-    
+
+    let decodableType: E.Type
+    let outputType: O.Type
+    let eventID: VTEventEndpointEventID
+    let useSSE: Bool
+    let transform: @Sendable (E) -> O
+
     private init(
         decodableType: E.Type,
         outputType: O.Type,
@@ -80,8 +78,8 @@ public struct VTEventEndpoint<E: Decodable & Equatable & Sendable, O: Sendable>:
     }
 }
 
-fileprivate extension VTEventEndpoint where E == O {
+private extension VTEventEndpoint where E == O {
     init(type: E.Type, eventID: VTEventEndpointEventID, useSSE: Bool) {
-        self.init(decodableType: type, outputType: type, eventID: eventID, useSSE: useSSE) { e in e}
+        self.init(decodableType: type, outputType: type, eventID: eventID, useSSE: useSSE) { e in e }
     }
 }

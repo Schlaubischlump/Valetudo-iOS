@@ -9,26 +9,26 @@ import UIKit
 struct VTConsumablesCellContentConfiguration: UIContentConfiguration, Hashable, Equatable {
     static func == (lhs: VTConsumablesCellContentConfiguration, rhs: VTConsumablesCellContentConfiguration) -> Bool {
         lhs.title == rhs.title &&
-        lhs.remaining == rhs.remaining &&
-        lhs.progress == rhs.progress &&
-        lhs.showsReset == rhs.showsReset
+            lhs.remaining == rhs.remaining &&
+            lhs.progress == rhs.progress &&
+            lhs.showsReset == rhs.showsReset
     }
-    
+
     var title: String
     var remaining: String
     var progress: Float
     var showsReset: Bool
-    var onReset: (() -> Void)? = nil
-    
+    var onReset: (() -> Void)?
+
     func makeContentView() -> UIView & UIContentView {
-        return VTConsumablesContentView(configuration: self)
+        VTConsumablesContentView(configuration: self)
     }
-    
-    func updated(for state: UIConfigurationState) -> VTConsumablesCellContentConfiguration {
-        return self
+
+    func updated(for _: UIConfigurationState) -> VTConsumablesCellContentConfiguration {
+        self
     }
-    
-    public func hash(into hasher: inout Hasher) {
+
+    func hash(into hasher: inout Hasher) {
         hasher.combine(title)
         hasher.combine(remaining)
         hasher.combine(progress)

@@ -16,24 +16,24 @@ struct VTUpdateDetailCellContentConfiguration: UIContentConfiguration, Hashable 
     var baseTextColor: UIColor = .label
     var buttonTitle: String
     var buttonAction: (UIButton) -> Void
-    
+
     func makeContentView() -> UIView & UIContentView {
         VTUpdateDetailCellView(configuration: self)
     }
 
-    func updated(for state: UIConfigurationState) -> VTUpdateDetailCellContentConfiguration {
+    func updated(for _: UIConfigurationState) -> VTUpdateDetailCellContentConfiguration {
         self
     }
-    
+
     static func == (lhs: VTUpdateDetailCellContentConfiguration, rhs: VTUpdateDetailCellContentConfiguration) -> Bool {
         lhs.attributedMessage == rhs.attributedMessage &&
-        lhs.buttonTitle == rhs.buttonTitle &&
-        lhs.title == rhs.title &&
-        lhs.subtitle == rhs.subtitle &&
-        lhs.image == rhs.image
+            lhs.buttonTitle == rhs.buttonTitle &&
+            lhs.title == rhs.title &&
+            lhs.subtitle == rhs.subtitle &&
+            lhs.image == rhs.image
     }
-    
-    public func hash(into hasher: inout Hasher) {
+
+    func hash(into hasher: inout Hasher) {
         hasher.combine(title)
         hasher.combine(subtitle)
         hasher.combine(image)

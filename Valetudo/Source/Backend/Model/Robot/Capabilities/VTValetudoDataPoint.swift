@@ -10,11 +10,11 @@ public enum VTValetudoDataPointType: String, Decodable, Sendable, Hashable, Desc
     case time
     case area
     case count
-    
+
     public var description: String {
-        switch (self) {
-        case .time:  "TIME".localized()
-        case .area:  "AREA".localized()
+        switch self {
+        case .time: "TIME".localized()
+        case .area: "AREA".localized()
         case .count: "COUNT".localized()
         }
     }
@@ -26,12 +26,12 @@ public struct VTValetudoDataPoint: Decodable, Sendable, Hashable, Describable {
     let timestamp: Date
     let type: VTValetudoDataPointType
     let value: Int
-    
+
     var areaInM2: Float? {
         guard type == .area else { return nil }
         return Float(value) / 10000
     }
-    
+
     var timeString: String? {
         guard type == .time else { return nil }
         let hours = value / 3600
@@ -42,13 +42,12 @@ public struct VTValetudoDataPoint: Decodable, Sendable, Hashable, Describable {
         let sString = String(format: "%02ds", seconds)
         return "\(hString) \(mString) \(sString)"
     }
-    
+
     public var description: String {
-        switch (self.type) {
-        case .time:  timeString ?? ""
-        case .area:  areaInM2.map({ String(format: "%06.2f m\u{00B2}", $0) }) ?? ""
+        switch type {
+        case .time: timeString ?? ""
+        case .area: areaInM2.map { String(format: "%06.2f m\u{00B2}", $0) } ?? ""
         case .count: String(value)
         }
     }
-            
 }

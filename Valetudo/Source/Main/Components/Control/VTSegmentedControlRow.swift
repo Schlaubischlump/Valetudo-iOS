@@ -15,7 +15,7 @@ final class VTSegmentedControlRow<T: VTSegmentedItem>: VTControlRow<UISegmentedC
     var values: [T] = [] {
         didSet { refresh() }
     }
-        
+
     private var allowsValueChange: Bool = true
 
     var selectedValue: T? {
@@ -31,33 +31,34 @@ final class VTSegmentedControlRow<T: VTSegmentedItem>: VTControlRow<UISegmentedC
             content.selectedSegmentIndex = index
         }
     }
-    
+
     private var previousValue: T?
-    
+
     var onValueChanged: ((T?, T) -> Void)?
-    
+
     init(title: String, titleIcon: UIImage?) {
-        let segmentedControl = UISegmentedControl() //RoundedSegmentedControl()
+        let segmentedControl = UISegmentedControl() // RoundedSegmentedControl()
         segmentedControl.selectedSegmentTintColor = .tintColor
         segmentedControl.setTitleTextAttributes([.foregroundColor: UIColor.white], for: .selected)
         super.init(title: title, titleIcon: titleIcon, content: segmentedControl)
     }
-    
-    required init?(coder: NSCoder) {
+
+    @available(*, unavailable)
+    required init?(coder _: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-    
+
     override func setup() {
         super.setup()
-        
+
         content.heightAnchor.constraint(equalToConstant: 45).isActive = true
         content.addTarget(self, action: #selector(selectedSegmentChanged(_:)), for: .valueChanged)
     }
-    
+
     private func refresh() {
         previousValue = nil
         content.removeAllSegments()
-        values.enumerated().forEach { (idx, item) in
+        for (idx, item) in values.enumerated() {
             if let icon = item.icon {
                 content.insertSegment(with: icon, at: idx, animated: false)
             } else {
@@ -68,19 +69,19 @@ final class VTSegmentedControlRow<T: VTSegmentedItem>: VTControlRow<UISegmentedC
             content.selectedSegmentIndex = currentIndex
         }
     }
-    
+
     var isEnabled: Bool = true {
         didSet {
             allowsValueChange = isEnabled
             content.isEnabled = isEnabled
         }
     }
-    
+
     @objc private func selectedSegmentChanged(_: UISegmentedControl) {
         guard let selectedValue else { return }
-                
+
         onValueChanged?(previousValue, selectedValue)
-        
+
         previousValue = selectedValue
     }
 }

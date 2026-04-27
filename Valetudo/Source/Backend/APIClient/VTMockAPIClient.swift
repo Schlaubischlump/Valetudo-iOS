@@ -5,8 +5,8 @@
 //  Created by David Klopp on 21.04.26.
 //
 import CoreGraphics
-import Foundation
 import CoreImage
+import Foundation
 
 extension VTStateAttributeList {
     init(attributes: [any VTStateAttribute]) {
@@ -20,7 +20,7 @@ actor VTMockAPIClient: VTAPIClientProtocol {
     private static let defaultPresetSelections: [VTPresetType: VTPresetValue] = [
         .fanSpeed: .medium,
         .waterGrade: .low,
-        .operationMode: .vacuumAndMop
+        .operationMode: .vacuumAndMop,
     ]
 
     private var timers: [String: VTTimer]
@@ -47,8 +47,8 @@ actor VTMockAPIClient: VTAPIClientProtocol {
             preActions: [],
             metaData: nil
         )
-        self.timers = [timer.id!: timer]
-        self.events = []
+        timers = [timer.id!: timer]
+        events = []
     }
 
     // MARK: - 1. Robot
@@ -73,15 +73,15 @@ actor VTMockAPIClient: VTAPIClientProtocol {
     }
 
     @discardableResult
-    func registerEventObserver<E: Decodable & Equatable, O>(for endpoint: VTEventEndpoint<E, O>) async -> (VTListenerToken, AsyncStream<VTEventAction<O>>) {
+    func registerEventObserver<O>(for endpoint: VTEventEndpoint<some Decodable & Equatable, O>) async -> (VTListenerToken, AsyncStream<VTEventAction<O>>) {
         let token = UUID()
         let stream = AsyncStream<VTEventAction<O>> { continuation in
             continuation.yield(.didConnect)
 
             let task = Task { [weak self] in
                 guard let self else { return }
-                await self.emitEvent(for: endpoint, to: continuation)
-                var lastStateAttributes = await self.stateAttributesIfNeeded(for: endpoint)
+                await emitEvent(for: endpoint, to: continuation)
+                var lastStateAttributes = await stateAttributesIfNeeded(for: endpoint)
 
                 while !Task.isCancelled {
                     try? await Task.sleep(nanoseconds: 5_000_000_000)
@@ -89,13 +89,13 @@ actor VTMockAPIClient: VTAPIClientProtocol {
 
                     switch endpoint.eventID {
                     case .stateAttributes:
-                        let currentStateAttributes = await self.currentStateAttributes()
+                        let currentStateAttributes = await currentStateAttributes()
                         guard currentStateAttributes != lastStateAttributes else { continue }
                         lastStateAttributes = currentStateAttributes
-                        await self.emitEvent(for: endpoint, to: continuation)
+                        await emitEvent(for: endpoint, to: continuation)
                     case .valetudoEvent:
-                        guard await self.addRandomDummyEvent() else { continue }
-                        await self.emitEvent(for: endpoint, to: continuation)
+                        guard await addRandomDummyEvent() else { continue }
+                        await emitEvent(for: endpoint, to: continuation)
                     case .map:
                         continue
                     }
@@ -111,7 +111,7 @@ actor VTMockAPIClient: VTAPIClientProtocol {
         return (token, stream)
     }
 
-    func removeEventObserver<E: Decodable & Equatable, O>(token: VTListenerToken, for endpoint: VTEventEndpoint<E, O>) async {
+    func removeEventObserver(token: VTListenerToken, for _: VTEventEndpoint<some Decodable & Equatable, some Any>) async {
         observerTasks[token]?.cancel()
         observerTasks[token] = nil
     }
@@ -131,15 +131,15 @@ actor VTMockAPIClient: VTAPIClientProtocol {
             .highResolutionManualControl,
             .autoEmptyDockManualTrigger,
             .mopDockCleanManualTrigger,
-            .mopDockDryManualTrigger
+            .mopDockDryManualTrigger,
         ]
     }
 
     func getCurrentStatisticsCapability() async throws -> [VTValetudoDataPoint] {
         [
-            VTValetudoDataPoint(__class: "ValetudoDataPoint", metaData: [:], timestamp: Date(), type: .time, value: 12_345),
+            VTValetudoDataPoint(__class: "ValetudoDataPoint", metaData: [:], timestamp: Date(), type: .time, value: 12345),
             VTValetudoDataPoint(__class: "ValetudoDataPoint", metaData: [:], timestamp: Date(), type: .area, value: 543_210),
-            VTValetudoDataPoint(__class: "ValetudoDataPoint", metaData: [:], timestamp: Date(), type: .count, value: 42)
+            VTValetudoDataPoint(__class: "ValetudoDataPoint", metaData: [:], timestamp: Date(), type: .count, value: 42),
         ]
     }
 
@@ -147,7 +147,7 @@ actor VTMockAPIClient: VTAPIClientProtocol {
     func pause() async throws {}
     func stop() async throws {}
     func home() async throws {}
-    func clean(segmentIDs: [String], customOrder: Bool, iterations: Int) async throws {}
+    func clean(segmentIDs _: [String], customOrder _: Bool, iterations _: Int) async throws {}
     func autoEmptyDock() async throws {}
     func startMopDockClean() async throws {}
     func stopMopDockClean() async throws {}
@@ -185,19 +185,19 @@ actor VTMockAPIClient: VTAPIClientProtocol {
                 type: .filter,
                 subType: .main,
                 remaining: VTConsumableRemaining(value: 420, unit: .minutes)
-            )
+            ),
         ]
     }
 
     func getPropertiesForConsumables() async throws -> [VTConsumableStateAttributeProperties] {
         [
             VTConsumableStateAttributeProperties(type: .brush, subType: .main, unit: .percent, maxValue: 100),
-            VTConsumableStateAttributeProperties(type: .filter, subType: .main, unit: .minutes, maxValue: 900)
+            VTConsumableStateAttributeProperties(type: .filter, subType: .main, unit: .minutes, maxValue: 900),
         ]
     }
 
-    func resetConsumable(type: VTConsumableType) async throws {}
-    func resetConsumable(type: VTConsumableType, subtype: VTConsumableSubType) async throws {}
+    func resetConsumable(type _: VTConsumableType) async throws {}
+    func resetConsumable(type _: VTConsumableType, subtype _: VTConsumableSubType) async throws {}
 
     func getManualControlIsEnabled() async throws -> Bool {
         manualControlEnabled
@@ -215,7 +215,7 @@ actor VTMockAPIClient: VTAPIClientProtocol {
         manualControlEnabled = false
     }
 
-    func manualControlMove(direction: VTMoveDirection) async throws {}
+    func manualControlMove(direction _: VTMoveDirection) async throws {}
 
     func getHighResolutionManualControlIsEnabled() async throws -> Bool {
         highResolutionManualControlEnabled
@@ -229,56 +229,52 @@ actor VTMockAPIClient: VTAPIClientProtocol {
         highResolutionManualControlEnabled = false
     }
 
-    func highResolutionManualControlMove(angle: CGFloat, velocity: CGFloat) async throws {}
+    func highResolutionManualControlMove(angle _: CGFloat, velocity _: CGFloat) async throws {}
 
     // MARK: - 1.2.11 ObstacleImagesCapability
-    
+
     func getObstacleImagesCapabilityIsEnabled() async throws -> Bool {
         obstacleImagesEnabled
     }
-    
+
     func enableObstacleImagesCapability() async throws {
         obstacleImagesEnabled = true
     }
-    
+
     func disableObstacleImagesCapability() async throws {
         obstacleImagesEnabled = false
     }
-    
+
     func getObstacleImage(id: String) async throws -> CIImage {
         let tint: CIColor = switch id {
         case "fc9a6d96-359c-53b5-93eb-d98918efcb57": .init(red: 0.30, green: 0.60, blue: 0.95)
         case "7d50387c-244d-53c4-8bff-179868c82bec": .init(red: 0.96, green: 0.61, blue: 0.20)
         default: .init(red: 0.55, green: 0.55, blue: 0.55)
         }
-        
+
         return CIImage(color: tint).cropped(to: CGRect(x: 0, y: 0, width: 220, height: 220))
     }
-    
+
     func getObstacleImagesCapabilityProperties() async throws -> VTObstacleImagesProperties {
-        return VTObstacleImagesProperties(fileFormat: .ok, dimensions: .init(width: 0, height: 0))
+        VTObstacleImagesProperties(fileFormat: .ok, dimensions: .init(width: 0, height: 0))
     }
-    
+
     // MARK: - 1.2.12 MapResetCapability
-    
-    func resetMap() async throws {
-        
-    }
-    
-    func getMapResetProperties() async throws -> [String : VTAnyCodable] {
-        return [:]
+
+    func resetMap() async throws {}
+
+    func getMapResetProperties() async throws -> [String: VTAnyCodable] {
+        [:]
     }
 
     // MARK: - 1.2.13 MappingPassCapability
 
-    func startMappingPass() async throws {
+    func startMappingPass() async throws {}
 
+    func getMappingPassProperties() async throws -> [String: VTAnyCodable] {
+        [:]
     }
 
-    func getMappingPassProperties() async throws -> [String : VTAnyCodable] {
-        return [:]
-    }
-    
     // MARK: - 1.3 Properties
 
     func getRobotProperties() async throws -> VTRobotProperties {
@@ -292,7 +288,7 @@ actor VTMockAPIClient: VTAPIClientProtocol {
             hostname: "mock-valetudo",
             arch: "arm64",
             mem: VTMemory(total: 512, free: 256, valetudo_current: 64, valetudo_max: 128),
-            uptime: 12_345,
+            uptime: 12345,
             load: VTLoad(one: 0.1, five: 0.2, fifteen: 0.3),
             cpus: [VTCPU(usage: VTUsage(user: 5, nice: 0, sys: 3, idle: 91, irq: 1))]
         )
@@ -300,7 +296,7 @@ actor VTMockAPIClient: VTAPIClientProtocol {
 
     func getRuntimeInfo() async throws -> VTRuntimeInfo {
         VTRuntimeInfo(
-            uptime: 4_321,
+            uptime: 4321,
             argv: ["valetudo"],
             execArgv: [],
             execPath: "/usr/bin/valetudo",
@@ -337,7 +333,7 @@ actor VTMockAPIClient: VTAPIClientProtocol {
     func getLog() async throws -> [VTLogLine] {
         [
             VTLogLine(timestamp: Date(), level: "info", message: "Mock client started"),
-            VTLogLine(timestamp: Date(), level: "debug", message: "Mock log entry")
+            VTLogLine(timestamp: Date(), level: "debug", message: "Mock log entry"),
         ]
     }
 
@@ -368,7 +364,7 @@ actor VTMockAPIClient: VTAPIClientProtocol {
     // MARK: - 5. Timer
 
     func getTimers() async throws -> [String: VTTimer] {
-        return timers
+        timers
     }
 
     func addTimer(_ timer: VTTimer) async throws {
@@ -400,7 +396,7 @@ actor VTMockAPIClient: VTAPIClientProtocol {
         timers[id] = nil
     }
 
-    func executeTimer(id: String) async throws {}
+    func executeTimer(id _: String) async throws {}
 
     func getTimerProperties() async throws -> VTTimersProperties {
         VTTimersProperties(
@@ -420,14 +416,14 @@ actor VTMockAPIClient: VTAPIClientProtocol {
         return event
     }
 
-    func interactWithValetudoEvent(id: String, interaction: VTEventInteraction) async throws {
+    func interactWithValetudoEvent(id: String, interaction _: VTEventInteraction) async throws {
         events.removeAll { $0.id == id }
     }
-    
+
     // MARK: - 7. NetworkAdvertisement
-    
+
     func getNetworkAdvertisementProperties() async throws -> VTNetworkAdvertisementProperties {
-        return VTNetworkAdvertisementProperties(port: 80, zeroconfHostname: "127.0.0.0")
+        VTNetworkAdvertisementProperties(port: 80, zeroconfHostname: "127.0.0.0")
     }
 
     // MARK: - Helpers
@@ -436,7 +432,7 @@ actor VTMockAPIClient: VTAPIClientProtocol {
         observerTasks[token] = task
     }
 
-    private func emitEvent<E: Decodable & Equatable, O>(for endpoint: VTEventEndpoint<E, O>, to continuation: AsyncStream<VTEventAction<O>>.Continuation) {
+    private func emitEvent<O>(for endpoint: VTEventEndpoint<some Decodable & Equatable, O>, to continuation: AsyncStream<VTEventAction<O>>.Continuation) {
         switch endpoint.eventID {
         case .stateAttributes:
             yield(stateAttributes, to: continuation)
@@ -459,18 +455,18 @@ actor VTMockAPIClient: VTAPIClientProtocol {
         stateAttributes
     }
 
-    private func stateAttributesIfNeeded<E: Decodable & Equatable, O>(for endpoint: VTEventEndpoint<E, O>) -> VTStateAttributeList? {
+    private func stateAttributesIfNeeded(for endpoint: VTEventEndpoint<some Decodable & Equatable, some Any>) -> VTStateAttributeList? {
         endpoint.eventID == .stateAttributes ? stateAttributes : nil
     }
 
     private func addRandomDummyEvent() -> Bool {
-        guard Int.random(in: 1...100) <= 20 else { return false }
+        guard Int.random(in: 1 ... 100) <= 20 else { return false }
 
         let id = "mock-event-\(nextEventNumber)"
         nextEventNumber += 1
         let timestamp = Date()
 
-        let event: any VTValetudoEvent = switch Int.random(in: 0..<6) {
+        let event: any VTValetudoEvent = switch Int.random(in: 0 ..< 6) {
         case 0:
             VTDustBinFullEvent(
                 __class: "DustBinFullValetudoEvent",
@@ -538,7 +534,7 @@ actor VTMockAPIClient: VTAPIClientProtocol {
             VTAttachmentStateAttribute(__class: "AttachmentStateAttribute", metaData: [:], type: .mop, attached: true),
             VTPresetSelectionStateAttribute(__class: "PresetSelectionStateAttribute", metaData: [:], type: .fanSpeed, value: presetSelections[.fanSpeed] ?? .medium, customValue: nil),
             VTPresetSelectionStateAttribute(__class: "PresetSelectionStateAttribute", metaData: [:], type: .waterGrade, value: presetSelections[.waterGrade] ?? .low, customValue: nil),
-            VTPresetSelectionStateAttribute(__class: "PresetSelectionStateAttribute", metaData: [:], type: .operationMode, value: presetSelections[.operationMode] ?? .vacuumAndMop, customValue: nil)
+            VTPresetSelectionStateAttribute(__class: "PresetSelectionStateAttribute", metaData: [:], type: .operationMode, value: presetSelections[.operationMode] ?? .vacuumAndMop, customValue: nil),
         ])
     }
 

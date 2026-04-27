@@ -8,16 +8,19 @@ import UIKit
 
 struct VTFanItem: VTSegmentedItem {
     let presetValue: VTPresetValue
-    var title: String { presetValue.description.capitalized }
+    var title: String {
+        presetValue.description.capitalized
+    }
+
     var icon: UIImage? {
         switch presetValue {
-        case .off:      .fanSpeedOff()
-        case .low:      .fanSpeedLow()
-        case .min:      .fanSpeedMin()
-        case .medium:   .fanSpeedMedium()
-        case .high:     .fanSpeedHigh()
-        case .max:      .fanSpeedMax()
-        case .turbo:    .fanSpeedTurbo()
+        case .off: .fanSpeedOff()
+        case .low: .fanSpeedLow()
+        case .min: .fanSpeedMin()
+        case .medium: .fanSpeedMedium()
+        case .high: .fanSpeedHigh()
+        case .max: .fanSpeedMax()
+        case .turbo: .fanSpeedTurbo()
         default: nil
         }
     }
@@ -25,30 +28,35 @@ struct VTFanItem: VTSegmentedItem {
 
 struct VTWaterGradeItem: VTSegmentedItem {
     let presetValue: VTPresetValue
-    var title: String { presetValue.description.capitalized }
+    var title: String {
+        presetValue.description.capitalized
+    }
+
     var icon: UIImage? {
         switch presetValue {
-        case .off:      .waterGradeOff()
-        case .min:      .waterGradeMin()
-        case .low:      .waterGradeLow()
-        case .medium:   .waterGradeMedium()
-        case .high:     .waterGradeHigh()
-        case .max:      .waterGradeMax()
+        case .off: .waterGradeOff()
+        case .min: .waterGradeMin()
+        case .low: .waterGradeLow()
+        case .medium: .waterGradeMedium()
+        case .high: .waterGradeHigh()
+        case .max: .waterGradeMax()
         default: nil
         }
-        
     }
 }
 
 struct VTOperationModeItem: VTSegmentedItem {
     let presetValue: VTPresetValue
-    var title: String { presetValue.description.capitalized }
+    var title: String {
+        presetValue.description.capitalized
+    }
+
     var icon: UIImage? {
-        return switch presetValue {
-        case .vacuum:           .fanFill
-        case .mop:              .dropFill
-        case .vacuumAndMop:     .operationModeVacuumAndMop
-        case .vacuumThenMop:    .operationModeVacuumThenMop
+        switch presetValue {
+        case .vacuum: .fanFill
+        case .mop: .dropFill
+        case .vacuumAndMop: .operationModeVacuumAndMop
+        case .vacuumThenMop: .operationModeVacuumThenMop
         default: nil
         }
     }
@@ -61,59 +69,62 @@ struct VTRepeatItem: CaseIterable, VTSegmentedItem {
         VTRepeatItem(iterations: 3),
         VTRepeatItem(iterations: 5),
     ]
-    
+
     let iterations: Int
-    var title: String { "× \(iterations)" }
-    var icon: UIImage? { .repeatCount(iterations) }
+    var title: String {
+        "× \(iterations)"
+    }
+
+    var icon: UIImage? {
+        .repeatCount(iterations)
+    }
 }
 
-
 class VTRobotControlViewController: VTViewController {
-    
     enum CleaningConfiguration {
         case none
         case segments(ids: [String], customOrder: Bool, iterations: Int)
-        
+
         fileprivate var canChangeIterations: Bool {
-            switch (self) {
+            switch self {
             case .none: false
             case .segments(ids: _, customOrder: _, iterations: _): true
             }
         }
-        
+
         fileprivate var iterations: Int {
-            switch (self) {
+            switch self {
             case .none: 1
             case .segments(ids: _, customOrder: _, iterations: let iter): iter
             }
         }
-        
-        public func appending(segmentId: String) -> CleaningConfiguration {
-            switch (self) {
+
+        func appending(segmentId: String) -> CleaningConfiguration {
+            switch self {
             case .none:
                 .segments(ids: [segmentId], customOrder: false, iterations: 1)
-            case .segments(ids: let ids, customOrder: let order, iterations: let iters):
+            case let .segments(ids: ids, customOrder: order, iterations: iters):
                 .segments(ids: ids + [segmentId], customOrder: order, iterations: iters)
             }
         }
-        
+
         fileprivate func updated(iterations: Int) -> CleaningConfiguration {
-            switch (self) {
+            switch self {
             case .none:
                 .none
             case .segments(ids: let ids, customOrder: let order, iterations: _):
                 .segments(ids: ids, customOrder: order, iterations: iterations)
             }
         }
-        
-        public func removing(segmentId: String) -> CleaningConfiguration {
-            switch (self) {
+
+        func removing(segmentId: String) -> CleaningConfiguration {
+            switch self {
             case .none:
                 return .none
             case .segments(ids: var ids, customOrder: let order, iterations: let iters):
                 let idx = ids.firstIndex(of: segmentId)!
                 ids.remove(at: idx)
-                if (ids.isEmpty) {
+                if ids.isEmpty {
                     return .none
                 } else {
                     return .segments(ids: ids, customOrder: order, iterations: iters)
@@ -121,7 +132,7 @@ class VTRobotControlViewController: VTViewController {
             }
         }
     }
-    
+
     /// Cleaning configuration to use when the start button is clicked.
     private var supportsSegmentation: Bool = false
     private var _currentConfiguration: CleaningConfiguration = .none
@@ -129,37 +140,37 @@ class VTRobotControlViewController: VTViewController {
         get { _currentConfiguration }
         set {
             _currentConfiguration = supportsSegmentation ? newValue : .none
-            self.updateIterations()
+            updateIterations()
         }
     }
-    
+
     private let client: VTAPIClientProtocol
     private var observerToken: VTListenerToken?
     private var sseTask: Task<Void, Never>?
-        
-    // Make sure that we process manual UI updates and SSE based UI updates in the right order
-    private let serialTaskQueue: SerialTaskQueue = SerialTaskQueue()
-    
+
+    /// Make sure that we process manual UI updates and SSE based UI updates in the right order
+    private let serialTaskQueue: SerialTaskQueue = .init()
+
     private let scrollView = UIScrollView()
     private let contentStackView = UIStackView()
     private let startPauseStopControl = VTStartPauseStopControlRow()
-    
+
     let modeRow = VTSegmentedControlRow<VTOperationModeItem>(
         title: VTPresetType.operationMode.description.capitalized,
         titleIcon: .filemenuAndSelection
     )
-    
+
     private let fanRow = VTSegmentedControlRow<VTFanItem>(
         title: VTPresetType.fanSpeed.description.capitalized,
-        titleIcon: .fanFill,
+        titleIcon: .fanFill
     )
     private let waterRow = VTSegmentedControlRow<VTWaterGradeItem>(
         title: VTPresetType.waterGrade.description.capitalized,
-        titleIcon: .dropFill,
+        titleIcon: .dropFill
     )
     private let iterationsRow = VTSegmentedControlRow<VTRepeatItem>(
         title: "ITERATIONS".localized(),
-        titleIcon: .repeatSymbol,
+        titleIcon: .repeatSymbol
     )
 
     private let dockControls = {
@@ -169,7 +180,7 @@ class VTRobotControlViewController: VTViewController {
         )
         dockControls.translatesAutoresizingMaskIntoConstraints = false
         dockControls.axis = .horizontal
-        
+
         // TODO: Conditionally add these items based on the Capability of the robot
         let cleanButton = VTToggleControlButton(
             title: "CLEAN".localizedUppercase(),
@@ -187,21 +198,23 @@ class VTRobotControlViewController: VTViewController {
         cleanButton.heightAnchor.constraint(equalToConstant: 50).isActive = true
         dryButton.heightAnchor.constraint(equalToConstant: 50).isActive = true
         emptyButton.heightAnchor.constraint(equalToConstant: 50).isActive = true
-        
+
         dockControls.items = [cleanButton, dryButton, emptyButton]
         return dockControls
     }()
-    
+
     private var cleanButton: VTToggleControlButton? {
         dockControls.items.first as? VTToggleControlButton
     }
+
     private var dryButton: VTToggleControlButton? {
         dockControls.items.count >= 2 ? dockControls.items[1] as? VTToggleControlButton : nil
     }
+
     private var emptyButton: VTControlButton? {
         dockControls.items.count >= 3 ? dockControls.items[2] : nil
     }
-    
+
     private let attachmentsControls = {
         let attachmentsControls = VTStackedControlRow<VTControlButton>(
             title: "ATTACHMENTS".localized(),
@@ -211,7 +224,7 @@ class VTRobotControlViewController: VTViewController {
         attachmentsControls.translatesAutoresizingMaskIntoConstraints = false
         return attachmentsControls
     }()
-    
+
     private let statisticsControls = {
         let statisticsControls = VTStackedControlRow<VTControlLabel>(
             title: "CURRENT_STATISTICS".localized(),
@@ -221,63 +234,64 @@ class VTRobotControlViewController: VTViewController {
         statisticsControls.translatesAutoresizingMaskIntoConstraints = false
         return statisticsControls
     }()
-    
+
     init(client: VTAPIClientProtocol) {
         self.client = client
         super.init(nibName: nil, bundle: nil)
     }
-    
-    required init?(coder: NSCoder) {
+
+    @available(*, unavailable)
+    required init?(coder _: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-    
+
     override func viewDidLoad() {
         super.viewDidLoad()
-        //view.backgroundColor = .systemBackground
+        // view.backgroundColor = .systemBackground
         setupControls()
     }
-    
+
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        
+
         startSSEObservation()
     }
-    
+
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
-        
+
         stopSSEObservation()
     }
-    
+
     @MainActor
     override func reconnectAndRefresh() async {
         // Cancel existing SSE task and reconnect
         stopSSEObservation()
         startSSEObservation()
     }
-    
+
     private func startSSEObservation() {
         guard sseTask == nil else { return }
-        
+
         sseTask = Task {
             do {
                 try await loadInitialData()
-                
+
                 let (token, stream) = await client.registerEventObserver(for: .stateAttributes)
                 observerToken = token
-                
+
                 for await event in stream {
                     switch event {
-                    case .didReceiveData(let attrs):
+                    case let .didReceiveData(attrs):
                         await serialTaskQueue.enqueue { [weak self] in
                             guard let self else { return }
                             await updateButtonStates(attrs)
                             await updateAttachments(attrs)
                             try? await updateStatistics()
                         }
-                    case .didReceiveError(let msg):
+                    case let .didReceiveError(msg):
                         log(message: msg, forSubsystem: .stateAttribute, level: .error)
-                        // TODO: Show error
+                    // TODO: Show error
                     default:
                         break
                     }
@@ -288,39 +302,39 @@ class VTRobotControlViewController: VTViewController {
             }
         }
     }
-    
+
     private func stopSSEObservation() {
         sseTask?.cancel()
         sseTask = nil
-        
+
         if let token = observerToken {
-            let client = self.client
+            let client = client
             Task { await client.removeEventObserver(token: token, for: .stateAttributes) }
             observerToken = nil
         }
     }
-    
+
     @MainActor
     func loadInitialData() async throws {
         try await collecting { [weak self] run in
             guard let self else { return }
-            self.iterationsRow.values = VTRepeatItem.allCases
-            self.updateIterations()
-            
+            iterationsRow.values = VTRepeatItem.allCases
+            updateIterations()
+
             await run {
-                let capibilities = Set((try? await client.getCapabilities()) ?? [])
-                self.supportsSegmentation           = capibilities.contains(.mapSegmentation)
+                let capibilities = await Set((try? client.getCapabilities()) ?? [])
+                self.supportsSegmentation = capibilities.contains(.mapSegmentation)
                 self.startPauseStopControl.isHidden = !capibilities.contains(.basicControl)
-                self.statisticsControls.isHidden    = !capibilities.contains(.currentStatistics)
-                self.iterationsRow.isHidden         = !capibilities.contains(.mapSegmentation)
-                self.emptyButton?.isHidden          = !capibilities.contains(.autoEmptyDockManualTrigger)
-                self.cleanButton?.isHidden          = !capibilities.contains(.mopDockCleanManualTrigger)
-                self.dryButton?.isHidden            = !capibilities.contains(.mopDockDryManualTrigger)
-                self.fanRow.isHidden                = !capibilities.contains(.fanSpeedControl)
-                self.waterRow.isHidden              = !capibilities.contains(.waterUsageControl)
-                self.modeRow.isHidden               = !capibilities.contains(.operationModeControl)
+                self.statisticsControls.isHidden = !capibilities.contains(.currentStatistics)
+                self.iterationsRow.isHidden = !capibilities.contains(.mapSegmentation)
+                self.emptyButton?.isHidden = !capibilities.contains(.autoEmptyDockManualTrigger)
+                self.cleanButton?.isHidden = !capibilities.contains(.mopDockCleanManualTrigger)
+                self.dryButton?.isHidden = !capibilities.contains(.mopDockDryManualTrigger)
+                self.fanRow.isHidden = !capibilities.contains(.fanSpeedControl)
+                self.waterRow.isHidden = !capibilities.contains(.waterUsageControl)
+                self.modeRow.isHidden = !capibilities.contains(.operationModeControl)
             }
-            
+
             await run {
                 self.fanRow.values = try await self.client.getPresets(forType: .fanSpeed)
                     .map(VTFanItem.init)
@@ -339,17 +353,17 @@ class VTRobotControlViewController: VTViewController {
             }
         }
     }
-    
+
     @MainActor
     private func updateButtons() async {
         await serialTaskQueue.enqueue { [weak self] in
             guard let self else { return }
-            if let initialAttrs = try? await self.client.getStateAttributes() {
-                await self.updateButtonStates(initialAttrs)
+            if let initialAttrs = try? await client.getStateAttributes() {
+                await updateButtonStates(initialAttrs)
             }
         }
     }
-    
+
     @MainActor
     private func updateIterations() {
         let config = currentConfiguration
@@ -358,13 +372,13 @@ class VTRobotControlViewController: VTViewController {
         iterationsRow.selectedValue = VTRepeatItem(iterations: config.iterations)
         iterationsRow.isEnabled = config.canChangeIterations
     }
-    
+
     @MainActor
     private func updateStatistics() async throws {
         let currentStatistics = try await client.getCurrentStatisticsCapability()
-        await self.updateStatistics(currentStatistics)
+        await updateStatistics(currentStatistics)
     }
-    
+
     @MainActor
     private func updateStatistics(_ statistics: [VTValetudoDataPoint]) async {
         // update all statistics
@@ -377,7 +391,7 @@ class VTRobotControlViewController: VTViewController {
             return label
         }
     }
-    
+
     @MainActor
     private func updateButtonStates(_ state: VTStateAttributeList) async {
         startPauseStopControl.isStopEnabled = state.isStoppable
@@ -393,34 +407,34 @@ class VTRobotControlViewController: VTViewController {
             startPauseStopControl.isStarted = false
             startPauseStopControl.isStartPauseEnabled = false
         }
-        
-        let robotIsDocked      = state.isDocked
+
+        let robotIsDocked = state.isDocked
         let mopPadsAreAttached = state.mopPadsAreAttached
-        let dockIsReady        = state.dockIsReady
-        let isDryingMopPads    = state.isDryingMopPads
-        let isCleaningMopPads  = state.isCleaningMopPads
-                
+        let dockIsReady = state.dockIsReady
+        let isDryingMopPads = state.isDryingMopPads
+        let isCleaningMopPads = state.isCleaningMopPads
+
         dryButton?.isEnabled = robotIsDocked && mopPadsAreAttached && (dockIsReady || isDryingMopPads)
         dryButton?.isToggled = isDryingMopPads
-        
+
         cleanButton?.isEnabled = robotIsDocked && mopPadsAreAttached && (dockIsReady || isCleaningMopPads)
         cleanButton?.isToggled = isCleaningMopPads
-        
+
         emptyButton?.isEnabled = robotIsDocked
-        
+
         fanRow.subtitle = state.fanSpeed.description.capitalized
         fanRow.selectedValue = VTFanItem(presetValue: state.fanSpeed)
         fanRow.isEnabled = true
-        
+
         waterRow.subtitle = state.waterGrade.description.capitalized
         waterRow.selectedValue = VTWaterGradeItem(presetValue: state.waterGrade)
         waterRow.isEnabled = true
-        
+
         modeRow.subtitle = state.operationMode.description.capitalized
         modeRow.selectedValue = VTOperationModeItem(presetValue: state.operationMode)
         modeRow.isEnabled = true
     }
-    
+
     @MainActor
     private func updateAttachments(_ state: VTStateAttributeList) async {
         // update all attachments
@@ -437,13 +451,13 @@ class VTRobotControlViewController: VTViewController {
 
     private func toggleStartPause(isStarted: Bool) async {
         do {
-            if (isStarted) {
+            if isStarted {
                 try await client.pause()
             } else {
-                switch (currentConfiguration) {
+                switch currentConfiguration {
                 case .none:
                     try await client.start()
-                case .segments(ids: let ids, customOrder: let order, iterations: let iters):
+                case let .segments(ids: ids, customOrder: order, iterations: iters):
                     try await client.clean(segmentIDs: ids, customOrder: order, iterations: iters)
                 }
             }
@@ -452,7 +466,7 @@ class VTRobotControlViewController: VTViewController {
             // TODO: Show error
         }
     }
-    
+
     private func stop() async {
         do {
             try await client.stop()
@@ -461,7 +475,7 @@ class VTRobotControlViewController: VTViewController {
             // TODO: Show error
         }
     }
-    
+
     private func home() async {
         do {
             try await client.home()
@@ -470,38 +484,38 @@ class VTRobotControlViewController: VTViewController {
             // TODO: Show error
         }
     }
-    
-    private func changeFanSpeed(old: VTPresetValue?, new value: VTPresetValue) async {
+
+    private func changeFanSpeed(old _: VTPresetValue?, new value: VTPresetValue) async {
         do {
-            try await self.client.setPreset(value, forType: .fanSpeed)
+            try await client.setPreset(value, forType: .fanSpeed)
         } catch {
             await updateButtons()
             // TODO: Show error
         }
     }
-    
-    private func changeWaterGrade(old: VTPresetValue?, new value:  VTPresetValue) async {
+
+    private func changeWaterGrade(old _: VTPresetValue?, new value: VTPresetValue) async {
         do {
-            try await self.client.setPreset(value, forType: .waterGrade)
+            try await client.setPreset(value, forType: .waterGrade)
         } catch {
             await updateButtons()
             // TODO: Show error
         }
     }
-    
-    private func changeOperationMode(old: VTPresetValue?, new value: VTPresetValue) async {
+
+    private func changeOperationMode(old _: VTPresetValue?, new value: VTPresetValue) async {
         do {
-            try await self.client.setPreset(value, forType: .operationMode)
+            try await client.setPreset(value, forType: .operationMode)
         } catch {
             await updateButtons()
             // TODO: Show error
         }
     }
-    
+
     @MainActor
     private func dryMopPads() async {
         do {
-            let attrs = try await self.client.getStateAttributes()
+            let attrs = try await client.getStateAttributes()
             if attrs.isDryingMopPads {
                 try await client.stopMopDockDry()
             } else {
@@ -512,11 +526,11 @@ class VTRobotControlViewController: VTViewController {
             // TODO: Show error
         }
     }
-    
+
     @MainActor
     private func cleanMopPads() async {
         do {
-            let attrs = try await self.client.getStateAttributes()
+            let attrs = try await client.getStateAttributes()
             if attrs.isCleaningMopPads {
                 try await client.stopMopDockClean()
             } else {
@@ -527,7 +541,7 @@ class VTRobotControlViewController: VTViewController {
             // TODO: Show error
         }
     }
-    
+
     @MainActor
     private func emptyDock() async {
         do {
@@ -537,7 +551,7 @@ class VTRobotControlViewController: VTViewController {
             // TODO: Show error
         }
     }
-    
+
     private func setupControls() {
         startPauseStopControl.onStartPauseCliked = { [weak self] isStarted in
             self?.startPauseStopControl.disableButtons()
@@ -551,7 +565,7 @@ class VTRobotControlViewController: VTViewController {
             self?.startPauseStopControl.disableButtons()
             Task { await self?.home() }
         }
-        
+
         dryButton?.onTap = { [weak self] in
             self?.dockControls.isEnabled = false
             Task { await self?.dryMopPads() }
@@ -564,24 +578,24 @@ class VTRobotControlViewController: VTViewController {
             self?.dockControls.isEnabled = false
             Task { await self?.emptyDock() }
         }
-        
-        fanRow.onValueChanged = { [weak self] (old, new) in
+
+        fanRow.onValueChanged = { [weak self] old, new in
             self?.fanRow.isEnabled = false
             Task { await self?.changeFanSpeed(old: old?.presetValue, new: new.presetValue) }
         }
-        waterRow.onValueChanged = { [weak self] (old, new) in
+        waterRow.onValueChanged = { [weak self] old, new in
             self?.waterRow.isEnabled = false
             Task { await self?.changeWaterGrade(old: old?.presetValue, new: new.presetValue) }
         }
-        modeRow.onValueChanged = { [weak self] (old, new) in
+        modeRow.onValueChanged = { [weak self] old, new in
             self?.modeRow.isEnabled = false
             Task { await self?.changeOperationMode(old: old?.presetValue, new: new.presetValue) }
         }
-        iterationsRow.onValueChanged = { [weak self]  (old, new) in
+        iterationsRow.onValueChanged = { [weak self] _, new in
             let config = self?.currentConfiguration ?? .none
             self?.currentConfiguration = config.updated(iterations: new.iterations)
         }
-        
+
         scrollView.delaysContentTouches = false
         scrollView.translatesAutoresizingMaskIntoConstraints = false
         contentStackView.translatesAutoresizingMaskIntoConstraints = false
@@ -611,9 +625,9 @@ class VTRobotControlViewController: VTViewController {
             ),
             contentStackView.widthAnchor.constraint(
                 equalTo: scrollView.frameLayoutGuide.widthAnchor, constant: -32
-            )
+            ),
         ])
-        
+
         contentStackView.addArrangedSubview(startPauseStopControl)
         contentStackView.addArrangedSubview(modeRow)
         contentStackView.addArrangedSubview(fanRow)

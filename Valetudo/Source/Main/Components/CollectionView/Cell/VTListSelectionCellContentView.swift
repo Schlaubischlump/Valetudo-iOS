@@ -6,9 +6,7 @@
 //
 import UIKit
 
-
 final class VTListSelectionCellContentView<T: Hashable & Equatable & Sendable & Describable>: UIView, UIContentView, UICollectionViewDelegate, UICollectionViewDropDelegate, UICollectionViewDragDelegate {
-
     private enum Section: Int, CaseIterable {
         case enabled
         case disabled
@@ -33,7 +31,7 @@ final class VTListSelectionCellContentView<T: Hashable & Equatable & Sendable & 
         var layoutConfig = UICollectionLayoutListConfiguration(appearance: .insetGrouped)
         layoutConfig.headerMode = .supplementary
 
-        //let compositionalLayout = UICollectionViewCompositionalLayout.list(using: layoutConfig)
+        // let compositionalLayout = UICollectionViewCompositionalLayout.list(using: layoutConfig)
         let compositionalLayout = UICollectionViewCompositionalLayout { _, env in
             let section = NSCollectionLayoutSection.list(using: layoutConfig, layoutEnvironment: env)
             section.contentInsets.top = 0
@@ -43,32 +41,33 @@ final class VTListSelectionCellContentView<T: Hashable & Equatable & Sendable & 
             section.supplementaryContentInsetsReference = .none
             return section
         }
-                
+
         collectionView = UICollectionView(frame: .zero, collectionViewLayout: compositionalLayout)
-        
+
         super.init(frame: .zero)
-        
+
         setup()
         configureDataSource()
         apply(configuration)
     }
 
-    required init?(coder: NSCoder) {
+    @available(*, unavailable)
+    required init?(coder _: NSCoder) {
         fatalError()
     }
 
     // MARK: - Self Sizing
-    
+
     override func systemLayoutSizeFitting(
         _ targetSize: CGSize,
-        withHorizontalFittingPriority horizontalFittingPriority: UILayoutPriority,
-        verticalFittingPriority: UILayoutPriority
+        withHorizontalFittingPriority _: UILayoutPriority,
+        verticalFittingPriority _: UILayoutPriority
     ) -> CGSize {
         collectionView.layoutIfNeeded()
         let height = collectionView.collectionViewLayout.collectionViewContentSize.height
         return CGSize(width: targetSize.width, height: height + 20)
     }
-    
+
     // MARK: - Setup
 
     private func setup() {
@@ -89,7 +88,7 @@ final class VTListSelectionCellContentView<T: Hashable & Equatable & Sendable & 
             collectionView.topAnchor.constraint(equalTo: topAnchor),
             collectionView.bottomAnchor.constraint(equalTo: bottomAnchor),
             collectionView.leadingAnchor.constraint(equalTo: leadingAnchor),
-            collectionView.trailingAnchor.constraint(equalTo: trailingAnchor)
+            collectionView.trailingAnchor.constraint(equalTo: trailingAnchor),
         ])
     }
 
@@ -98,7 +97,7 @@ final class VTListSelectionCellContentView<T: Hashable & Equatable & Sendable & 
     private func configureDataSource() {
         let cellRegistration = UICollectionView.CellRegistration<UICollectionViewListCell, T> { [weak self] cell, indexPath, item in
             guard let allowReordering = self?.currentConfiguration.allowReordering else { return }
-            
+
             var content = UIListContentConfiguration.cell()
             content.text = item.description
             cell.contentConfiguration = content
@@ -127,7 +126,7 @@ final class VTListSelectionCellContentView<T: Hashable & Equatable & Sendable & 
                 let section = Section(rawValue: indexPath.section)
                 header?.configure(text: section == .enabled ? config.enabledTitle : config.disabledTitle)
             }
-            
+
             return header
         }
     }
@@ -142,19 +141,19 @@ final class VTListSelectionCellContentView<T: Hashable & Equatable & Sendable & 
 
         let enabled = config.active
         let disabled = config.options.filter { !config.active.contains($0) }
-        
+
         snapshot.appendItems(enabled, toSection: .enabled)
         snapshot.appendItems(disabled, toSection: .disabled)
 
         // reconfigure to refresh cell accessories
         snapshot.reconfigureItems(enabled + disabled)
-        
+
         dataSource.apply(snapshot, animatingDifferences: false)
     }
-    
+
     // MARK: - UICollectionViewDelegate
-    
-    func collectionView(_ collectionView: UICollectionView, shouldSelectItemAt indexPath: IndexPath) -> Bool {
+
+    func collectionView(_: UICollectionView, shouldSelectItemAt indexPath: IndexPath) -> Bool {
         guard let item = dataSource.itemIdentifier(for: indexPath),
               let section = Section(rawValue: indexPath.section)
         else { return false }
@@ -165,49 +164,52 @@ final class VTListSelectionCellContentView<T: Hashable & Equatable & Sendable & 
         let targetSection: Section = (section == .enabled) ? .disabled : .enabled
         snapshot.appendItems([item], toSection: targetSection)
         snapshot.reconfigureItems([item])
-        
+
         let enabledItems = snapshot.itemIdentifiers(inSection: .enabled)
-        
+
         dataSource.apply(snapshot, animatingDifferences: true)
-        
+
         // Perform callback to inform observer about the change
         currentConfiguration.onChange?(enabledItems)
-        
+
         return false
     }
-    
+
     // MARK: - UICollectionViewDragDelegate
-    
-    func collectionView(_ collectionView: UICollectionView,
-                        itemsForBeginning session: UIDragSession,
+
+    func collectionView(_: UICollectionView,
+                        itemsForBeginning _: UIDragSession,
                         at indexPath: IndexPath)
-    -> [UIDragItem] {
+        -> [UIDragItem]
+    {
         guard currentConfiguration.allowReordering else { return [] }
-        
+
         let section = Section(rawValue: indexPath.section)
         guard section == .enabled else { return [] }
-        
+
         let itemProvider = NSItemProvider(object: indexPath.description as NSString)
         let dragItem = UIDragItem(itemProvider: itemProvider)
         dragItem.localObject = indexPath
         return [dragItem]
     }
-    
+
     // MARK: - UICollectionViewDropDelegate
-    
-    func collectionView(_ collectionView: UICollectionView,
+
+    func collectionView(_: UICollectionView,
                         dropSessionDidUpdate session: UIDropSession,
                         withDestinationIndexPath destinationIndexPath: IndexPath?)
-    -> UICollectionViewDropProposal {
+        -> UICollectionViewDropProposal
+    {
         guard currentConfiguration.allowReordering else { return UICollectionViewDropProposal(operation: .forbidden) }
-        
+
         guard let destinationIndexPath else { return UICollectionViewDropProposal(operation: .cancel) }
         guard let sourceIndexPath = session.localDragSession?
             .items.first?
-            .localObject as? IndexPath else {
+            .localObject as? IndexPath
+        else {
             return UICollectionViewDropProposal(operation: .cancel)
         }
-        
+
         let destSection = Section(rawValue: destinationIndexPath.section)
         let sourceSection = Section(rawValue: sourceIndexPath.section)
 
@@ -219,20 +221,21 @@ final class VTListSelectionCellContentView<T: Hashable & Equatable & Sendable & 
         return UICollectionViewDropProposal(operation: .move, intent: .insertAtDestinationIndexPath)
     }
 
-    func collectionView(_ collectionView: UICollectionView,
-                        performDropWith coordinator: UICollectionViewDropCoordinator) {
+    func collectionView(_: UICollectionView,
+                        performDropWith coordinator: UICollectionViewDropCoordinator)
+    {
         guard currentConfiguration.allowReordering else { return }
-        
+
         guard let destinationIndexPath = coordinator.destinationIndexPath else { return }
         guard let item = coordinator.items.first, let sourceIndexPath = item.sourceIndexPath else { return }
 
         let destSection = Section(rawValue: destinationIndexPath.section)!
         let sourceSection = Section(rawValue: sourceIndexPath.section)!
-        
+
         guard sourceSection == .enabled, sourceSection == destSection else { return }
 
         var snapshot = dataSource.snapshot()
-        
+
         // Remove from old position
         let movingItem = dataSource.itemIdentifier(for: sourceIndexPath)!
         snapshot.deleteItems([movingItem])
@@ -245,8 +248,8 @@ final class VTListSelectionCellContentView<T: Hashable & Equatable & Sendable & 
             snapshot.appendItems([movingItem], toSection: destSection)
         } else {
             let referenceItem = itemsInSection[insertIndex == itemsInSection.count
-                                               ? insertIndex - 1
-                                               : insertIndex]
+                ? insertIndex - 1
+                : insertIndex]
 
             if insertIndex >= itemsInSection.count {
                 snapshot.appendItems([movingItem], toSection: destSection)
@@ -259,7 +262,7 @@ final class VTListSelectionCellContentView<T: Hashable & Equatable & Sendable & 
 
         let enabledItems = snapshot.itemIdentifiers(inSection: .enabled)
         currentConfiguration.onChange?(enabledItems)
-        
+
         coordinator.drop(item.dragItem, toItemAt: destinationIndexPath)
     }
 }

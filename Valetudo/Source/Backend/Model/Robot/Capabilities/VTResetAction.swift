@@ -6,6 +6,6 @@
 //
 import Foundation
 
-struct VTResetAction: Encodable, Hashable, Sendable {
+struct VTResetAction: Encodable, Hashable {
     let action = "reset"
 }

@@ -61,7 +61,7 @@ final class VTLaunchScreenViewController: UIViewController {
 
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-        self.startRobothAnimation()
+        startRobothAnimation()
     }
 
     override func viewWillDisappear(_ animated: Bool) {
@@ -82,7 +82,7 @@ final class VTLaunchScreenViewController: UIViewController {
             iconBackgroundView.widthAnchor.constraint(equalTo: view.widthAnchor, multiplier: 0.46),
             iconBackgroundView.heightAnchor.constraint(equalTo: iconBackgroundView.widthAnchor, multiplier: 0.72),
             iconBackgroundView.widthAnchor.constraint(lessThanOrEqualToConstant: 360),
-            iconBackgroundView.widthAnchor.constraint(greaterThanOrEqualToConstant: 180)
+            iconBackgroundView.widthAnchor.constraint(greaterThanOrEqualToConstant: 180),
         ]
 
         NSLayoutConstraint.activate(iconBackgroundConstraints + [
@@ -101,7 +101,7 @@ final class VTLaunchScreenViewController: UIViewController {
             titleLabel.topAnchor.constraint(equalTo: iconBackgroundView.bottomAnchor, constant: 28),
             titleLabel.leadingAnchor.constraint(greaterThanOrEqualTo: view.layoutMarginsGuide.leadingAnchor),
             titleLabel.trailingAnchor.constraint(lessThanOrEqualTo: view.layoutMarginsGuide.trailingAnchor),
-            titleLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor)
+            titleLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
         ])
     }
 
@@ -144,7 +144,7 @@ final class VTLaunchScreenViewController: UIViewController {
 private extension UIFont {
     func withWeight(_ weight: UIFont.Weight) -> UIFont {
         let descriptor = fontDescriptor.addingAttributes([
-            .traits: [UIFontDescriptor.TraitKey.weight: weight]
+            .traits: [UIFontDescriptor.TraitKey.weight: weight],
         ])
         return UIFont(descriptor: descriptor, size: pointSize)
     }

@@ -7,7 +7,6 @@
 import UIKit
 
 class VTLegendItemView: UIView {
-
     private let colorView = UIView()
     private let legendLabel = UILabel()
     private let checkmarkImageView = UIImageView()
@@ -34,10 +33,10 @@ class VTLegendItemView: UIView {
         layer.shadowRadius = 2
         layer.masksToBounds = false
     }
-    
+
     private func setup(item: VTLegendItem) {
         backgroundColor = .systemGray6
-        
+
         setupShadow()
 
         // Color view
@@ -45,7 +44,7 @@ class VTLegendItemView: UIView {
         colorView.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
             colorView.widthAnchor.constraint(equalToConstant: 24),
-            colorView.heightAnchor.constraint(equalToConstant: 24)
+            colorView.heightAnchor.constraint(equalToConstant: 24),
         ])
 
         // Label
@@ -59,7 +58,7 @@ class VTLegendItemView: UIView {
         checkmarkImageView.setContentHuggingPriority(.required, for: .horizontal)
         NSLayoutConstraint.activate([
             checkmarkImageView.widthAnchor.constraint(equalToConstant: 20),
-            checkmarkImageView.heightAnchor.constraint(equalToConstant: 20)
+            checkmarkImageView.heightAnchor.constraint(equalToConstant: 20),
         ])
 
         updateCheckmark() // Initial state
@@ -78,13 +77,13 @@ class VTLegendItemView: UIView {
             stack.topAnchor.constraint(equalTo: topAnchor),
             stack.bottomAnchor.constraint(equalTo: bottomAnchor),
             stack.leadingAnchor.constraint(equalTo: leadingAnchor),
-            stack.trailingAnchor.constraint(equalTo: trailingAnchor)
+            stack.trailingAnchor.constraint(equalTo: trailingAnchor),
         ])
     }
-    
+
     override func layoutSubviews() {
         super.layoutSubviews()
-        
+
         colorView.layoutIfNeeded()
         colorView.layer.cornerRadius = colorView.bounds.height / 2
         layer.cornerRadius = bounds.height / 2
@@ -93,7 +92,7 @@ class VTLegendItemView: UIView {
     private func updateCheckmark() {
         let imageName = isSelected ? "checkmark.circle.fill" : "circle"
         let symbolImage = UIImage(systemName: imageName)
-        
+
         // Animate the image change with crossfade
         UIView.transition(with: checkmarkImageView,
                           duration: 0.3,

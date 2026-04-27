@@ -7,7 +7,6 @@
 import UIKit
 
 final class VTTimerCellView: UIView, UIContentView {
-
     private var currentConfiguration: VTTimerCellContentConfiguration!
 
     var configuration: UIContentConfiguration {
@@ -39,7 +38,8 @@ final class VTTimerCellView: UIView, UIContentView {
         apply(configuration: configuration)
     }
 
-    required init?(coder: NSCoder) {
+    @available(*, unavailable)
+    required init?(coder _: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
 
@@ -49,7 +49,7 @@ final class VTTimerCellView: UIView, UIContentView {
         backgroundColor = .secondarySystemGroupedBackground
         layer.cornerRadius = 16
         clipsToBounds = true
-        
+
         // Toggle
         toggle.setContentHuggingPriority(.required, for: .horizontal)
 
@@ -61,12 +61,12 @@ final class VTTimerCellView: UIView, UIContentView {
         runButton.setImage(.playFill, for: .normal)
         runButton.tintColor = .systemGreen
         runButton.addTarget(self, action: #selector(run), for: .touchUpInside)
-        
+
         let headerStack = UIStackView(arrangedSubviews: [
             runButton,
             titleLabel,
             UIView(),
-            toggle
+            toggle,
         ])
         headerStack.axis = .horizontal
         headerStack.alignment = .center
@@ -87,7 +87,7 @@ final class VTTimerCellView: UIView, UIContentView {
 
         let timeStack = UIStackView(arrangedSubviews: [
             timeLabel,
-            secondaryTimeLabel
+            secondaryTimeLabel,
         ])
         timeStack.axis = .vertical
         timeStack.spacing = 2
@@ -104,28 +104,28 @@ final class VTTimerCellView: UIView, UIContentView {
         NSLayoutConstraint.activate([
             weekdaysStack.topAnchor.constraint(equalTo: weekdaysContainer.topAnchor),
             weekdaysStack.bottomAnchor.constraint(equalTo: weekdaysContainer.bottomAnchor),
-            weekdaysStack.leadingAnchor.constraint(equalTo: weekdaysContainer.leadingAnchor)
+            weekdaysStack.leadingAnchor.constraint(equalTo: weekdaysContainer.leadingAnchor),
         ])
-        
+
         let separatorLine = UIView()
         separatorLine.backgroundColor = .separator
         separatorLine.translatesAutoresizingMaskIntoConstraints = false
         separatorLine.heightAnchor.constraint(equalToConstant: 1.0).isActive = true
-        
+
         // Main stack
         let vStack = UIStackView(arrangedSubviews: [
             headerStack,
             separatorLine,
             weekdaysContainer,
             timeStack,
-            detailsLabel
+            detailsLabel,
         ])
         vStack.axis = .vertical
         vStack.spacing = 14
         vStack.translatesAutoresizingMaskIntoConstraints = false
 
         addSubview(vStack)
-        
+
         let hPad = 16.0
         let vPad = 12.0
 
@@ -165,13 +165,13 @@ final class VTTimerCellView: UIView, UIContentView {
             label.translatesAutoresizingMaskIntoConstraints = false
             NSLayoutConstraint.activate([
                 label.widthAnchor.constraint(equalToConstant: 28),
-                label.heightAnchor.constraint(equalToConstant: 28)
+                label.heightAnchor.constraint(equalToConstant: 28),
             ])
-            
+
             label.isUserInteractionEnabled = true
             let tapGesture = UITapGestureRecognizer(target: self, action: #selector(selectWeekday(_:)))
             label.addGestureRecognizer(tapGesture)
-            
+
             return label
         }
 
@@ -181,14 +181,14 @@ final class VTTimerCellView: UIView, UIContentView {
     @objc private func toggleChanged() {
         currentConfiguration.onToggle?(toggle.isOn)
     }
-    
+
     @objc private func selectWeekday(_ sender: UITapGestureRecognizer) {
         guard let label = sender.view as? UILabel,
-                let index = weekdayLabels.firstIndex(of: label),
-                let weekday = VTWeekday(normalizedIndex: index) else { return }
+              let index = weekdayLabels.firstIndex(of: label),
+              let weekday = VTWeekday(normalizedIndex: index) else { return }
         currentConfiguration.onSelect?(weekday)
     }
-    
+
     @objc private func run() {
         currentConfiguration.onRun?()
     }
@@ -213,8 +213,8 @@ final class VTTimerCellView: UIView, UIContentView {
 
     private func updateWeekdays(activeDays: [VTWeekday]) {
         // 0 = Monday, ..., 6 = Sunday
-        let activeDaysIndices = Set(activeDays.map(\.normalizedIndex) )
-        
+        let activeDaysIndices = Set(activeDays.map(\.normalizedIndex))
+
         for (weekday, label) in weekdayLabels.enumerated() {
             let isActive = activeDaysIndices.contains(weekday)
 

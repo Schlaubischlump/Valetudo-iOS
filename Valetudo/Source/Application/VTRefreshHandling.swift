@@ -1,5 +1,5 @@
 //
-//  VTRefreshSupport.swift
+//  VTRefreshHandling.swift
 //  Valetudo
 //
 //  Created by David Klopp on 13.11.25.
@@ -13,13 +13,13 @@ protocol VTRefreshHandling: AnyObject {
 }
 
 extension VTViewController: VTRefreshHandling {
-    func refreshContent(animated: Bool) async {
+    func refreshContent(animated _: Bool) async {
         await reconnectAndRefresh()
     }
 }
 
 extension VTCollectionViewController: VTRefreshHandling {
-    func refreshContent(animated: Bool) async {
+    func refreshContent(animated _: Bool) async {
         await reconnectAndRefresh()
     }
 }
@@ -28,8 +28,8 @@ extension UICollectionViewController {
     func configureRefreshControlIfSupported(_ refreshControl: UIRefreshControl, action: Selector) {
         // Refresh control is not available on macOS.
         #if !targetEnvironment(macCatalyst)
-        collectionView.refreshControl = refreshControl
-        refreshControl.addTarget(self, action: action, for: .valueChanged)
+            collectionView.refreshControl = refreshControl
+            refreshControl.addTarget(self, action: action, for: .valueChanged)
         #endif
     }
 }
@@ -43,12 +43,14 @@ extension UIViewController {
         }
 
         if let navigationController = self as? UINavigationController,
-           let visibleViewController = navigationController.visibleViewController {
+           let visibleViewController = navigationController.visibleViewController
+        {
             return visibleViewController.activeRefreshHandler()
         }
 
         if let tabBarController = self as? UITabBarController,
-           let selectedViewController = tabBarController.selectedViewController {
+           let selectedViewController = tabBarController.selectedViewController
+        {
             return selectedViewController.activeRefreshHandler()
         }
 

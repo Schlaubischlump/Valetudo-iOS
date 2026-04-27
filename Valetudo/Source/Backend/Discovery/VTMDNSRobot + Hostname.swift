@@ -9,7 +9,7 @@ import Network
 
 /// Wraps a temporary `NWConnection`-based resolution and guarantees the continuation is resumed only once.
 @MainActor
-fileprivate final class EndpointConnectionResolution {
+private final class EndpointConnectionResolution {
     private let connection: NWConnection
     private let continuation: CheckedContinuation<(host: NWEndpoint.Host, port: NWEndpoint.Port)?, Never>
     private var didResume = false
@@ -54,24 +54,24 @@ extension VTMDNSRobot {
         guard let resolvedEndpoint = await resolveHostOrIpAndPort() else { return nil }
 
         if let properties = await fetchNetworkAdvertisementProperties(from: resolvedEndpoint),
-           let port = NWEndpoint.Port(rawValue: UInt16(properties.port)) {
-        
+           let port = NWEndpoint.Port(rawValue: UInt16(properties.port))
+        {
             var hostname = properties.zeroconfHostname
             if hostname.hasSuffix(".local") {
                 hostname.removeLast(6)
             }
-            
+
             let shortHostPort: (host: NWEndpoint.Host, port: NWEndpoint.Port) = (.name(hostname, nil), port)
             let otherProperties = await fetchNetworkAdvertisementProperties(from: shortHostPort)
             let isSameRobot = (otherProperties == properties)
-                        
+
             if isSameRobot, let url = getUrl(fromHost: shortHostPort.host, andPort: shortHostPort.port) {
                 return url
             }
-            
+
             return getUrl(fromHost: .name(properties.zeroconfHostname, nil), andPort: port)
         }
-        
+
         return getUrl(fromHost: resolvedEndpoint.host, andPort: resolvedEndpoint.port)
     }
 
@@ -119,7 +119,7 @@ extension VTMDNSRobot {
             connection.start(queue: .main)
         }
     }
-    
+
     /// Fetches the robot's own advertised hostname and port from Valetudo.
     ///
     /// Example response:
@@ -128,21 +128,21 @@ extension VTMDNSRobot {
         from endpoint: (host: NWEndpoint.Host, port: NWEndpoint.Port)
     ) async -> VTNetworkAdvertisementProperties? {
         guard let baseURL = getUrl(fromHost: endpoint.host, andPort: endpoint.port) else { return nil }
-        
+
         let config = URLSessionConfiguration.ephemeral
         config.timeoutIntervalForRequest = 1.0
         config.timeoutIntervalForResource = 1.0
         let client = makeAPIClient(baseURL: baseURL, configuration: config)
         return try? await client.getNetworkAdvertisementProperties()
     }
-    
+
     /// Builds a plain HTTP base URL from a resolved Network framework host and port.
     ///
     /// Named hosts may contain a trailing dot when they come from DNS, which is valid in DNS but not
     /// useful for the URLs we persist and display, so it is normalized away here.
     /// IPv6 literals need brackets when embedded in a URL authority component.
     private func getUrl(fromHost host: NWEndpoint.Host, andPort port: NWEndpoint.Port) -> URL? {
-        let isIPv6: Bool = if case .ipv6(_) = host { true } else { false }
+        let isIPv6 = if case .ipv6 = host { true } else { false }
         let hostString: String? = switch host {
         case let .name(name, _):
             name.hasSuffix(".") ? String(name.dropLast()) : name

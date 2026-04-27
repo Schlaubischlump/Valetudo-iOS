@@ -6,24 +6,24 @@
 //
 import Foundation
 
-enum VTHighResolutionManualControlActionType: String, Encodable, Hashable, Sendable {
+enum VTHighResolutionManualControlActionType: String, Encodable, Hashable {
     case enable
     case disable
     case move
 }
 
-struct VTHighResolutionManualControlVector: Codable, Hashable, Sendable {
+struct VTHighResolutionManualControlVector: Codable, Hashable {
     let velocity: CGFloat
     let angle: CGFloat
-    //let metaData: [String: VTAnyDecodable]? we would need an any encodable here
-    
+    // let metaData: [String: VTAnyDecodable]? we would need an any encodable here
+
     init(velocity: CGFloat, angle: CGFloat) {
         self.velocity = max(min(velocity, 1.0), -1.0)
         self.angle = max(min(angle, 180.0), -180.0)
     }
 }
 
-struct VTHighResolutionManualControlAction: Encodable, Hashable, Sendable  {
+struct VTHighResolutionManualControlAction: Encodable, Hashable {
     let action: VTHighResolutionManualControlActionType
     let vector: VTHighResolutionManualControlVector?
 
@@ -31,12 +31,10 @@ struct VTHighResolutionManualControlAction: Encodable, Hashable, Sendable  {
         self.action = action
         self.vector = vector
     }
-    
-    static let enable  = VTHighResolutionManualControlAction(action: .enable, vector: nil)
+
+    static let enable = VTHighResolutionManualControlAction(action: .enable, vector: nil)
     static let disable = VTHighResolutionManualControlAction(action: .disable, vector: nil)
     static func move(vector: VTHighResolutionManualControlVector) -> VTHighResolutionManualControlAction {
         VTHighResolutionManualControlAction(action: .move, vector: vector)
     }
 }
-
-

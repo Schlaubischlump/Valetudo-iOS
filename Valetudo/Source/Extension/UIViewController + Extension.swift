@@ -7,5 +7,7 @@
 import UIKit
 
 extension UIViewController {
-    var isCompact: Bool { traitCollection.horizontalSizeClass == .compact }
+    var isCompact: Bool {
+        traitCollection.horizontalSizeClass == .compact
+    }
 }

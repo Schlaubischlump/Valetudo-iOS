@@ -6,14 +6,14 @@
 //
 import UIKit
 
-private let imageViewSize: CGSize = CGSize(width: 18, height: 18)
+private let imageViewSize: CGSize = .init(width: 18, height: 18)
 
 class VTRobotStatusView: UIView {
-    
     // MARK: - Subviews
+
     private let iconImageView: UIImageView = {
         let imageView = UIImageView()
-                
+
         let robotType = VTEntityType.robot_position
         let robotIconPath = robotType.icon(center: .zero)
         let robotIcon = robotIconPath?.renderedImage(
@@ -23,14 +23,14 @@ class VTRobotStatusView: UIView {
             lineWidth: robotType.borderWidth,
             scale: UIScreen.current?.scale ?? kDefaultScale
         )
-        
+
         imageView.image = robotIcon
         imageView.contentMode = .scaleAspectFit
         imageView.tintColor = .label
         imageView.translatesAutoresizingMaskIntoConstraints = false
         return imageView
     }()
-    
+
     private let titleLabel: UILabel = {
         let label = UILabel()
         label.text = "ROBOT".localized()
@@ -38,7 +38,7 @@ class VTRobotStatusView: UIView {
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
-    
+
     private let statusLabel: UILabel = {
         let label = UILabel()
         label.text = ""
@@ -47,7 +47,7 @@ class VTRobotStatusView: UIView {
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
-    
+
     private let batteryLabel: UILabel = {
         let label = UILabel()
         label.text = ""
@@ -56,7 +56,7 @@ class VTRobotStatusView: UIView {
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
-    
+
     private let batteryProgressView: VTProgressView = {
         let progressSlider = VTProgressView()
         progressSlider.isUserInteractionEnabled = false
@@ -67,6 +67,7 @@ class VTRobotStatusView: UIView {
     }()
 
     // MARK: - Init
+
     override init(frame: CGRect) {
         super.init(frame: frame)
         setup()
@@ -78,6 +79,7 @@ class VTRobotStatusView: UIView {
     }
 
     // MARK: - Setup
+
     private func setupShadow() {
         layer.shadowColor = UIColor.black.cgColor
         layer.shadowOpacity = 0.2
@@ -85,14 +87,14 @@ class VTRobotStatusView: UIView {
         layer.shadowRadius = 2
         layer.masksToBounds = false
     }
-    
+
     private func setup() {
         backgroundColor = .systemBackground
-        
+
         layer.cornerRadius = 10
         layer.borderWidth = 1
         layer.borderColor = UIColor.separator.cgColor
-        
+
         setupShadow()
 
         addSubview(iconImageView)
@@ -100,7 +102,7 @@ class VTRobotStatusView: UIView {
         addSubview(statusLabel)
         addSubview(batteryLabel)
         addSubview(batteryProgressView)
-        
+
         setupConstraints()
     }
 
@@ -125,16 +127,16 @@ class VTRobotStatusView: UIView {
             batteryProgressView.topAnchor.constraint(equalTo: batteryLabel.bottomAnchor, constant: 4),
             batteryProgressView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 12),
             batteryProgressView.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -12),
-            batteryProgressView.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -12)
+            batteryProgressView.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -12),
         ])
     }
 
     // MARK: - Configuration
+
     func update(forStatus status: String, batteryLevel: Double) {
         statusLabel.text = status.uppercased()
         let batteryPercent = Int(batteryLevel)
         batteryLabel.text = "BATTERY".localizedUppercase() + ": \(batteryPercent)%"
-        batteryProgressView.setProgress(CGFloat(batteryLevel/100), animated: true)
+        batteryProgressView.setProgress(CGFloat(batteryLevel / 100), animated: true)
     }
 }
-

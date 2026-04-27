@@ -14,17 +14,19 @@ struct VTListSelectionCellContentConfiguration<T: Hashable & Sendable & Describa
     let options: [T]
     let active: [T]
     let onChange: (([T]) -> Void)?
-    
+
     func makeContentView() -> UIView & UIContentView {
         VTListSelectionCellContentView(configuration: self)
     }
 
-    func updated(for state: UIConfigurationState) -> Self { self }
+    func updated(for _: UIConfigurationState) -> Self {
+        self
+    }
 
     static func == (lhs: Self, rhs: Self) -> Bool {
         lhs.id == rhs.id &&
-        lhs.options == rhs.options &&
-        lhs.active == rhs.active
+            lhs.options == rhs.options &&
+            lhs.active == rhs.active
     }
 
     func hash(into hasher: inout Hasher) {

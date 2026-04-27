@@ -16,7 +16,7 @@ struct VTUpdateStateCellContentConfiguration: UIContentConfiguration, Hashable {
         VTUpdateStateCellView(configuration: self)
     }
 
-    func updated(for state: UIConfigurationState) -> VTUpdateStateCellContentConfiguration {
+    func updated(for _: UIConfigurationState) -> VTUpdateStateCellContentConfiguration {
         self
     }
 }

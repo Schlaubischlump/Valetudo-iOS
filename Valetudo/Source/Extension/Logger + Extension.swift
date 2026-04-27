@@ -9,7 +9,7 @@ import os.log
 
 enum VTSubsystem: String {
     case mock
-    //case sse
+    // case sse
     case consumable
     case valetudoLog
     case map
@@ -17,7 +17,7 @@ enum VTSubsystem: String {
     case robotControl
     case timer
     case valetudoEvent
-    
+
     case stateAttribute
 }
 

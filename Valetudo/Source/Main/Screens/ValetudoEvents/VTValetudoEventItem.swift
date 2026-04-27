@@ -7,59 +7,70 @@
 import Foundation
 import UIKit
 
-struct VTValetudoEventItem: Hashable, Sendable {
+struct VTValetudoEventItem: Hashable {
     private let _hash: @Sendable (inout Hasher) -> Void
     private let _isEqual: @Sendable (Any) -> Bool
-    
+
     private let event: any VTValetudoEvent
-    
+
     init<T: VTValetudoEvent>(event: T) {
         self.event = event
-        
+
         _hash = { hasher in event.hash(into: &hasher) }
         _isEqual = { other in
             guard let other = other as? T else { return false }
             return other == event
         }
     }
-    
-    var id: String { event.id }
-    var timestamp: Date { event.timestamp }
-    var title: String { event.description }
-    var processed: Bool { event.processed }
-    
+
+    var id: String {
+        event.id
+    }
+
+    var timestamp: Date {
+        event.timestamp
+    }
+
+    var title: String {
+        event.description
+    }
+
+    var processed: Bool {
+        event.processed
+    }
+
     @MainActor
-    func createContextualAction(_ interact: @escaping ((VTEventInteraction) async -> Bool) ) -> [UIContextualAction] {
-        switch (event) {
+    func createContextualAction(_ interact: @escaping ((VTEventInteraction) async -> Bool)) -> [UIContextualAction] {
+        switch event {
         case _ as VTConsumableDepletedEvent:
-            return [
-                UIContextualAction(style: .destructive, title: "RESET".localized()) { _,_,completion in
-                    Task { completion(await interact(.reset)) }
-                }
+            [
+                UIContextualAction(style: .destructive, title: "RESET".localized()) { _, _, completion in
+                    Task { await completion(interact(.reset)) }
+                },
             ]
         case _ as VTMissingResourceEvent,
-            _ as VTDustBinFullEvent,
-            _ as VTErrorStateEvent,
-            _ as VTMopAttachmentReminderEvent:
-            return [
-                UIContextualAction(style: .destructive, title: "DISMISS".localized()) { _,_,completion in
-                    Task { completion(await interact(.ok)) }
-                }
+             _ as VTDustBinFullEvent,
+             _ as VTErrorStateEvent,
+             _ as VTMopAttachmentReminderEvent:
+            [
+                UIContextualAction(style: .destructive, title: "DISMISS".localized()) { _, _, completion in
+                    Task { await completion(interact(.ok)) }
+                },
             ]
         case _ as VTPendingMapChangeEvent:
-            return [
-                UIContextualAction(style: .destructive, title: "NO".localized()) { _,_,completion in
-                    Task { completion(await interact(.no)) }
+            [
+                UIContextualAction(style: .destructive, title: "NO".localized()) { _, _, completion in
+                    Task { await completion(interact(.no)) }
                 },
-                UIContextualAction(style: .normal, title: "YES".localized(), color: .systemGreen) { _,_,completion in
-                    Task { completion(await interact(.yes)) }
-                }
+                UIContextualAction(style: .normal, title: "YES".localized(), color: .systemGreen) { _, _, completion in
+                    Task { await completion(interact(.yes)) }
+                },
             ]
         default:
-            return []
+            []
         }
     }
-    
+
     static func == (lhs: Self, rhs: Self) -> Bool {
         lhs._isEqual(rhs.event)
     }

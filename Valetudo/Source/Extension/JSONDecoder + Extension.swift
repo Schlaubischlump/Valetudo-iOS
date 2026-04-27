@@ -14,7 +14,7 @@ extension JSONDecoder.DateDecodingStrategy {
 
         let formats = [
             "yyyy-MM-dd'T'HH:mm:ss.SSSXXXXX", // ISO8601 with fractional seconds
-            "yyyy-MM-dd'T'HH:mm:ssXXXXX"      // ISO8601 without fractional seconds
+            "yyyy-MM-dd'T'HH:mm:ssXXXXX", // ISO8601 without fractional seconds
         ]
 
         let formatter = DateFormatter()

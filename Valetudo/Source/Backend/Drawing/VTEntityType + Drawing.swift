@@ -4,13 +4,13 @@
 //
 //  Created by David Klopp on 17.05.25.
 //
-import Foundation
 import CoreGraphics
+import Foundation
 
 extension VTEntityType {
-    // specify drawing order. Lower numbers are drawn on top, larger numbers on bottom.
+    /// specify drawing order. Lower numbers are drawn on top, larger numbers on bottom.
     var order: Int {
-        switch (self) {
+        switch self {
         case .virtual_wall: 0
         case .active_zone: 1
         case .no_go_area: 2
@@ -21,12 +21,12 @@ extension VTEntityType {
         case .go_to_target: 7
         case .path: 8
         case .predicted_path: 9
-        case .carpet: 10 
+        case .carpet: 10
         }
     }
-    
+
     var color: CGColor? {
-        switch (self) {
+        switch self {
         case .charger_location: .blue
         case .robot_position: .white
         case .path: nil
@@ -35,9 +35,9 @@ extension VTEntityType {
         default: .black
         }
     }
-    
+
     var borderColor: CGColor? {
-        switch (self) {
+        switch self {
         case .charger_location: .white
         case .robot_position: .lightGray
         case .path: .white
@@ -46,9 +46,9 @@ extension VTEntityType {
         default: .black
         }
     }
-    
+
     var borderWidth: CGFloat {
-        switch (self) {
+        switch self {
         case .charger_location: 1.0
         case .robot_position: 0.5
         case .path: 0.5
@@ -56,20 +56,20 @@ extension VTEntityType {
         default: 1.0
         }
     }
-    
+
     func icon(center: CGPoint) -> CGPath? {
-        switch (self) {
+        switch self {
         case .path: return nil
         case .charger_location:
             let radius = 6.0
             let iconPath = CGMutablePath()
             iconPath.addArc(center: center, radius: radius, startAngle: 0, endAngle: .pi * 2, clockwise: false)
-            
+
             let boltWidth = radius - 3
             let boltHeight = radius - 2
             let startX = center.x - boltWidth / 2
             let startY = center.y - boltHeight / 2
-            
+
             iconPath.move(to: CGPoint(x: startX + 0, y: startY + boltHeight * 0.6))
             iconPath.addLine(to: CGPoint(x: startX + boltWidth * 0.4, y: startY + boltHeight * 0.6))
             iconPath.addLine(to: CGPoint(x: startX + boltWidth * 0.2, y: startY + boltHeight))
@@ -77,12 +77,12 @@ extension VTEntityType {
             iconPath.addLine(to: CGPoint(x: startX + boltWidth * 0.6, y: startY + boltHeight * 0.4))
             iconPath.addLine(to: CGPoint(x: startX + boltWidth * 0.8, y: startY))
             iconPath.closeSubpath()
-            
+
             return iconPath
         case .robot_position:
             let radius = 5.0
             let iconPath = CGMutablePath()
-            
+
             let verticalOffset = radius * 0.25
             let innerCircleRadius = radius * 0.4
             let innerCircleFrame = CGRect(
@@ -91,22 +91,21 @@ extension VTEntityType {
                 width: innerCircleRadius * 2,
                 height: innerCircleRadius * 2
             )
-            
+
             // 1. Outer circle
             iconPath.addArc(center: center, radius: radius, startAngle: 0, endAngle: .pi * 2, clockwise: false)
-            
+
             // 2. Horizontal line (split left and right of center circle)
             iconPath.move(to: CGPoint(x: innerCircleFrame.midX - radius, y: innerCircleFrame.midY))
             iconPath.addLine(to: CGPoint(x: innerCircleFrame.minX, y: innerCircleFrame.midY))
-            
+
             iconPath.move(to: CGPoint(x: innerCircleFrame.maxX, y: innerCircleFrame.midY))
             iconPath.addLine(to: CGPoint(x: innerCircleFrame.midX + radius, y: innerCircleFrame.midY))
-            
+
             // 3. Inner center circle
             iconPath.addEllipse(in: innerCircleFrame)
-            
+
             return iconPath
-            
         case .carpet: return nil
         case .no_go_area: return nil
         case .no_mop_area: return nil

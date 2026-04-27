@@ -30,17 +30,17 @@ public enum VTEventAction<E: Sendable>: Sendable {
 
     /// The socket received and decoded endpoint data.
     case didReceiveData(E)
-    
+
     /// Returns an action with received data transformed to another payload type.
     func map<O: Sendable>(_ transform: (E) -> O) -> VTEventAction<O> {
         switch self {
-        case .didReceiveData(let e): .didReceiveData(transform(e))
+        case let .didReceiveData(e): .didReceiveData(transform(e))
         case .didConnect: .didConnect
         case .didAttemptReconnect: .didAttemptReconnect
         case .didDisconnect: .didDisconnect
         case .didCompleteWithError: .didCompleteWithError
         case .didReceiveKeepAlive: .didReceiveKeepAlive
-        case .didReceiveError(let msg): .didReceiveError(msg)
+        case let .didReceiveError(msg): .didReceiveError(msg)
         }
     }
 }

@@ -17,7 +17,7 @@ final class VTRobotsListViewController: VTCollectionViewController {
     private let mdnsClient = VTMDNSClient()
     private var dataSource: DataSource!
     private var scanTask: Task<Void, Never>?
-    
+
     /// We track the current generation of a scan for two reasons:
     /// - stale robot results should not be publishd into the new scan’s UI
     /// - prevent running the retry path and restart scanning even though a newer scan is already active
@@ -37,7 +37,8 @@ final class VTRobotsListViewController: VTCollectionViewController {
         navigationItem.subtitle = "SEARCHING_FOR_ROBOTS".localized()
     }
 
-    required init?(coder: NSCoder) {
+    @available(*, unavailable)
+    required init?(coder _: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
 
@@ -100,12 +101,12 @@ final class VTRobotsListViewController: VTCollectionViewController {
             guard let self else { return }
 
             for await robots in mdnsClient.scanForRobotsStream() {
-                guard self.scanGeneration == currentScanGeneration else { return }
+                guard scanGeneration == currentScanGeneration else { return }
                 self.robots = robots
-                self.applySnapshot(animated: true)
+                applySnapshot(animated: true)
             }
 
-            await self.retryScanningIfNeeded(scanGeneration: currentScanGeneration)
+            await retryScanningIfNeeded(scanGeneration: currentScanGeneration)
         }
     }
 
@@ -145,7 +146,7 @@ final class VTRobotsListViewController: VTCollectionViewController {
         dataSource.apply(snapshot, animatingDifferences: animated)
     }
 
-    override func updateContentUnavailableConfiguration(using state: UIContentUnavailableConfigurationState) {
+    override func updateContentUnavailableConfiguration(using _: UIContentUnavailableConfigurationState) {
         guard robots.isEmpty else {
             applyContentUnavailableConfiguration(nil)
             return
@@ -170,9 +171,9 @@ final class VTRobotsListViewController: VTCollectionViewController {
     /// Mac catalyst has a problem with setting contentUnavailableConfiguration.
     private func applyContentUnavailableConfiguration(_ configuration: UIContentUnavailableConfiguration?) {
         #if targetEnvironment(macCatalyst)
-        collectionView.backgroundView = configuration.map(UIContentUnavailableView.init(configuration:))
+            collectionView.backgroundView = configuration.map(UIContentUnavailableView.init(configuration:))
         #else
-        contentUnavailableConfiguration = configuration
+            contentUnavailableConfiguration = configuration
         #endif
     }
 

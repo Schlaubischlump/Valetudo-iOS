@@ -7,14 +7,12 @@
 import UIKit
 
 extension UICellAccessory {
-
     @MainActor
     static func plus(
         action: UIAction? = nil,
         pointSize: CGFloat = 18,
         color: UIColor = .tintColor
     ) -> UICellAccessory {
-
         let imageView = UIImageView(image: .plusCircleFill)
 
         imageView.tintColor = color

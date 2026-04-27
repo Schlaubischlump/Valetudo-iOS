@@ -8,8 +8,6 @@ import Darwin
 import Foundation
 import Network
 
-
-
 /// Scans the local network for Valetudo robots advertised through Bonjour/mDNS.
 ///
 /// This mirrors the Valetudo Companion discovery path: browse `_valetudo._tcp.`, require the
@@ -155,4 +153,3 @@ final class VTMDNSClient {
         scanContinuation?.yield(sortedRobots)
     }
 }
-

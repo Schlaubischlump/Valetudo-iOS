@@ -7,7 +7,6 @@
 import UIKit
 
 final class VTTimePickerCellContentView: UIView, UIContentView {
-
     private let label = UILabel()
     private let picker = UIDatePicker()
     private let stackView = UIStackView()
@@ -29,7 +28,10 @@ final class VTTimePickerCellContentView: UIView, UIContentView {
         apply(configuration)
     }
 
-    required init?(coder: NSCoder) { fatalError() }
+    @available(*, unavailable)
+    required init?(coder _: NSCoder) {
+        fatalError()
+    }
 
     private func setup() {
         // Label
@@ -66,7 +68,7 @@ final class VTTimePickerCellContentView: UIView, UIContentView {
             stackView.topAnchor.constraint(equalTo: topAnchor, constant: vPad),
             stackView.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -vPad),
             stackView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: hPad),
-            stackView.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -hPad)
+            stackView.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -hPad),
         ])
     }
 
@@ -87,7 +89,7 @@ final class VTTimePickerCellContentView: UIView, UIContentView {
 
     @objc private func changed() {
         let components = Calendar.current.dateComponents([.hour, .minute], from: picker.date)
-        
+
         let hours = components.hour ?? 0
         let minutes = components.minute ?? 0
 

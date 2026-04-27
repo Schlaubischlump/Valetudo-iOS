@@ -7,15 +7,15 @@
 import CoreGraphics
 
 extension CGSize {
-    static var one : CGSize {
-        return CGSize(width: 1, height: 1)
+    static var one: CGSize {
+        CGSize(width: 1, height: 1)
     }
-    
+
     func scaleBy(x: CGFloat, y: CGFloat) -> CGSize {
-        return CGSize(width: self.width * x, height: self.height * y)
+        CGSize(width: width * x, height: height * y)
     }
 
     func insetBy(dx: CGFloat, dy: CGFloat) -> CGSize {
-        return CGSize(width: self.width - dx, height: self.height - dy)
+        CGSize(width: width - dx, height: height - dy)
     }
 }

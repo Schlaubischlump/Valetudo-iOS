@@ -5,7 +5,6 @@
 //  Created by David Klopp on 17.05.25.
 //
 
-
 public enum VTLayerType: String, Decodable, Sendable {
     case floor
     case wall

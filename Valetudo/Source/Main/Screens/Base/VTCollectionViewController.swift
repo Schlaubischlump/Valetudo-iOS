@@ -7,18 +7,17 @@
 import UIKit
 
 class VTCollectionViewController: UICollectionViewController {
-    
     @objc
-    private func sceneWillEnterForeground(_ notification: Notification) {
+    private func sceneWillEnterForeground(_: Notification) {
         Task {
             guard self.viewIfLoaded?.window != nil else { return }
             await self.reconnectAndRefresh()
         }
     }
-    
+
     override func viewDidLoad() {
         super.viewDidLoad()
-        
+
         // We don't need any cleanup, since we are using target / action pattern
         NotificationCenter.default.addObserver(
             self,
@@ -27,7 +26,7 @@ class VTCollectionViewController: UICollectionViewController {
             object: nil
         )
     }
-    
+
     @MainActor
     func reconnectAndRefresh() async {
         // Override me

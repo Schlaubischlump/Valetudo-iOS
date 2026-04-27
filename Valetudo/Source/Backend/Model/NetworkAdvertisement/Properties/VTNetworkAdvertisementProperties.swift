@@ -1,5 +1,5 @@
 //
-//  Untitled.swift
+//  VTNetworkAdvertisementProperties.swift
 //  Valetudo
 //
 //  Created by David Klopp on 25.04.26.

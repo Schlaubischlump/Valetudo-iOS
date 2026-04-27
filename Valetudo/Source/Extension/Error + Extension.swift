@@ -5,8 +5,8 @@ enum CollectedErrors: Error, CustomStringConvertible {
 
     var description: String {
         switch self {
-        case .multiple(let errors):
-            return errors.map { "\($0)" }.joined(separator: "\n")
+        case let .multiple(errors):
+            errors.map { "\($0)" }.joined(separator: "\n")
         }
     }
 }
@@ -31,14 +31,13 @@ func collecting<T>(_ block: (_ run: (_ f: () throws -> Void) -> Void) throws -> 
     return result
 }
 
-fileprivate actor ErrorCollector {
+private actor ErrorCollector {
     private(set) var errors: [Error] = []
 
     func append(_ error: Error) {
         errors.append(error)
     }
 }
-
 
 func collecting<T: Sendable>(
     _ block: @MainActor (_ run: (_ f: @MainActor () async throws -> Void) async -> Void) async throws -> T
@@ -73,25 +72,23 @@ func retry<T>(
     operation: @Sendable @escaping () async throws -> T
 ) async throws -> T {
     precondition(maxRetries > 0, "maxRetries must be at least 1")
-    
+
     var lastError: Error?
-    
-    for attempt in 1...maxRetries {
+
+    for attempt in 1 ... maxRetries {
         do {
             return try await operation()
         } catch {
             lastError = error
-            
+
             // If not the last attempt, wait before retrying
-            if attempt < maxRetries, let delay = delay {
+            if attempt < maxRetries, let delay {
                 try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
             } else if attempt == maxRetries {
                 throw error
             }
         }
     }
-    
+
     throw lastError!
 }
-
-

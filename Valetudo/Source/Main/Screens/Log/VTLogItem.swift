@@ -7,8 +7,7 @@
 import Foundation
 import UIKit
 
-
-enum VTLogItem: Sendable, Hashable {
+enum VTLogItem: Hashable {
     case updateLogLevel(presets: [String])
     case logLine(date: Date, level: String, message: String)
 }

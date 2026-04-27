@@ -8,6 +8,6 @@ import Foundation
 import UIKit
 
 struct VTStackedProgressBarSegment: Hashable {
-    let value: CGFloat   // 0...1 relative size inside its bar
+    let value: CGFloat // 0...1 relative size inside its bar
     let color: UIColor
 }

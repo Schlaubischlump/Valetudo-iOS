@@ -6,12 +6,12 @@
 //
 import Foundation
 
-enum VTUpdaterActionType: String, Encodable, Sendable {
+enum VTUpdaterActionType: String, Encodable {
     case check
     case download
     case apply
 }
 
-struct VTUpdaterAction: Encodable, Sendable {
+struct VTUpdaterAction: Encodable {
     let action: VTUpdaterActionType
 }

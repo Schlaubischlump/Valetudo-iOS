@@ -7,7 +7,6 @@
 import UIKit
 
 final class VTNavigationTitleView: UIView {
-
     private let imageView: UIImageView = {
         let iv = UIImageView()
         iv.contentMode = .scaleAspectFit
@@ -50,10 +49,11 @@ final class VTNavigationTitleView: UIView {
     }()
 
     // MARK: - Init
+
     init(image: UIImage?, title: String?, subtitle: String?) {
         super.init(frame: .zero)
         setupViews()
-        
+
         imageView.image = image
         titleLabel.text = title
         subtitleLabel.text = subtitle
@@ -61,8 +61,9 @@ final class VTNavigationTitleView: UIView {
         // Hide subtitle if nil
         subtitleLabel.isHidden = (subtitle == nil)
     }
-    
-    required init?(coder: NSCoder) {
+
+    @available(*, unavailable)
+    required init?(coder _: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
 
@@ -84,7 +85,7 @@ final class VTNavigationTitleView: UIView {
             mainStack.bottomAnchor.constraint(equalTo: bottomAnchor),
 
             imageView.widthAnchor.constraint(equalToConstant: 24),
-            imageView.heightAnchor.constraint(equalToConstant: 24)
+            imageView.heightAnchor.constraint(equalToConstant: 24),
         ])
     }
 }

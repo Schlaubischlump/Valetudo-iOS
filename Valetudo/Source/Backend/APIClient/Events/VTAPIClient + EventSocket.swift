@@ -7,23 +7,22 @@
 import Foundation
 
 public extension VTAPIClient {
-    
     private func sseSocket<E: Decodable, O: Sendable>(
         forEndpoint endpoint: VTEventEndpoint<E, O>,
-        createIfNeeded: Bool) -> VTSSESocket<E, O>?
-    {
+        createIfNeeded: Bool
+    ) -> VTSSESocket<E, O>? {
         eventSocket(VTSSESocket<E, O>.self, forEndpoint: endpoint, createIfNeeded: createIfNeeded)
     }
-    
+
     private func pollSocket<E: Decodable, O>(
         forEndpoint endpoint: VTEventEndpoint<E, O>,
-        createIfNeeded: Bool) -> VTPollSocket<E, O>?
-    {
+        createIfNeeded: Bool
+    ) -> VTPollSocket<E, O>? {
         eventSocket(VTPollSocket<E, O>.self, forEndpoint: endpoint, createIfNeeded: createIfNeeded)
     }
-    
+
     private func eventSocket<S: VTEventSocketProtocol>(
-        _ ty: S.Type,
+        _: S.Type,
         forEndpoint endpoint: VTEventEndpoint<S.E, S.O>,
         createIfNeeded: Bool
     ) -> S? {
@@ -41,20 +40,20 @@ public extension VTAPIClient {
 
         return typed
     }
-    
-    private func eventURL<E: Decodable, O>(forEndpoint endpoint: VTEventEndpoint<E, O>) -> URL {
-        let url = switch (endpoint.eventID) {
-        case .map:                                      self.stateURL.appendingPathComponent("map")
-        case .stateAttributes:                          self.stateURL.appendingPathComponent("attributes")
-        case .valetudoEvent where !endpoint.useSSE:     self.eventsURL
-        case .valetudoEvent:                            fatalError("ValetudoEvent does not support SSE")
+
+    private func eventURL(forEndpoint endpoint: VTEventEndpoint<some Decodable, some Any>) -> URL {
+        let url = switch endpoint.eventID {
+        case .map: stateURL.appendingPathComponent("map")
+        case .stateAttributes: stateURL.appendingPathComponent("attributes")
+        case .valetudoEvent where !endpoint.useSSE: eventsURL
+        case .valetudoEvent: fatalError("ValetudoEvent does not support SSE")
         }
-        
+
         return endpoint.useSSE ? url.appendingPathComponent("sse") : url
     }
-    
+
     // MARK: - 1.1.3 SSE
-    
+
     /// Registers a listener for an event endpoint.
     ///
     /// Sockets are shared per `endpoint.eventID`: multiple listeners for the same endpoint reuse the same `VTSSESocket` or `VTPollSocket`.
@@ -62,9 +61,10 @@ public extension VTAPIClient {
     ///
     @discardableResult
     func registerEventObserver<E: Decodable & Equatable & Sendable, O>(for endpoint: VTEventEndpoint<E, O>) async
-    -> (VTListenerToken, AsyncStream<VTEventAction<O>>) {
+        -> (VTListenerToken, AsyncStream<VTEventAction<O>>)
+    {
         var token: VTListenerToken!
-        var asyncStream : AsyncStream<VTEventAction<E>>!
+        var asyncStream: AsyncStream<VTEventAction<E>>!
         if endpoint.useSSE {
             let socket = sseSocket(forEndpoint: endpoint, createIfNeeded: true)
             (token, asyncStream) = await socket!.register()
@@ -72,11 +72,11 @@ public extension VTAPIClient {
             let socket = pollSocket(forEndpoint: endpoint, createIfNeeded: true)
             (token, asyncStream) = await socket!.register()
         }
-            
+
         return (token, asyncStream.mapStream { action in action.map { endpoint.transform($0) } })
     }
 
-    func removeEventObserver<E: Decodable & Equatable & Sendable, O>(token: VTListenerToken, for endpoint: VTEventEndpoint<E, O>) async {
+    func removeEventObserver(token: VTListenerToken, for endpoint: VTEventEndpoint<some Decodable & Equatable & Sendable, some Any>) async {
         let socket: (any VTEventSocketProtocol)? = if endpoint.useSSE {
             sseSocket(forEndpoint: endpoint, createIfNeeded: false)
         } else {

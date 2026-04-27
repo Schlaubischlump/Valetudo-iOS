@@ -9,8 +9,8 @@ import UIKit
 final class VTStackedControlRow<T: VTControlItem>: VTControlRow<UIStackView> {
     var items: [T] = [] {
         didSet {
-            content.arrangedSubviews.forEach({$0.removeFromSuperview()})
-            items.forEach({content.addArrangedSubview($0)})
+            content.arrangedSubviews.forEach { $0.removeFromSuperview() }
+            items.forEach { content.addArrangedSubview($0) }
         }
     }
 
@@ -18,15 +18,16 @@ final class VTStackedControlRow<T: VTControlItem>: VTControlRow<UIStackView> {
         get { content.axis }
         set { content.axis = newValue }
     }
-    
+
     init(title: String, titleIcon: UIImage?) {
         super.init(title: title, titleIcon: titleIcon, content: UIStackView())
     }
-    
-    required init?(coder: NSCoder) {
+
+    @available(*, unavailable)
+    required init?(coder _: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-    
+
     override func setup() {
         super.setup()
         // Horizontal stack for buttons
@@ -39,7 +40,7 @@ final class VTStackedControlRow<T: VTControlItem>: VTControlRow<UIStackView> {
 
 extension VTStackedControlRow where T == VTControlButton {
     var isEnabled: Bool {
-        get { self.items.allSatisfy(\.isEnabled) }
-        set { self.items.forEach({ $0.isEnabled = newValue }) }
+        get { items.allSatisfy(\.isEnabled) }
+        set { items.forEach { $0.isEnabled = newValue } }
     }
 }

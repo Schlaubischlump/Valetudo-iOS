@@ -4,12 +4,12 @@
 //
 //  Created by David Klopp on 18.04.26.
 //
-import Foundation
 import CoreGraphics
+import Foundation
 
-final class VTPatternFactory {
-    
+enum VTPatternFactory {
     // MARK: - Helper
+
     private static func getBounds(from pts: [CGPoint]) -> (minX: Int, maxX: Int, minY: Int, maxY: Int)? {
         guard !pts.isEmpty else { return nil }
         return (
@@ -21,15 +21,16 @@ final class VTPatternFactory {
     }
 
     // MARK: - Carpet (aka. Grid)
+
     static func makeCarpetPattern(withPoints pts: [CGPoint], lineWidth: CGFloat) -> CGPath {
         let path = CGMutablePath()
 
         guard let bounds = getBounds(from: pts) else { return path }
         let spacing = Int(0.5 + lineWidth)
-        
+
         let padX = (bounds.maxX - bounds.minX) % spacing
         let padY = (bounds.maxY - bounds.minY) % spacing
-        
+
         for x in stride(from: bounds.minX, through: bounds.maxX + padX, by: spacing) {
             path.move(to: CGPoint(x: x, y: bounds.minY))
             path.addLine(to: CGPoint(x: x, y: bounds.maxY + padY))
@@ -44,11 +45,12 @@ final class VTPatternFactory {
     }
 
     // MARK: - Tile
+
     static func makeTilePattern(withPoints pts: [CGPoint], tileSize: Int = 6) -> CGPath {
         let path = CGMutablePath()
 
         guard let bounds = getBounds(from: pts) else { return path }
-        
+
         let startX = ((bounds.minX / tileSize) - 1) * tileSize
         for x in stride(from: startX, to: bounds.maxX + tileSize * 2, by: tileSize) {
             path.move(to: CGPoint(x: x, y: bounds.minY))
@@ -65,15 +67,15 @@ final class VTPatternFactory {
     }
 
     // MARK: - Wood (Horizontal / Vertical)
-    
+
     static func makeVerticalWoodPattern(withPoints pts: [CGPoint], plankWidth: Int = 5, plankLength: Int = 24) -> CGPath {
         let path = CGMutablePath()
 
         guard let bounds = getBounds(from: pts) else { return path }
         let jointOffset = plankLength / 2
-        
+
         let startX = ((bounds.minX / plankWidth) - 1) * plankWidth
-        
+
         for x in stride(from: startX, to: bounds.maxX + plankWidth, by: plankWidth) {
             // Main vertical plank line
             path.move(to: CGPoint(x: x, y: bounds.minY))
@@ -84,10 +86,10 @@ final class VTPatternFactory {
             let currentJointPos = isEvenStrip ? 0 : jointOffset
 
             let startY = ((bounds.minY / plankLength) - 1) * plankLength + currentJointPos
-            
+
             // Horizontal joint lines
             for y in stride(from: startY, to: bounds.maxY + plankLength, by: plankLength) {
-                if y >= bounds.minY && y <= bounds.maxY {
+                if y >= bounds.minY, y <= bounds.maxY {
                     path.move(to: CGPoint(x: x, y: y))
                     path.addLine(to: CGPoint(x: x + plankWidth, y: y))
                 }
@@ -95,7 +97,7 @@ final class VTPatternFactory {
         }
         return path
     }
-    
+
     static func makeHorizontalWoodPattern(withPoints pts: [CGPoint], plankWidth: Int = 5, plankLength: Int = 24) -> CGPath {
         let path = CGMutablePath()
 
@@ -103,7 +105,7 @@ final class VTPatternFactory {
         let jointOffset = plankLength / 2
 
         let startY = ((bounds.minY / plankWidth) - 1) * plankWidth
-        
+
         for y in stride(from: startY, to: bounds.maxY + plankWidth, by: plankWidth) {
             // Main horizontal plank line
             path.move(to: CGPoint(x: bounds.minX, y: y))
@@ -115,10 +117,10 @@ final class VTPatternFactory {
             let currentJointPos = isEvenStrip ? 0 : jointOffset
 
             let startX = ((bounds.minX / plankLength) - 1) * plankLength + currentJointPos
-            
+
             // Vertical joint lines
             for x in stride(from: startX, to: bounds.maxX + plankLength, by: plankLength) {
-                if x >= bounds.minX && x <= bounds.maxX {
+                if x >= bounds.minX, x <= bounds.maxX {
                     path.move(to: CGPoint(x: x, y: y))
                     path.addLine(to: CGPoint(x: x, y: y + plankWidth))
                 }
@@ -128,6 +130,7 @@ final class VTPatternFactory {
     }
 
     // MARK: - Chevron
+
     static func makeChevronPattern(withPoints pts: [CGPoint], plankWidth: Int = 4, sectionWidth: Int = 8) -> CGPath {
         let path = CGMutablePath()
 
@@ -139,7 +142,7 @@ final class VTPatternFactory {
         for colX in stride(from: startColX, to: bounds.maxX + sectionWidth, by: sectionWidth) {
             let stripIndex = Int(floor(Double(colX) / Double(sectionWidth)))
             let isZig = stripIndex % 2 == 0
-            
+
             let colMinX = colX
             let colMaxX = colX + sectionWidth
 
@@ -147,7 +150,7 @@ final class VTPatternFactory {
                 // Math equivalent: (x + y) % plankWidth == 0
                 let minK = ((colMinX + bounds.minY) / plankWidth) - 1
                 let maxK = ((colMaxX + bounds.maxY) / plankWidth) + 1
-                for k in minK...maxK {
+                for k in minK ... maxK {
                     let c = k * plankWidth
                     path.move(to: CGPoint(x: colMinX, y: c - colMinX))
                     path.addLine(to: CGPoint(x: colMaxX, y: c - colMaxX))
@@ -156,7 +159,7 @@ final class VTPatternFactory {
                 // Math equivalent: (x - y) % plankWidth == 0
                 let minK = ((colMinX - bounds.maxY) / plankWidth) - 1
                 let maxK = ((colMaxX - bounds.minY) / plankWidth) + 1
-                for k in minK...maxK {
+                for k in minK ... maxK {
                     let c = k * plankWidth
                     path.move(to: CGPoint(x: colMinX, y: colMinX - c))
                     path.addLine(to: CGPoint(x: colMaxX, y: colMaxX - c))
@@ -167,6 +170,7 @@ final class VTPatternFactory {
     }
 
     // MARK: - Parquet
+
     static func makeParquetPattern(withPoints pts: [CGPoint], blockSize: Int = 8, plankGap: Int = 2) -> CGPath {
         let path = CGMutablePath()
 
@@ -191,8 +195,8 @@ final class VTPatternFactory {
         let startGridY = (bounds.minY / blockSize) - 1
         let endGridY = (bounds.maxY / blockSize) + 1
 
-        for gX in startGridX...endGridX {
-            for gY in startGridY...endGridY {
+        for gX in startGridX ... endGridX {
+            for gY in startGridY ... endGridY {
                 let isVerticalBlock = (gX + gY) % 2 == 0
                 let blockMinX = gX * blockSize
                 let blockMaxX = (gX + 1) * blockSize

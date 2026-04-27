@@ -13,7 +13,7 @@ struct VTRobotCellContentConfiguration: UIContentConfiguration, Hashable {
         VTRobotCellContentView(configuration: self)
     }
 
-    func updated(for state: UIConfigurationState) -> VTRobotCellContentConfiguration {
+    func updated(for _: UIConfigurationState) -> VTRobotCellContentConfiguration {
         self
     }
 }

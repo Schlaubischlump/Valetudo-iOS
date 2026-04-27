@@ -20,11 +20,11 @@ extension Sequence {
 
         return (a, b)
     }
-    
+
     func swapped<A, B>() -> [(B, A)] where Element == (A, B) {
         map { ($0.1, $0.0) }
     }
-    
+
     func reverseEnumerated() -> [(Element, Int)] {
         enumerated().map { ($0.element, $0.offset) }
     }

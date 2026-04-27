@@ -6,9 +6,9 @@
 //
 import UIKit
 
-// ProgressView is not working on macOS catalyst.
-// In particular, you can not change its color.
-// Therefore we implement this custom class.
+/// ProgressView is not working on macOS catalyst.
+/// In particular, you can not change its color.
+/// Therefore we implement this custom class.
 class VTProgressView: UIView {
     /// Progress value between 0.0 and 1.0
     var progress: CGFloat = 0 {
@@ -59,7 +59,7 @@ class VTProgressView: UIView {
             backgroundView.leadingAnchor.constraint(equalTo: leadingAnchor),
             backgroundView.trailingAnchor.constraint(equalTo: trailingAnchor),
             backgroundView.topAnchor.constraint(equalTo: topAnchor),
-            backgroundView.bottomAnchor.constraint(equalTo: bottomAnchor)
+            backgroundView.bottomAnchor.constraint(equalTo: bottomAnchor),
         ])
     }
 

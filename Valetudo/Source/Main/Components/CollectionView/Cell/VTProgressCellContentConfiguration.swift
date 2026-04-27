@@ -10,12 +10,12 @@ struct VTProgressCellContentConfiguration: UIContentConfiguration, Hashable {
     let id: String
     let message: String
     var progress: Double
-    
+
     func makeContentView() -> UIView & UIContentView {
         VTProgressCellView(configuration: self)
     }
 
-    func updated(for state: UIConfigurationState) -> VTProgressCellContentConfiguration {
+    func updated(for _: UIConfigurationState) -> VTProgressCellContentConfiguration {
         self
     }
 }

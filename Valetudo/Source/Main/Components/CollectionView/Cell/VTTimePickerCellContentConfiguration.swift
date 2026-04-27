@@ -17,12 +17,14 @@ struct VTTimePickerCellContentConfiguration: UIContentConfiguration, Hashable {
         VTTimePickerCellContentView(configuration: self)
     }
 
-    func updated(for state: UIConfigurationState) -> Self { self }
+    func updated(for _: UIConfigurationState) -> Self {
+        self
+    }
 
     static func == (lhs: Self, rhs: Self) -> Bool {
         lhs.id == rhs.id &&
-        lhs.hours == rhs.hours &&
-        lhs.minutes == rhs.minutes
+            lhs.hours == rhs.hours &&
+            lhs.minutes == rhs.minutes
     }
 
     func hash(into hasher: inout Hasher) {

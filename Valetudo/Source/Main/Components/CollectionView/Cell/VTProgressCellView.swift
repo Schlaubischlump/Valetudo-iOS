@@ -34,7 +34,8 @@ final class VTProgressCellView: UIView, UIContentView {
         apply(configuration: configuration)
     }
 
-    required init?(coder: NSCoder) {
+    @available(*, unavailable)
+    required init?(coder _: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
 
@@ -52,10 +53,10 @@ final class VTProgressCellView: UIView, UIContentView {
             stack.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -16),
             stack.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 16),
             stack.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -16),
-            
+
             progressView.leadingAnchor.constraint(equalTo: stack.leadingAnchor),
             progressView.trailingAnchor.constraint(equalTo: stack.trailingAnchor),
-            progressView.heightAnchor.constraint(equalToConstant: 8)
+            progressView.heightAnchor.constraint(equalToConstant: 8),
         ])
     }
 

@@ -14,7 +14,7 @@ public struct VTMapData: Decodable, Sendable {
     public let metaData: VTMetaData
 
     var segmentLayer: [VTLayer] {
-        get { layers.filter { $0.type == .segment } }
+        layers.filter { $0.type == .segment }
     }
 }
 

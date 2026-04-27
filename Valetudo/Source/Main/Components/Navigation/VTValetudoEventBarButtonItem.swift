@@ -11,32 +11,33 @@ class VTValetudoEventBarButtonItem: UIBarButtonItem {
     private let client: any VTAPIClientProtocol
     private var observerToken: VTListenerToken?
     private weak var parentViewController: UIViewController?
-    
+
     init(client: any VTAPIClientProtocol, parentViewController: UIViewController) {
         self.client = client
         self.parentViewController = parentViewController
         super.init()
-        self.image = .bellFill
-        self.target = self
-        self.action = #selector(showEventsPopup(_:))
+        image = .bellFill
+        target = self
+        action = #selector(showEventsPopup(_:))
         Task { await startEventObservation() }
     }
-    
-    required init?(coder: NSCoder) {
+
+    @available(*, unavailable)
+    required init?(coder _: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-    
+
     deinit {
         if let observerToken {
             let client = self.client
             Task { await client.removeEventObserver(token: observerToken, for: .valetudoEvent) }
         }
     }
-    
+
     @objc func showEventsPopup(_ sender: UIBarButtonItem) {
         let vc = VTValetudoEventsViewController(client: client)
         vc.title = "EVENTS".localized()
-        
+
         let nav = UINavigationController(rootViewController: vc)
         nav.modalPresentationStyle = .popover
 
@@ -44,11 +45,11 @@ class VTValetudoEventBarButtonItem: UIBarButtonItem {
         popover.barButtonItem = sender
         popover.permittedArrowDirections = .any
         popover.delegate = vc
-    
+
         let topViewController = parentViewController?.presentedViewController ?? parentViewController
         topViewController?.present(nav, animated: true)
     }
-    
+
     @MainActor
     private func startEventObservation() async {
         do {
@@ -58,24 +59,24 @@ class VTValetudoEventBarButtonItem: UIBarButtonItem {
             updateBadge(eventCount: 0)
             log(message: error.localizedDescription, forSubsystem: .valetudoEvent, level: .error)
         }
-        
+
         let (token, stream) = await client.registerEventObserver(for: .valetudoEvent)
         observerToken = token
-        
+
         for await event in stream {
             guard !Task.isCancelled else { break }
-            
+
             switch event {
-            case .didReceiveData(let events):
+            case let .didReceiveData(events):
                 updateBadge(eventCount: events.count)
-            case .didReceiveError(let message):
+            case let .didReceiveError(message):
                 log(message: message, forSubsystem: .valetudoEvent, level: .error)
             default:
                 break
             }
         }
     }
-    
+
     private func updateBadge(eventCount: Int) {
         badge = eventCount > 0 ? .count(eventCount) : nil
     }

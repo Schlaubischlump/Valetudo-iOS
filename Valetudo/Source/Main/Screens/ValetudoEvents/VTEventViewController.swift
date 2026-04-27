@@ -10,18 +10,19 @@ final class VTValetudoEventsViewController: VTCollectionViewController {
     private var dataSource: UICollectionViewDiffableDataSource<Int, VTValetudoEventItem>!
 
     private let refreshControl = UIRefreshControl()
-    
+
     private var client: any VTAPIClientProtocol
     private var events: [any VTValetudoEvent] = []
     private var eventObservationTask: Task<Void, Never>?
     private var observerToken: VTListenerToken?
-    
+
     init(client: any VTAPIClientProtocol) {
         self.client = client
         super.init(collectionViewLayout: UICollectionViewLayout())
     }
 
-    required init?(coder: NSCoder) {
+    @available(*, unavailable)
+    required init?(coder _: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
 
@@ -41,10 +42,10 @@ final class VTValetudoEventsViewController: VTCollectionViewController {
         configureCollectionView()
         configureDataSource()
     }
-    
+
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        
+
         startEventObservation()
     }
 
@@ -53,14 +54,14 @@ final class VTValetudoEventsViewController: VTCollectionViewController {
 
         stopEventObservation()
     }
-    
+
     override func reconnectAndRefresh() async {
         stopEventObservation()
         startEventObservation()
     }
-    
+
     // MARK: - Setup
-    
+
     private func configureCollectionView() {
         var config = UICollectionLayoutListConfiguration(appearance: .plain)
         config.trailingSwipeActionsConfigurationProvider = { [weak self] indexPath in
@@ -89,19 +90,18 @@ final class VTValetudoEventsViewController: VTCollectionViewController {
 
         view.addSubview(collectionView)
     }
-    
+
     private func configureDataSource() {
         let cellRegistration = UICollectionView.CellRegistration<UICollectionViewListCell, VTValetudoEventItem> { cell, _, item in
-            
             var content = cell.defaultContentConfiguration()
-            
+
             let formatter = DateFormatter()
             formatter.dateStyle = .short
             formatter.timeStyle = .short
 
             content.text = item.title
             content.secondaryText = formatter.string(from: item.timestamp)
-            
+
             if item.processed {
                 content.text = nil
                 content.textProperties.color = .label
@@ -109,7 +109,7 @@ final class VTValetudoEventsViewController: VTCollectionViewController {
                     string: item.title,
                     attributes: [
                         .strikethroughStyle: NSUnderlineStyle.single.rawValue,
-                        .foregroundColor: UIColor.label
+                        .foregroundColor: UIColor.label,
                     ]
                 )
                 content.attributedText = attributedTitle
@@ -132,11 +132,11 @@ final class VTValetudoEventsViewController: VTCollectionViewController {
             )
         }
     }
-    
+
     // MARK: - Selection
-    
-    override func collectionView(_ collectionView: UICollectionView, shouldHighlightItemAt indexPath: IndexPath) -> Bool {
-        return false
+
+    override func collectionView(_: UICollectionView, shouldHighlightItemAt _: IndexPath) -> Bool {
+        false
     }
 
     // MARK: - Event Observation
@@ -156,9 +156,9 @@ final class VTValetudoEventsViewController: VTCollectionViewController {
                 guard !Task.isCancelled else { break }
 
                 switch event {
-                case .didReceiveData(let events):
+                case let .didReceiveData(events):
                     await updateEvents(events, animated: true)
-                case .didReceiveError(let message):
+                case let .didReceiveError(message):
                     log(message: message, forSubsystem: .valetudoEvent, level: .error)
                 default:
                     break
@@ -172,7 +172,7 @@ final class VTValetudoEventsViewController: VTCollectionViewController {
         eventObservationTask = nil
 
         if let observerToken {
-            let client = self.client
+            let client = client
             Task { await client.removeEventObserver(token: observerToken, for: .valetudoEvent) }
             self.observerToken = nil
         }
@@ -185,11 +185,11 @@ final class VTValetudoEventsViewController: VTCollectionViewController {
     }
 
     // MARK: - Reload
-    
+
     @objc private func didPullToRefresh() {
         Task { await self.reloadData(animated: true) }
     }
-    
+
     @MainActor func reloadData(animated: Bool) async {
         do {
             events = try await client.getValetudoEvents()
@@ -199,7 +199,7 @@ final class VTValetudoEventsViewController: VTCollectionViewController {
         }
         await applySnapshot(animated: animated)
     }
-    
+
     private func applySnapshot(animated: Bool) async {
         var snapshot = NSDiffableDataSourceSnapshot<Int, VTValetudoEventItem>()
         snapshot.appendSections([0])
@@ -209,10 +209,10 @@ final class VTValetudoEventsViewController: VTCollectionViewController {
         updateChromeVisibility(animated: animated)
         setNeedsUpdateContentUnavailableConfiguration()
 
-        if self.refreshControl.isRefreshing {
-            self.refreshControl.endRefreshing()
+        if refreshControl.isRefreshing {
+            refreshControl.endRefreshing()
         }
-        
+
         await dataSource.apply(snapshot, animatingDifferences: animated)
     }
 
@@ -221,7 +221,7 @@ final class VTValetudoEventsViewController: VTCollectionViewController {
         view.setNeedsLayout()
     }
 
-    override func updateContentUnavailableConfiguration(using state: UIContentUnavailableConfigurationState) {
+    override func updateContentUnavailableConfiguration(using _: UIContentUnavailableConfigurationState) {
         guard events.isEmpty else {
             contentUnavailableConfiguration = nil
             return
@@ -233,9 +233,9 @@ final class VTValetudoEventsViewController: VTCollectionViewController {
         config.imageProperties.preferredSymbolConfiguration = .init(pointSize: 36, weight: .regular)
         contentUnavailableConfiguration = config
     }
-    
+
     // MARK: - Self sizing
-    
+
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
 
@@ -251,7 +251,7 @@ final class VTValetudoEventsViewController: VTCollectionViewController {
 }
 
 extension VTValetudoEventsViewController: UIPopoverPresentationControllerDelegate {
-    func adaptivePresentationStyle(for controller: UIPresentationController) -> UIModalPresentationStyle {
+    func adaptivePresentationStyle(for _: UIPresentationController) -> UIModalPresentationStyle {
         .none
     }
 }

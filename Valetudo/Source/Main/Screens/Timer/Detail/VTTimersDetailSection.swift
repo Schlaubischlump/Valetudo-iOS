@@ -8,13 +8,13 @@ import Foundation
 
 enum VTTimersDetailSection: RawRepresentable, Hashable {
     typealias RawValue = Int
-    
+
     case general
     case schedule
     case preActions
     case group(id: Int)
     case action
-    
+
     init?(rawValue: Int) {
         self = switch rawValue {
         case -1: .general
@@ -24,24 +24,24 @@ enum VTTimersDetailSection: RawRepresentable, Hashable {
         default: .group(id: rawValue)
         }
     }
-    
+
     var rawValue: Int {
         switch self {
-        case .general:    -1
-        case .schedule:   -2
+        case .general: -1
+        case .schedule: -2
         case .preActions: -3
-        case .action:     -4
+        case .action: -4
         case let .group(id): id
         }
     }
-    
+
     var title: String? {
         switch self {
-        case .general:    "GENERAL".localized()
-        case .schedule:   "SCHEDULE".localized()
+        case .general: "GENERAL".localized()
+        case .schedule: "SCHEDULE".localized()
         case .preActions: "PRE_ACTIONS".localized()
-        case .action:     "ACTION".localized()
-        case .group:      ""
+        case .action: "ACTION".localized()
+        case .group: ""
         }
     }
 }

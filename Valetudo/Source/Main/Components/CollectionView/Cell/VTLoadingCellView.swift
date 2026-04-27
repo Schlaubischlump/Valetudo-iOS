@@ -27,7 +27,8 @@ final class VTLoadingCellView: UIView, UIContentView {
         apply(configuration: configuration)
     }
 
-    required init?(coder: NSCoder) {
+    @available(*, unavailable)
+    required init?(coder _: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
 
@@ -44,7 +45,7 @@ final class VTLoadingCellView: UIView, UIContentView {
             stack.topAnchor.constraint(equalTo: topAnchor, constant: 16),
             stack.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -16),
             stack.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 16),
-            stack.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -16)
+            stack.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -16),
         ])
     }
 

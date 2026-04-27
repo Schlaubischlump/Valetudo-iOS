@@ -114,12 +114,12 @@ class VTZoomableScrollView: UIScrollView, UIScrollViewDelegate {
     }
 
     /// Returns the managed content view for pinch zooming.
-    func viewForZooming(in scrollView: UIScrollView) -> UIView? {
+    func viewForZooming(in _: UIScrollView) -> UIView? {
         zoomableView
     }
 
     /// Recenters the content after UIKit updates the zoomed frame.
-    func scrollViewDidZoom(_ scrollView: UIScrollView) {
+    func scrollViewDidZoom(_: UIScrollView) {
         centerZoomableView()
     }
 }

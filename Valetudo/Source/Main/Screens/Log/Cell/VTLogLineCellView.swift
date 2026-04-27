@@ -7,7 +7,6 @@
 import UIKit
 
 final class VTLogLineCellView: UIView, UIContentView {
-
     private var currentConfiguration: VTLogLineCellContentConfiguration!
 
     var configuration: UIContentConfiguration {
@@ -37,10 +36,11 @@ final class VTLogLineCellView: UIView, UIContentView {
         setupContextMenu()
     }
 
-    required init?(coder: NSCoder) {
+    @available(*, unavailable)
+    required init?(coder _: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-    
+
     private func setupContextMenu() {
         let interaction = UIContextMenuInteraction(delegate: self)
         addInteraction(interaction)
@@ -82,7 +82,7 @@ final class VTLogLineCellView: UIView, UIContentView {
             vStack.topAnchor.constraint(equalTo: topAnchor, constant: 8),
             vStack.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 12),
             vStack.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -12),
-            vStack.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -8)
+            vStack.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -8),
         ])
 
         layer.cornerRadius = 8
@@ -98,8 +98,8 @@ final class VTLogLineCellView: UIView, UIContentView {
 
         levelLabel.textColor = switch configuration.level.lowercased() {
         case "error": .systemRed
-        case "warn":  .systemYellow
-        case "info":  .systemGreen
+        case "warn": .systemYellow
+        case "info": .systemGreen
         case "debug": .systemTeal
         case "trace": .systemIndigo
         default: .secondaryLabel
@@ -108,13 +108,12 @@ final class VTLogLineCellView: UIView, UIContentView {
 }
 
 extension VTLogLineCellView: UIContextMenuInteractionDelegate {
-
     func contextMenuInteraction(
-        _ interaction: UIContextMenuInteraction,
-        configurationForMenuAtLocation location: CGPoint
+        _: UIContextMenuInteraction,
+        configurationForMenuAtLocation _: CGPoint
     ) -> UIContextMenuConfiguration? {
         let text = "[\(timestampLabel.text ?? "")] [\(levelLabel.text ?? "")] \(messageLabel.text ?? "")]"
-        
+
         return UIContextMenuConfiguration(identifier: nil, previewProvider: nil) { _ in
             let title = "COPY".localized()
             let copyAction = UIAction(title: title, image: .docOnDoc) { _ in

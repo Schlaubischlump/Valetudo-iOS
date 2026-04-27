@@ -1,15 +1,14 @@
 //
-//  VTMainViewController.swift
+//  VTTimersViewController.swift
 //  Valetudo
 //
 //  Created by David Klopp on 18.03.25.
-//  
+//
 //
 
 import UIKit
 
 final class VTTimersViewController: VTCollectionViewController {
-
     typealias DataSource = UICollectionViewDiffableDataSource<VTTimersSection, VTTimersItem>
     typealias Snapshot = NSDiffableDataSourceSnapshot<VTTimersSection, VTTimersItem>
 
@@ -24,14 +23,15 @@ final class VTTimersViewController: VTCollectionViewController {
 
     init(client: VTAPIClientProtocol) {
         self.client = client
-        
+
         super.init(collectionViewLayout: UICollectionViewLayout())
         setupAndApplyListLayout()
-        
+
         title = "TIMER".localized()
     }
 
-    @MainActor required init?(coder: NSCoder) {
+    @available(*, unavailable)
+    @MainActor required init?(coder _: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
 
@@ -39,7 +39,7 @@ final class VTTimersViewController: VTCollectionViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        
+
         navigationItem.rightBarButtonItems = [
             VTValetudoEventBarButtonItem(client: client, parentViewController: self),
             UIBarButtonItem(
@@ -48,19 +48,19 @@ final class VTTimersViewController: VTCollectionViewController {
                 action: #selector(didTapAdd)
             ),
         ]
-        
+
         configureCollectionView()
         configureDataSource()
     }
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        
+
         Task {
             await reloadData(animated: false)
         }
     }
-    
+
     // MARK: - Layout
 
     private func setupAndApplyListLayout() {
@@ -69,23 +69,23 @@ final class VTTimersViewController: VTCollectionViewController {
         listConfig.headerMode = .supplementary
         listConfig.trailingSwipeActionsConfigurationProvider = { [weak self] indexPath in
             guard let item = self?.dataSource.itemIdentifier(for: indexPath),
-                  case .timer(let timer) = item else { return nil }
-            
+                  case let .timer(timer) = item else { return nil }
+
             let delete = UIContextualAction(style: .destructive, title: "DELETE".localized()) { [weak self] _, _, completion in
                 Task {
                     await self?.deleteTimer(timer)
                     completion(true)
                 }
             }
-            
+
             delete.image = .trash
-            
+
             return UISwipeActionsConfiguration(actions: [delete])
         }
         let layout = UICollectionViewCompositionalLayout.list(using: listConfig)
         collectionView.setCollectionViewLayout(layout, animated: false)
     }
-    
+
     private func configureCollectionView() {
         configureRefreshControlIfSupported(refreshControl, action: #selector(didPullToRefresh))
 
@@ -97,21 +97,20 @@ final class VTTimersViewController: VTCollectionViewController {
     }
 
     // MARK: - DataSource
-    
+
     @MainActor
     private func enableUserInteraction() async {
-        self.collectionView.isUserInteractionEnabled = true
+        collectionView.isUserInteractionEnabled = true
     }
-    
+
     @MainActor
     private func disableUserInteraction() async {
-        self.collectionView.isUserInteractionEnabled = false
+        collectionView.isUserInteractionEnabled = false
     }
 
     private func configureDataSource() {
-
         let timerCell = UICollectionView.CellRegistration<UICollectionViewListCell, VTTimersItem> { [weak self] cell, _, item in
-            guard case .timer(let timer) = item else { return }
+            guard case let .timer(timer) = item else { return }
 
             var config = timer.toCellConfiguration()
 
@@ -134,7 +133,7 @@ final class VTTimersViewController: VTCollectionViewController {
             }
             config.onRun = {
                 guard let timerID = timer.id else { return }
-                
+
                 Task {
                     await self?.disableUserInteraction()
                     do {
@@ -178,7 +177,7 @@ final class VTTimersViewController: VTCollectionViewController {
     // MARK: - Actions
 
     @objc private func didTapAdd() {
-        let client = self.client
+        let client = client
         let vc = VTTimerDetailViewController(timer: VTTimer(), client: client)
         vc.title = "ADD_TIMER".localized()
         vc.onDone = { [weak self] timer in
@@ -194,7 +193,7 @@ final class VTTimersViewController: VTCollectionViewController {
         }
         present(UINavigationController(rootViewController: vc), animated: true)
     }
-    
+
     @objc private func didPullToRefresh() {
         Task {
             await reloadData(animated: true)
@@ -206,16 +205,16 @@ final class VTTimersViewController: VTCollectionViewController {
             fatalError("ID mismatch between timer and updated timer!")
         }
         guard let id = timer.id else { return }
-                
+
         // try to update timer, on failure revert
-        let newTimer = ((try? await client.updateTimer(updated)) != nil) ? updated : timer
-        
+        let newTimer = await ((try? client.updateTimer(updated)) != nil) ? updated : timer
+
         await MainActor.run {
             self.timers[id] = newTimer
             self.applySnapshot(animated: true)
         }
     }
-    
+
     private func deleteTimer(_ timer: VTTimer) async {
         guard let id = timer.id else { return }
 
@@ -234,7 +233,7 @@ final class VTTimersViewController: VTCollectionViewController {
 
         await enableUserInteraction()
     }
-    
+
     @MainActor
     private func applySnapshot(animated: Bool = true) {
         var snapshot = Snapshot()
@@ -253,14 +252,14 @@ final class VTTimersViewController: VTCollectionViewController {
 
         dataSource.apply(snapshot, animatingDifferences: animated)
     }
-    
-    override func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+
+    override func collectionView(_: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         guard let item = dataSource.itemIdentifier(for: indexPath),
-              case .timer(let timer) = item else { return }
+              case let .timer(timer) = item else { return }
 
         let vc = VTTimerDetailViewController(timer: timer, client: client)
         vc.title = "EDIT_TIMER".localized()
-        let client = self.client
+        let client = client
         vc.onDone = { [weak self] timer in
             Task {
                 do {
@@ -287,7 +286,7 @@ final class VTTimersViewController: VTCollectionViewController {
             timers = [:]
         }
 
-        self.applySnapshot(animated: animated)
+        applySnapshot(animated: animated)
 
         if refreshControl.isRefreshing {
             refreshControl.endRefreshing()
@@ -305,13 +304,12 @@ final class VTTimersViewController: VTCollectionViewController {
 // MARK: - Context Menu
 
 extension VTTimersViewController {
-
-    override func collectionView(_ collectionView: UICollectionView,
-                        contextMenuConfigurationForItemAt indexPath: IndexPath,
-                        point: CGPoint) -> UIContextMenuConfiguration? {
-
+    override func collectionView(_: UICollectionView,
+                                 contextMenuConfigurationForItemAt indexPath: IndexPath,
+                                 point _: CGPoint) -> UIContextMenuConfiguration?
+    {
         guard let item = dataSource.itemIdentifier(for: indexPath),
-              case .timer(let timer) = item,
+              case let .timer(timer) = item,
               let id = timer.id else { return nil }
 
         return UIContextMenuConfiguration(identifier: id as NSString, previewProvider: nil) { _ in

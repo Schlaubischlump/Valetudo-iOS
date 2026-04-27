@@ -17,18 +17,18 @@ struct VTTextFieldCellContentConfiguration: UIContentConfiguration, Hashable {
         VTTextFieldCellContentView(configuration: self)
     }
 
-    func updated(for state: UIConfigurationState) -> Self {
+    func updated(for _: UIConfigurationState) -> Self {
         self
     }
-    
+
     static func == (lhs: VTTextFieldCellContentConfiguration, rhs: VTTextFieldCellContentConfiguration) -> Bool {
         lhs.id == rhs.id &&
-        lhs.label == rhs.label &&
-        lhs.placeholder == rhs.placeholder &&
-        lhs.text == rhs.text
+            lhs.label == rhs.label &&
+            lhs.placeholder == rhs.placeholder &&
+            lhs.text == rhs.text
     }
-    
-    public func hash(into hasher: inout Hasher) {
+
+    func hash(into hasher: inout Hasher) {
         hasher.combine(id)
         hasher.combine(label)
         hasher.combine(placeholder)

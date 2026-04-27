@@ -32,4 +32,3 @@ actor SerialTaskQueue {
 func printCurrentQueue() {
     print("Queue label: \(String(cString: __dispatch_queue_get_label(nil), encoding: .utf8) ?? "unknown")")
 }
-

@@ -6,26 +6,26 @@
 //
 import UIKit
 
-struct VTConsumableItem: Sendable, Hashable {
+struct VTConsumableItem: Hashable {
     let type: VTConsumableType
     let subType: VTConsumableSubType
     let remaining: VTConsumableRemaining
     let maxValue: VTConsumableRemaining?
-    
+
     var title: String {
-        "\(self.subType.description.capitalized) \(self.type.description.capitalized)"
+        "\(subType.description.capitalized) \(type.description.capitalized)"
     }
-    
+
     var subtitle: String {
-        return remaining.description
+        remaining.description
     }
-    
+
     var icon: UIImage? {
-        return nil
+        nil
     }
-    
+
     var progress: Double {
-        switch(maxValue?.unit, remaining.unit) {
+        switch (maxValue?.unit, remaining.unit) {
         case (_, .percent):
             return remaining.value / 100.0
         case (.minutes, .minutes):
@@ -40,7 +40,7 @@ struct VTConsumableItem: Sendable, Hashable {
         }
     }
 
-    public func hash(into hasher: inout Hasher) {
+    func hash(into hasher: inout Hasher) {
         hasher.combine(type)
         hasher.combine(subType)
         hasher.combine(remaining.value)

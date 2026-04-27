@@ -6,7 +6,7 @@
 //
 import UIKit
 
-struct VTCheckboxCellContentConfiguration: UIContentConfiguration, Hashable {    
+struct VTCheckboxCellContentConfiguration: UIContentConfiguration, Hashable {
     let id: String
     let title: String
     let isOn: Bool
@@ -17,17 +17,17 @@ struct VTCheckboxCellContentConfiguration: UIContentConfiguration, Hashable {
         VTCheckboxCellContentView(configuration: self)
     }
 
-    func updated(for state: UIConfigurationState) -> Self {
+    func updated(for _: UIConfigurationState) -> Self {
         self
     }
-    
+
     static func == (lhs: VTCheckboxCellContentConfiguration, rhs: VTCheckboxCellContentConfiguration) -> Bool {
         lhs.id == rhs.id &&
-        lhs.title == rhs.title &&
-        lhs.isOn == rhs.isOn
+            lhs.title == rhs.title &&
+            lhs.isOn == rhs.isOn
     }
-    
-    public func hash(into hasher: inout Hasher) {
+
+    func hash(into hasher: inout Hasher) {
         hasher.combine(id)
         hasher.combine(title)
         hasher.combine(isOn)

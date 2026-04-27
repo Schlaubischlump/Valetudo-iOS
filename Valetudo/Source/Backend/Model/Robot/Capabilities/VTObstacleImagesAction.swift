@@ -6,11 +6,11 @@
 //
 import Foundation
 
-enum VTObstacleImagesActionType: String, Encodable, Hashable, Sendable {
+enum VTObstacleImagesActionType: String, Encodable, Hashable {
     case enabled
     case disable
 }
 
-struct VTObstacleImagesAction: Encodable, Hashable, Sendable {
+struct VTObstacleImagesAction: Encodable, Hashable {
     let action: VTObstacleImagesActionType
 }

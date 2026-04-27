@@ -12,12 +12,12 @@ struct VTStackedProgressBarCellContentConfiguration: UIContentConfiguration, Has
     var bars: [[VTStackedProgressBarSegment]]
     var legend: [VTStackedProgressBarLegendEntry]?
     var availableWidth: CGFloat = 0
-    
+
     func makeContentView() -> UIView & UIContentView {
         VTStackedProgressBarCellContentView(configuration: self)
     }
 
-    func updated(for state: UIConfigurationState) -> VTStackedProgressBarCellContentConfiguration {
+    func updated(for _: UIConfigurationState) -> VTStackedProgressBarCellContentConfiguration {
         self
     }
 }

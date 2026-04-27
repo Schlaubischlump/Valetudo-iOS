@@ -31,14 +31,14 @@ final class VTActionCellContentView: UIView, UIContentView {
         label.numberOfLines = 0
         return label
     }()
-    
+
     private lazy var textStack: UIStackView = {
         let stack = UIStackView(arrangedSubviews: [titleLabel, subtitleLabel])
         stack.axis = .vertical
         stack.spacing = 4
         return stack
     }()
-    
+
     private lazy var container: UIStackView = {
         let stack = UIStackView(arrangedSubviews: [iconImageView, textStack, actionButton])
         stack.axis = .horizontal
@@ -62,7 +62,8 @@ final class VTActionCellContentView: UIView, UIContentView {
         apply(configuration: configuration)
     }
 
-    required init?(coder: NSCoder) {
+    @available(*, unavailable)
+    required init?(coder _: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
 
@@ -81,7 +82,7 @@ final class VTActionCellContentView: UIView, UIContentView {
             container.trailingAnchor.constraint(equalTo: layoutMarginsGuide.trailingAnchor),
             container.bottomAnchor.constraint(equalTo: layoutMarginsGuide.bottomAnchor),
             iconImageView.widthAnchor.constraint(equalToConstant: 28),
-            iconImageView.heightAnchor.constraint(equalToConstant: 28)
+            iconImageView.heightAnchor.constraint(equalToConstant: 28),
         ])
 
         textStack.setContentHuggingPriority(.defaultLow, for: .horizontal)
@@ -107,7 +108,7 @@ final class VTActionCellContentView: UIView, UIContentView {
             style: configuration.buttonStyle ?? .normal
         )
     }
-    
+
     private func replaceActionButton(title: String, style: VTButtonStyle) {
         container.removeArrangedSubview(actionButton)
         actionButton.removeFromSuperview()

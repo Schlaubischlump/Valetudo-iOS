@@ -54,14 +54,17 @@ final class VTUpdateDetailCellView: UIView, UIContentView {
     }
 
     init(configuration: VTUpdateDetailCellContentConfiguration) {
-        self.currentConfiguration = configuration
+        currentConfiguration = configuration
         super.init(frame: .zero)
         setupViews()
         apply(configuration: configuration)
     }
 
-    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
-    
+    @available(*, unavailable)
+    required init?(coder _: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
     private func setupViews() {
         actionButton.addTarget(self, action: #selector(didTapButton(_:)), for: .touchUpInside)
 
@@ -119,4 +122,3 @@ final class VTUpdateDetailCellView: UIView, UIContentView {
         actionButton.isEnabled = true
     }
 }
-

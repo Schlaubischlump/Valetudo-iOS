@@ -8,7 +8,6 @@ import UIKit
 
 @MainActor
 class VTLegendView: UIView {
-
     var items: [VTLegendItem] = [] {
         didSet {
             reload()
@@ -16,7 +15,7 @@ class VTLegendView: UIView {
     }
 
     var onSelectionChange: ((Int, Bool) async -> Bool)?
-    
+
     private let scrollView = UIScrollView()
     private let stackView = UIStackView()
     private var itemViews: [VTLegendItemView] = []
@@ -31,7 +30,7 @@ class VTLegendView: UIView {
         setup()
     }
 
-    private func setup() {        
+    private func setup() {
         scrollView.translatesAutoresizingMaskIntoConstraints = false
         scrollView.showsHorizontalScrollIndicator = false
         scrollView.alwaysBounceHorizontal = true
@@ -56,7 +55,7 @@ class VTLegendView: UIView {
             stackView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
             stackView.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor, constant: 16),
             stackView.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor, constant: -16),
-            stackView.heightAnchor.constraint(equalTo: scrollView.heightAnchor)
+            stackView.heightAnchor.constraint(equalTo: scrollView.heightAnchor),
         ])
     }
 
@@ -78,7 +77,7 @@ class VTLegendView: UIView {
     }
 
     // MARK: - Selection
-    
+
     @objc private func handleTap(_ gesture: UITapGestureRecognizer) {
         Task { [weak self] in
             await self?.handleTapAsync(gesture)
@@ -105,12 +104,12 @@ class VTLegendView: UIView {
     }
 
     func select(at index: Int) async {
-        guard index >= 0 && index < itemViews.count else { return }
+        guard index >= 0, index < itemViews.count else { return }
         itemViews[index].isSelected = true
     }
 
     func deselect(at index: Int) async {
-        guard index >= 0 && index < itemViews.count else { return }
+        guard index >= 0, index < itemViews.count else { return }
         itemViews[index].isSelected = false
     }
 
@@ -118,4 +117,3 @@ class VTLegendView: UIView {
         itemViews.forEach { $0.isSelected = false }
     }
 }
-

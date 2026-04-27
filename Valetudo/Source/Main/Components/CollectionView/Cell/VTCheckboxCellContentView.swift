@@ -7,13 +7,9 @@
 import UIKit
 
 final class VTCheckboxCellContentView: UIView, UIContentView {
+    private let label: UILabel = .init()
+    // label.textColor = .secondaryLabel
 
-    private let label: UILabel = {
-        let label = UILabel()
-        //label.textColor = .secondaryLabel
-        return label
-    }()
-    
     private let toggle = UISwitch()
 
     private var currentConfiguration: VTCheckboxCellContentConfiguration!
@@ -32,7 +28,10 @@ final class VTCheckboxCellContentView: UIView, UIContentView {
         apply(configuration)
     }
 
-    required init?(coder: NSCoder) { fatalError() }
+    @available(*, unavailable)
+    required init?(coder _: NSCoder) {
+        fatalError()
+    }
 
     private func setup() {
         let stack = UIStackView(arrangedSubviews: [label, toggle])

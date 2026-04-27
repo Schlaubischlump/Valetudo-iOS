@@ -17,6 +17,7 @@ public extension UIImage {
         guard let image = UIImage.mapFill else { return nil }
         return image.slashed(fillColor: .black, lineWidth: 1.25)
     }()
+
     static let chartLineTextClipboardFill = UIImage(systemName: "chart.line.text.clipboard.fill")
     static let roboticVacuumFill = UIImage(systemName: "robotic.vacuum.fill")
     static let clockFill = UIImage(systemName: "clock.fill")
@@ -44,10 +45,10 @@ public extension UIImage {
     static let puzzlepieceExtensionFill = UIImage(systemName: "puzzlepiece.extension.fill")
     static let chartBarFill = UIImage(systemName: "chart.bar.fill")
     static let appLogo = UIImage(named: "Logo")
-    
+
     static let operationModeVacuumAndMop = UIImage.combine(left: .dropFill, right: .fanFill)
     static let operationModeVacuumThenMop = UIImage.combine(left: .fanFill, right: .dropFill, op: "→")
-    
+
     convenience init?(color: UIColor) {
         let rect = CGRect(origin: .zero, size: .one)
         UIGraphicsBeginImageContextWithOptions(.one, false, 0)
@@ -70,11 +71,11 @@ public extension UIImage {
     ) -> UIImage {
         .combine(op: text, opFont: font, opColor: color, spacing: 0)
     }
-    
+
     static func repeatCount(_ iterations: Int) -> UIImage {
         .textImage("× \(iterations)")
     }
-    
+
     /// Combines two images with an optional text operator rendered between them.
     /// - Parameter lhs: The image drawn on the left side.
     /// - Parameter rhs: The image drawn on the right side.
@@ -93,7 +94,7 @@ public extension UIImage {
         // Attributes for plus string
         let attributes: [NSAttributedString.Key: Any] = [
             .font: opFont,
-            .foregroundColor: opColor
+            .foregroundColor: opColor,
         ]
         let lhsSize = lhs?.size ?? .zero
         let rhsSize = rhs?.size ?? .zero
@@ -103,7 +104,7 @@ public extension UIImage {
         let finalSize = CGSize(width: totalWidth, height: maxHeight)
 
         let renderer = UIGraphicsImageRenderer(size: finalSize, format: .default())
-        return renderer.image { ctx in
+        return renderer.image { _ in
             let lhsOrigin = CGPoint(x: 0, y: (maxHeight - lhsSize.height) / 2)
             lhs?.draw(in: CGRect(origin: lhsOrigin, size: lhsSize))
 
@@ -134,7 +135,7 @@ public extension UIImage {
         let image = renderer.image { context in
             withTintColor(fillColor, renderingMode: .alwaysOriginal)
                 .draw(in: CGRect(origin: .zero, size: size))
-            
+
             let slashPath = UIBezierPath()
             slashPath.move(to: CGPoint(x: size.width - lineOffset, y: size.height - lineOffset))
             slashPath.addLine(to: CGPoint(x: lineOffset, y: lineOffset))

@@ -19,7 +19,7 @@ final class VTRobotVacuumView: UIView {
         static let right = Brush(rawValue: 1 << 1)
         static let all: Brush = [.left, .right]
     }
-    
+
     struct MopPad: OptionSet {
         let rawValue: Int
 
@@ -84,8 +84,8 @@ final class VTRobotVacuumView: UIView {
 
         leftMopView.bounds = CGRect(origin: .zero, size: mopSize)
         rightMopView.bounds = CGRect(origin: .zero, size: mopSize)
-        leftMopView.center = CGPoint(x: mopDiameter, y: drawingRect.minY + mopDiameter/2 * 1.3)
-        rightMopView.center = CGPoint(x: drawingRect.maxX - mopDiameter, y: drawingRect.minY + mopDiameter/2 * 1.3)
+        leftMopView.center = CGPoint(x: mopDiameter, y: drawingRect.minY + mopDiameter / 2 * 1.3)
+        rightMopView.center = CGPoint(x: drawingRect.maxX - mopDiameter, y: drawingRect.minY + mopDiameter / 2 * 1.3)
     }
 
     private func configureView() {
@@ -114,7 +114,7 @@ final class VTRobotVacuumView: UIView {
             rightBrushView.startAnimating(clockwise: true)
         }
     }
-    
+
     func stopAnimatingBrushes(_ brushes: Brush = .all) {
         if brushes.contains(.left) {
             leftBrushView.stopAnimating()
@@ -123,7 +123,7 @@ final class VTRobotVacuumView: UIView {
             rightBrushView.stopAnimating()
         }
     }
-    
+
     func startAnimatingMopPads(_ mopPad: MopPad = .all) {
         if mopPad.contains(.left) {
             leftMopView.startAnimating(clockwise: false)
@@ -143,7 +143,6 @@ final class VTRobotVacuumView: UIView {
     }
 }
 
-
 private final class VTRobotVacuumMopView: UIView {
     private let animationKey = "robotMopSpin"
 
@@ -158,7 +157,8 @@ private final class VTRobotVacuumMopView: UIView {
         contentMode = .redraw
     }
 
-    required init?(coder: NSCoder) {
+    @available(*, unavailable)
+    required init?(coder _: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
 
@@ -193,7 +193,7 @@ private final class VTRobotVacuumMopView: UIView {
         // of visually parallel stripes. The result is a soft, wave-like pattern that
         // resembles flowing ribbons clipped to the circular area.
         UIColor.white.withAlphaComponent(0.38).setStroke()
-        for index in -2...2 {
+        for index in -2 ... 2 {
             let offset = CGFloat(index) * diameter * 0.16
             let stripePath = UIBezierPath()
             stripePath.move(to: CGPoint(x: circleRect.minX + offset, y: circleRect.maxY))
@@ -240,7 +240,8 @@ private final class VTRobotVaccuumBrushView: UIView {
         isOpaque = false
     }
 
-    required init?(coder: NSCoder) {
+    @available(*, unavailable)
+    required init?(coder _: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
 
@@ -255,7 +256,7 @@ private final class VTRobotVaccuumBrushView: UIView {
         context.saveGState()
         context.translateBy(x: rect.midX, y: rect.midY)
 
-        for index in 0..<3 {
+        for index in 0 ..< 3 {
             context.saveGState()
             context.rotate(by: CGFloat(index) * 2 * .pi / 3)
 

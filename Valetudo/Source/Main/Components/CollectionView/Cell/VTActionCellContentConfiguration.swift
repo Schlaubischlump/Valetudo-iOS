@@ -12,24 +12,24 @@ struct VTActionCellContentConfiguration: UIContentConfiguration, Hashable {
     var subtitle: String
     var image: UIImage?
     var buttonTitle: String
-    var buttonStyle: VTButtonStyle? = nil
-    var onAction: (() -> Void)? = nil
+    var buttonStyle: VTButtonStyle?
+    var onAction: (() -> Void)?
 
     func makeContentView() -> UIView & UIContentView {
         VTActionCellContentView(configuration: self)
     }
 
-    func updated(for state: UIConfigurationState) -> VTActionCellContentConfiguration {
+    func updated(for _: UIConfigurationState) -> VTActionCellContentConfiguration {
         self
     }
 
     static func == (lhs: VTActionCellContentConfiguration, rhs: VTActionCellContentConfiguration) -> Bool {
         lhs.id == rhs.id &&
-        lhs.title == rhs.title &&
-        lhs.subtitle == rhs.subtitle &&
-        lhs.image == rhs.image &&
-        lhs.buttonTitle == rhs.buttonTitle &&
-        lhs.buttonStyle == rhs.buttonStyle
+            lhs.title == rhs.title &&
+            lhs.subtitle == rhs.subtitle &&
+            lhs.image == rhs.image &&
+            lhs.buttonTitle == rhs.buttonTitle &&
+            lhs.buttonStyle == rhs.buttonStyle
     }
 
     func hash(into hasher: inout Hasher) {

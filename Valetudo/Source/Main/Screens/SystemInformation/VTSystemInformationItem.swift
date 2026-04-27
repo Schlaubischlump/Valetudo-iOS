@@ -7,8 +7,7 @@
 import Foundation
 import UIKit
 
-
-enum VTSystemInformationItem: Sendable, Hashable {
+enum VTSystemInformationItem: Hashable {
     case keyValuePair(title: String, subtitle: String? = nil)
     case segmentedBar(config: VTStackedProgressBarCellContentConfiguration)
     case link(title: String, children: [VTSystemInformationSection: [VTSystemInformationItem]])

@@ -6,8 +6,8 @@
 //
 import UIKit
 
-fileprivate let kMappingPass = "MAPPING_PASS"
-fileprivate let kMapReset = "MAP_RESET"
+private let kMappingPass = "MAPPING_PASS"
+private let kMapReset = "MAP_RESET"
 
 final class VTMapOptionsViewController: VTCollectionViewController {
     private typealias DataSource = UICollectionViewDiffableDataSource<VTMapOptionsSection, VTAnyItem>
@@ -18,22 +18,23 @@ final class VTMapOptionsViewController: VTCollectionViewController {
     private var availableCapabilities = Set<VTCapability>()
 
     #if !targetEnvironment(macCatalyst)
-    private let refreshControl = UIRefreshControl()
+        private let refreshControl = UIRefreshControl()
     #endif
-    
+
     init(client: VTAPIClientProtocol) {
         self.client = client
-        
+
         super.init(collectionViewLayout: UICollectionViewLayout())
         setupAndApplyListLayout()
-        
+
         title = "MAP".localized()
         navigationItem.subtitle = "MAP_OPTIONS_SUBTITLE".localized()
         navigationItem.rightBarButtonItem = VTValetudoEventBarButtonItem(client: client, parentViewController: self)
     }
-    
+
+    @available(*, unavailable)
     @MainActor
-    required init?(coder: NSCoder) {
+    required init?(coder _: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
 
@@ -69,7 +70,7 @@ final class VTMapOptionsViewController: VTCollectionViewController {
             withReuseIdentifier: VTFooterView.reuseIdentifier
         )
         #if !targetEnvironment(macCatalyst)
-        configureRefreshControlIfSupported(refreshControl, action: #selector(didPullToRefresh))
+            configureRefreshControlIfSupported(refreshControl, action: #selector(didPullToRefresh))
         #endif
     }
 
@@ -88,15 +89,16 @@ final class VTMapOptionsViewController: VTCollectionViewController {
                 buttonTitle: item.buttonTitle,
                 buttonStyle: item.buttonStyle,
                 onAction: { [weak self] in
-                switch item.id {
-                case kMappingPass:
-                    self?.didTapMappingPass()
-                case kMapReset:
-                    self?.didTapMapReset()
-                default:
-                    break
+                    switch item.id {
+                    case kMappingPass:
+                        self?.didTapMappingPass()
+                    case kMapReset:
+                        self?.didTapMapReset()
+                    default:
+                        break
+                    }
                 }
-            })
+            )
         }
 
         dataSource = DataSource(collectionView: collectionView) { collectionView, indexPath, item in
@@ -128,7 +130,7 @@ final class VTMapOptionsViewController: VTCollectionViewController {
 
     @MainActor
     private func reloadData(animated: Bool) async {
-        availableCapabilities = Set((try? await client.getCapabilities()) ?? [])
+        availableCapabilities = await Set((try? client.getCapabilities()) ?? [])
 
         var snapshot = Snapshot()
         snapshot.appendSections([.main])
@@ -140,7 +142,7 @@ final class VTMapOptionsViewController: VTCollectionViewController {
                     subtitle: "MAP_OPTIONS_MAPPING_PASS_SUBTITLE".localized(),
                     image: .mapFill,
                     buttonTitle: "MAP_OPTIONS_MAPPING_PASS_BUTTON".localized()
-                )
+                ),
             ], toSection: .main)
         }
         if availableCapabilities.contains(.mapReset) {
@@ -152,15 +154,15 @@ final class VTMapOptionsViewController: VTCollectionViewController {
                     image: .mapSlash,
                     buttonTitle: "MAP_OPTIONS_MAPPING_PASS_BUTTON".localized(),
                     buttonStyle: .destructive
-                )
+                ),
             ], toSection: .main)
         }
         await dataSource.apply(snapshot, animatingDifferences: animated)
 
         #if !targetEnvironment(macCatalyst)
-        if refreshControl.isRefreshing {
-            refreshControl.endRefreshing()
-        }
+            if refreshControl.isRefreshing {
+                refreshControl.endRefreshing()
+            }
         #endif
     }
 

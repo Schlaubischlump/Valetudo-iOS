@@ -5,6 +5,6 @@
 //  Created by David Klopp on 12.04.26.
 //
 
-enum VTTimersItem: Sendable, Hashable {
+enum VTTimersItem: Hashable {
     case timer(VTTimer)
 }

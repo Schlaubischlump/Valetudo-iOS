@@ -31,7 +31,7 @@ public struct VTUpdaterNoUpdateRequiredState: VTUpdaterState, Equatable, Sendabl
     public let timestamp: Date
     public let busy: Bool
     public let metaData: [String: VTAnyCodable]
-    
+
     public let currentVersion: String
     public let changelog: String
 }
@@ -41,7 +41,7 @@ public struct VTUpdaterIdleState: VTUpdaterState, Equatable, Sendable {
     public let timestamp: Date
     public let busy: Bool
     public let metaData: [String: VTAnyCodable]
-    
+
     public let currentVersion: String
 }
 
@@ -50,7 +50,7 @@ public struct VTUpdaterErrorState: VTUpdaterState, Equatable, Sendable {
     public let timestamp: Date
     public let busy: Bool
     public let metaData: [String: VTAnyCodable]
-    
+
     public let type: VTUpdaterErrorType
     public let message: String
 }
@@ -60,15 +60,15 @@ public struct VTUpdaterDownloadingState: VTUpdaterState, Equatable, Sendable {
     public let timestamp: Date
     public let busy: Bool
     public let metaData: [String: VTAnyCodable]
-    
+
     public let version: String
     public let releaseTimestamp: Date
     public let downloadUrl: String
     public let expectedHash: String
     public let downloadPath: String
-    
+
     public var progress: Double? {
-        if let progress = self.metaData["progress"] {
+        if let progress = metaData["progress"] {
             return progress.doubleValue
         }
         return nil
@@ -87,7 +87,7 @@ public struct VTUpdaterApprovalPendingState: VTUpdaterState, Equatable, Sendable
     public let timestamp: Date
     public let busy: Bool
     public let metaData: [String: VTAnyCodable]
-    
+
     public let version: String
     public let releaseTimestamp: Date
     public let changelog: String
@@ -101,21 +101,21 @@ public struct VTUpdaterApplyPendingState: VTUpdaterState, Equatable, Sendable {
     public let timestamp: Date
     public let busy: Bool
     public let metaData: [String: VTAnyCodable]
-    
+
     public let version: String
     public let releaseTimestamp: Date
     public let downloadPath: String
 }
 
-internal struct VTUpdaterStateDecoder: Decodable, Sendable, Equatable {
+struct VTUpdaterStateDecoder: Decodable, Equatable {
     let className: String
     let metaData: [String: VTAnyCodable]?
     let timestamp: Date
     var busy: Bool
-    
+
     var stateObject: any VTUpdaterState {
         let metaData = metaData ?? [:]
-        switch (self.className) {
+        switch className {
         case "ValetudoUpdaterNoUpdateRequiredState":
             return VTUpdaterNoUpdateRequiredState(
                 className: className,
@@ -188,14 +188,14 @@ internal struct VTUpdaterStateDecoder: Decodable, Sendable, Equatable {
             fatalError("Unhandeled updater object.")
         }
     }
-    
-    // Common fields
+
+    /// Common fields
     let currentVersion: String?
-    
+
     // Error state
     let type: VTUpdaterErrorType?
     let message: String?
-    
+
     // Downloading / Downloaded / Verifying
     let version: String?
     let releaseTimestamp: Date?
@@ -203,7 +203,7 @@ internal struct VTUpdaterStateDecoder: Decodable, Sendable, Equatable {
     let downloadUrl: String?
     let expectedHash: String?
     let downloadPath: String?
-    
+
     enum CodingKeys: String, CodingKey {
         case className = "__class"
         case metaData

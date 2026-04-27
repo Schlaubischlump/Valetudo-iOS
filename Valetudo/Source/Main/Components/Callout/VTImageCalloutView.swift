@@ -6,11 +6,11 @@
 //
 import UIKit
 
-fileprivate let textCalloutSpacing = 4.0
-fileprivate let imageCalloutPadX = 14.0
-fileprivate let imageCalloutPadY = 14.0
-fileprivate let imageCalloutSpacing = 10.0
-fileprivate let calloutImageLength = 220.0
+private let textCalloutSpacing = 4.0
+private let imageCalloutPadX = 14.0
+private let imageCalloutPadY = 14.0
+private let imageCalloutSpacing = 10.0
+private let calloutImageLength = 220.0
 
 final class VTImageCalloutView: VTCalloutView {
     private let closeButton = UIButton(type: .system)
@@ -20,25 +20,25 @@ final class VTImageCalloutView: VTCalloutView {
     private let textStack = UIStackView()
     private let headerStack = UIStackView()
     private let contentStack = UIStackView()
-    
+
     override var preferredContentWidth: CGFloat? {
         calloutImageLength + imageCalloutPadX * 2
     }
-    
+
     init(title: String, subtitle: String, image: UIImage? = nil, isLoadingImage: Bool = false) {
         super.init(title: title, subtitle: subtitle)
         setupViews()
         configureImage(image: image, isLoadingImage: isLoadingImage)
     }
-    
+
     required init?(coder: NSCoder) {
         super.init(coder: coder)
         setupViews()
     }
-    
+
     private func setupViews() {
         backgroundColor = .clear
-        
+
         var configuration = UIButton.Configuration.filled()
         configuration.image = .xmark
         configuration.buttonSize = .small
@@ -52,43 +52,43 @@ final class VTImageCalloutView: VTCalloutView {
             },
             for: .touchUpInside
         )
-        
+
         imageContainerView.backgroundColor = .clear
         imageContainerView.layer.cornerRadius = 14
         imageContainerView.clipsToBounds = true
         imageContainerView.translatesAutoresizingMaskIntoConstraints = false
-        
+
         imageView.contentMode = .scaleToFill
         imageView.clipsToBounds = true
         imageView.backgroundColor = .clear
         imageView.translatesAutoresizingMaskIntoConstraints = false
-        
+
         activityIndicatorView.hidesWhenStopped = true
         activityIndicatorView.translatesAutoresizingMaskIntoConstraints = false
-        
+
         textStack.axis = .vertical
         textStack.spacing = textCalloutSpacing
         textStack.alignment = .leading
         textStack.addArrangedSubview(titleLabel)
         textStack.addArrangedSubview(subtitleLabel)
-        
+
         headerStack.axis = .horizontal
         headerStack.spacing = imageCalloutSpacing
         headerStack.alignment = .center
         headerStack.addArrangedSubview(textStack)
         headerStack.addArrangedSubview(closeButton)
-        
+
         contentStack.axis = .vertical
         contentStack.spacing = imageCalloutSpacing
         contentStack.alignment = .fill
         contentStack.translatesAutoresizingMaskIntoConstraints = false
         contentStack.addArrangedSubview(headerStack)
         contentStack.addArrangedSubview(imageContainerView)
-        
+
         addSubview(contentStack)
         imageContainerView.addSubview(imageView)
         imageContainerView.addSubview(activityIndicatorView)
-        
+
         NSLayoutConstraint.activate([
             contentStack.topAnchor.constraint(equalTo: safeAreaLayoutGuide.topAnchor, constant: imageCalloutPadY),
             contentStack.bottomAnchor.constraint(equalTo: safeAreaLayoutGuide.bottomAnchor, constant: -imageCalloutPadY),
@@ -101,14 +101,14 @@ final class VTImageCalloutView: VTCalloutView {
             imageView.leadingAnchor.constraint(equalTo: imageContainerView.leadingAnchor),
             imageView.trailingAnchor.constraint(equalTo: imageContainerView.trailingAnchor),
             activityIndicatorView.centerXAnchor.constraint(equalTo: imageContainerView.centerXAnchor),
-            activityIndicatorView.centerYAnchor.constraint(equalTo: imageContainerView.centerYAnchor)
+            activityIndicatorView.centerYAnchor.constraint(equalTo: imageContainerView.centerYAnchor),
         ])
     }
-    
+
     func configureImage(image: UIImage? = nil, isLoadingImage: Bool = false) {
         imageView.image = image
         imageView.isHidden = image == nil
-        
+
         if isLoadingImage {
             activityIndicatorView.startAnimating()
         } else {

@@ -1,10 +1,10 @@
 //
-//  VTPresetCapability.swift
+//  VTPresetAction.swift
 //  Valetudo
 //
 //  Created by David Klopp on 03.06.25.
 //
 
-struct VTPresetAction: Encodable, Sendable, Hashable {
+struct VTPresetAction: Encodable, Hashable {
     let name: VTPresetValue
 }

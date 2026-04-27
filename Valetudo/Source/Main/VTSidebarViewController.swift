@@ -12,13 +12,13 @@ enum VTSidebarSection: Int, CaseIterable {
     case robot = 1
     case options = 2
     case misc = 3
-    
+
     var title: String? {
-        switch (self) {
-        case .main:     return nil
-        case .robot:    return "ROBOT".localized()
-        case .options:  return "OPTIONS".localized()
-        case .misc:     return "MISC".localized()
+        switch self {
+        case .main: nil
+        case .robot: "ROBOT".localized()
+        case .options: "OPTIONS".localized()
+        case .misc: "MISC".localized()
         }
     }
 }
@@ -37,51 +37,53 @@ enum VTSidebarItem: Hashable {
 
     var title: String {
         switch self {
-        case .home:                                        return "HOME".localized()
-        case .map:                                         return "MAP".localized()
-        case .consumables:                                 return "CONSUMABLES".localized()
-        case .robot:                                       return "ROBOT".localized()
-        case .timers:                                      return "TIMERS".localized()
-        case .log:                                         return "LOG".localized()
-        case .systemInformation:                           return "SYSTEM_INFORMATION".localized()
-        case .updater:                                     return "UPDATER".localized()
-        case .manualControl, .highResolutionManualControl: return "MANUAL_CONTROL".localized()
+        case .home: "HOME".localized()
+        case .map: "MAP".localized()
+        case .consumables: "CONSUMABLES".localized()
+        case .robot: "ROBOT".localized()
+        case .timers: "TIMERS".localized()
+        case .log: "LOG".localized()
+        case .systemInformation: "SYSTEM_INFORMATION".localized()
+        case .updater: "UPDATER".localized()
+        case .manualControl, .highResolutionManualControl: "MANUAL_CONTROL".localized()
         }
     }
 
     var icon: UIImage? {
         switch self {
-        case .home:                                        return .houseFill
-        case .map:                                         return .mapFill
-        case .consumables:                                 return .chartLineTextClipboardFill
-        case .robot:                                       return .roboticVacuumFill
-        case .timers:                                      return .clockFill
-        case .log:                                         return .textPageFill
-        case .systemInformation:                           return .infoCircleFill
-        case .updater:                                     return .squareAndArrowDownFill
-        case .manualControl, .highResolutionManualControl: return .arrowUpAndDownAndArrowLeftAndRight
+        case .home: .houseFill
+        case .map: .mapFill
+        case .consumables: .chartLineTextClipboardFill
+        case .robot: .roboticVacuumFill
+        case .timers: .clockFill
+        case .log: .textPageFill
+        case .systemInformation: .infoCircleFill
+        case .updater: .squareAndArrowDownFill
+        case .manualControl, .highResolutionManualControl: .arrowUpAndDownAndArrowLeftAndRight
         }
     }
 }
 
-fileprivate typealias VTSidebarData = [(VTSidebarSection, [VTSidebarItem])]
+private typealias VTSidebarData = [(VTSidebarSection, [VTSidebarItem])]
 
-fileprivate extension VTSidebarData {
-    func section(at: Int) -> VTSidebarSection? { self[safe: at]?.0 }
+private extension VTSidebarData {
+    func section(at: Int) -> VTSidebarSection? {
+        self[safe: at]?.0
+    }
 }
 
 class VTSidebarViewController: VTCollectionViewController {
     typealias VTSidebarDataSource = UICollectionViewDiffableDataSource<VTSidebarSection, VTSidebarItem>
     typealias VTSidebarDatasourceSnapshot = NSDiffableDataSourceSnapshot<VTSidebarSection, VTSidebarItem>
-    
+
     private var dataSource: VTSidebarDataSource!
     private var data: VTSidebarData = [
-        .main    => [.home],
-        .robot   => [.consumables, .manualControl, .highResolutionManualControl],
+        .main => [.home],
+        .robot => [.consumables, .manualControl, .highResolutionManualControl],
         .options => [.map, .robot],
-        .misc    => [.timers, .log, .updater, .systemInformation]
+        .misc => [.timers, .log, .updater, .systemInformation],
     ]
-    
+
     var didSelectItem: ((VTSidebarItem) -> Void)?
 
     private var client: VTAPIClientProtocol
@@ -92,40 +94,41 @@ class VTSidebarViewController: VTCollectionViewController {
         listConfig.headerMode = .supplementary
         let layout = UICollectionViewCompositionalLayout.list(using: listConfig)
         super.init(collectionViewLayout: layout)
-        self.clearsSelectionOnViewWillAppear = true
-        
-        self.navigationItem.rightBarButtonItem = VTValetudoEventBarButtonItem(client: client, parentViewController: self)
-        self.navigationItem.leftBarButtonItem = VTRobotBarButtonItem(parentViewController: self)
+        clearsSelectionOnViewWillAppear = true
+
+        navigationItem.rightBarButtonItem = VTValetudoEventBarButtonItem(client: client, parentViewController: self)
+        navigationItem.leftBarButtonItem = VTRobotBarButtonItem(parentViewController: self)
     }
 
-    required init?(coder: NSCoder) {
+    @available(*, unavailable)
+    required init?(coder _: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        
+
         configureCollectionView()
         configureDataSource()
-        
+
         Task { await loadInitialData() }
     }
-    
+
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         selectFirstItemIfNeeded()
     }
-    
+
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         selectFirstItemIfNeeded()
     }
-    
+
     private func selectFirstItemIfNeeded() {
         guard viewIfLoaded != nil, let isCompact = splitViewController?.isCompact else { return }
         guard !isCompact else { return }
         guard collectionView.indexPathsForSelectedItems?.isEmpty ?? true else { return }
-        
+
         let snapshot = dataSource.snapshot()
         guard let firstSection = snapshot.sectionIdentifiers.first,
               let firstItem = snapshot.itemIdentifiers(inSection: firstSection).first,
@@ -135,31 +138,31 @@ class VTSidebarViewController: VTCollectionViewController {
     }
 
     private func configureCollectionView() {
-        //collectionView.backgroundColor = .systemGroupedBackground
+        // collectionView.backgroundColor = .systemGroupedBackground
         collectionView.register(
             VTSidebarHeaderView.self,
             forSupplementaryViewOfKind: UICollectionView.elementKindSectionHeader,
             withReuseIdentifier: VTSidebarHeaderView.reuseIdentifier
         )
     }
-    
+
     @MainActor
     private func loadInitialData() async {
-        let capabilities = Set((try? await client.getCapabilities()) ?? [])
+        let capabilities = await Set((try? client.getCapabilities()) ?? [])
         let supportsHighResolutionManualControl = capabilities.contains(.highResolutionManualControl)
         // filter the data, such that all unavailable features are remove
-        data = data.compactMap { (sec, its) in
+        data = data.compactMap { sec, its in
             let tmpItems = its.filter { item in
-                switch (item) {
+                switch item {
                 case .home, .log, .robot, .map, .systemInformation, .timers, .updater: true
-                case .consumables:   capabilities.contains(.consumableMonitoring)
+                case .consumables: capabilities.contains(.consumableMonitoring)
                 case .manualControl: capabilities.contains(.manualControl) && !supportsHighResolutionManualControl
                 case .highResolutionManualControl: supportsHighResolutionManualControl
                 }
             }
             return tmpItems.isEmpty ? nil : (sec, tmpItems)
         }
-        
+
         var snapshot = VTSidebarDatasourceSnapshot()
         for (section, items) in data {
             snapshot.appendSections([section])
@@ -177,7 +180,7 @@ class VTSidebarViewController: VTCollectionViewController {
         }
 
         dataSource = VTSidebarDataSource(collectionView: collectionView) { collectionView, indexPath, item in
-            return collectionView.dequeueConfiguredReusableCell(using: cellRegistration, for: indexPath, item: item)
+            collectionView.dequeueConfiguredReusableCell(using: cellRegistration, for: indexPath, item: item)
         }
 
         dataSource.supplementaryViewProvider = { [weak self] collectionView, kind, indexPath in
@@ -194,7 +197,7 @@ class VTSidebarViewController: VTCollectionViewController {
 
     // MARK: - UICollectionViewDelegate
 
-    override func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+    override func collectionView(_: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         guard let identifier = dataSource.itemIdentifier(for: indexPath) else { return }
         didSelectItem?(identifier)
     }

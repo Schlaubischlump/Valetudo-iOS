@@ -46,9 +46,9 @@ public enum VTCapability: Equatable, Hashable, Sendable, Decodable {
     case autoEmptyDockAutoEmptyIntervalControl
     case quirks
     case unknown(String)
-    
+
     var name: String {
-        return switch self {
+        switch self {
         case .wifiConfiguration: "WifiConfigurationCapability"
         case .wifiScan: "WifiScanCapability"
         case .basicControl: "BasicControlCapability"
@@ -87,10 +87,10 @@ public enum VTCapability: Equatable, Hashable, Sendable, Decodable {
         case .collisionAvoidantNavigationControl: "CollisionAvoidantNavigationControlCapability"
         case .autoEmptyDockAutoEmptyIntervalControl: "AutoEmptyDockAutoEmptyIntervalControlCapability"
         case .quirks: "QuirksCapability"
-        case .unknown(let str): str
+        case let .unknown(str): str
         }
     }
-    
+
     init(name: String) {
         switch name {
         case "WifiConfigurationCapability": self = .wifiConfiguration
@@ -134,7 +134,7 @@ public enum VTCapability: Equatable, Hashable, Sendable, Decodable {
         default: self = .unknown(name)
         }
     }
-    
+
     public init(from decoder: Decoder) throws {
         let container = try decoder.singleValueContainer()
         let name = try container.decode(String.self)

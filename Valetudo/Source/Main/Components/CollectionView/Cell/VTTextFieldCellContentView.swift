@@ -7,7 +7,6 @@
 import UIKit
 
 final class VTTextFieldCellContentView: UIView, UIContentView {
-
     private let textField: UITextField = {
         let textField = UITextField()
         textField.clearButtonMode = .never
@@ -16,13 +15,10 @@ final class VTTextFieldCellContentView: UIView, UIContentView {
         textField.returnKeyType = .done
         return textField
     }()
-    
-    private let label: UILabel = {
-        let label = UILabel()
-        //label.textColor = .secondaryLabel
-        return label
-    }()
-    
+
+    private let label: UILabel = .init()
+    // label.textColor = .secondaryLabel
+
     private var currentConfiguration: VTTextFieldCellContentConfiguration!
 
     var configuration: UIContentConfiguration {
@@ -39,13 +35,16 @@ final class VTTextFieldCellContentView: UIView, UIContentView {
         apply(configuration)
     }
 
-    required init?(coder: NSCoder) { fatalError() }
+    @available(*, unavailable)
+    required init?(coder _: NSCoder) {
+        fatalError()
+    }
 
     private func setup() {
         textField.delegate = self
         textField.translatesAutoresizingMaskIntoConstraints = false
         addSubview(textField)
-        
+
         label.translatesAutoresizingMaskIntoConstraints = false
         addSubview(label)
 
@@ -56,7 +55,7 @@ final class VTTextFieldCellContentView: UIView, UIContentView {
             label.leadingAnchor.constraint(equalTo: leadingAnchor, constant: hPad),
             label.topAnchor.constraint(equalTo: topAnchor, constant: vPad),
             label.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -vPad),
-            //label.widthAnchor.constraint(equalToConstant: 250),
+            // label.widthAnchor.constraint(equalToConstant: 250),
             textField.leadingAnchor.constraint(equalTo: label.trailingAnchor, constant: spacing),
             textField.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -hPad),
             textField.topAnchor.constraint(equalTo: topAnchor, constant: vPad),

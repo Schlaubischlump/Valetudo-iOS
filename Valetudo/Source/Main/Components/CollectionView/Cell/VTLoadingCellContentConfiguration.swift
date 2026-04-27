@@ -9,12 +9,12 @@ import UIKit
 struct VTLoadingCellContentConfiguration: UIContentConfiguration, Hashable {
     let id: String
     let message: String
-    
+
     func makeContentView() -> UIView & UIContentView {
         VTLoadingCellView(configuration: self)
     }
 
-    func updated(for state: UIConfigurationState) -> VTLoadingCellContentConfiguration {
+    func updated(for _: UIConfigurationState) -> VTLoadingCellContentConfiguration {
         self
     }
 }

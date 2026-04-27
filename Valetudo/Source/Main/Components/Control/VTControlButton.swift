@@ -8,15 +8,17 @@ import UIKit
 
 class VTControlButton: UIButton, VTControlItem {
     var onTap: (() -> Void)?
-    
+
     static let baseBackgroundColor: UIColor = .secondarySystemFill
     static let baseForegroundColor: UIColor = .label
     static let highlightedBackgroundColor: UIColor = .tintColor
-    
-    fileprivate var isActive: Bool { isHighlighted }
-    
+
+    fileprivate var isActive: Bool {
+        isHighlighted
+    }
+
     private var _title: String?
-    
+
     static func defaultConfiguration() -> UIButton.Configuration {
         var config = UIButton.Configuration.plain()
         config.imagePadding = 4
@@ -31,24 +33,24 @@ class VTControlButton: UIButton, VTControlItem {
         }
         return config
     }
-    
-    init(title: String?, icon: UIImage?, config: UIButton.Configuration = VTControlButton.defaultConfiguration()) {
-        self._title = title
+
+    init(title: String?, icon: UIImage?, config _: UIButton.Configuration = VTControlButton.defaultConfiguration()) {
+        _title = title
         super.init(frame: .zero)
         var config = VTControlButton.defaultConfiguration()
         config.title = title
         config.image = icon
-        self.configurationUpdateHandler = updateButton
-        self.configuration = config
-        self.addTarget(self, action: #selector(self.buttonPushed(_:)), for: .touchUpInside)
+        configurationUpdateHandler = updateButton
+        configuration = config
+        addTarget(self, action: #selector(buttonPushed(_:)), for: .touchUpInside)
     }
-    
+
     func updateButton(_ button: UIButton) {
         guard let controlButton = button as? VTControlButton else { return }
         let isDark = controlButton.traitCollection.userInterfaceStyle == .dark
         let isActive = controlButton.isActive
-        
-        if (isDark) {
+
+        if isDark {
             button.configuration?.background.backgroundColor = !isActive
                 ? VTControlButton.baseBackgroundColor
                 : VTControlButton.highlightedBackgroundColor
@@ -64,8 +66,8 @@ class VTControlButton: UIButton, VTControlItem {
                 : VTControlButton.baseForegroundColor.inverted()
         }
     }
-    
-    @objc fileprivate func buttonPushed(_ sender: UIButton) {
+
+    @objc fileprivate func buttonPushed(_: UIButton) {
         onTap?()
     }
 
@@ -74,22 +76,23 @@ class VTControlButton: UIButton, VTControlItem {
     }
 }
 
-
 final class VTToggleControlButton: VTControlButton {
-    fileprivate override var isActive: Bool { isHighlighted || isToggled }
-    
+    override fileprivate var isActive: Bool {
+        isHighlighted || isToggled
+    }
+
     private var _isToggled: Bool = false
-    
+
     var isToggled: Bool {
         get { _isToggled }
         set {
             guard isEnabled else { return }
             _isToggled = newValue
-            self.setNeedsLayout()
-            self.layoutIfNeeded()
+            setNeedsLayout()
+            layoutIfNeeded()
         }
     }
-    
+
     override fileprivate func buttonPushed(_ sender: UIButton) {
         isToggled.toggle()
         super.buttonPushed(sender)

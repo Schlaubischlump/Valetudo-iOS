@@ -7,12 +7,12 @@
 import Foundation
 
 public enum VTUpdaterProvider: String, Codable, Sendable, CaseIterable, Describable {
-    case github = "github"
+    case github
     case githubNightly = "github_nightly"
-    
+
     public var description: String {
-        switch (self) {
-        case .github:        "RELEASE".localized()
+        switch self {
+        case .github: "RELEASE".localized()
         case .githubNightly: "NIGHTLY".localized()
         }
     }

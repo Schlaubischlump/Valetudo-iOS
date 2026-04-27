@@ -1,5 +1,5 @@
 //
-//  VTStateAttribute.swift
+//  VTStateAttributeList.swift
 //  Valetudo
 //
 //  Created by David Klopp on 18.05.25.
@@ -11,12 +11,12 @@ public enum VTPresetType: String, Codable, Sendable, Describable {
     case fanSpeed = "fan_speed"
     case waterGrade = "water_grade"
     case operationMode = "operation_mode"
-    
+
     public var description: String {
-        switch (self) {
-        case .waterGrade:       "WATER_GRADE".localized()
-        case .fanSpeed:         "FAN_SPEED".localized()
-        case .operationMode:    "OPERATION_MODE".localized()
+        switch self {
+        case .waterGrade: "WATER_GRADE".localized()
+        case .fanSpeed: "FAN_SPEED".localized()
+        case .operationMode: "OPERATION_MODE".localized()
         }
     }
 }
@@ -24,28 +24,28 @@ public enum VTPresetType: String, Codable, Sendable, Describable {
 public enum VTPresetValue: String, Codable, Sendable, Describable {
     case off, min, low, medium, high, max, turbo, custom
     case vacuum, mop, vacuumAndMop = "vacuum_and_mop", vacuumThenMop = "vacuum_then_mop"
-    
+
     public var description: String {
         switch self {
-        case .off:             "OFF".localized()
-        case .min:             "MIN".localized()
-        case .low:             "LOW".localized()
-        case .medium:          "MEDIUM".localized()
-        case .high:            "HIGH".localized()
-        case .max:             "MAX".localized()
-        case .turbo:           "TURBO".localized()
-        case .custom:          "CUSTOM".localized()
-        case .vacuum:          "VACUUM".localized()
-        case .mop:             "MOP".localized()
-        case .vacuumAndMop:    "VACUUM_AND_MOP".localized()
-        case .vacuumThenMop:   "VACUUM_THEN_MOP".localized()
+        case .off: "OFF".localized()
+        case .min: "MIN".localized()
+        case .low: "LOW".localized()
+        case .medium: "MEDIUM".localized()
+        case .high: "HIGH".localized()
+        case .max: "MAX".localized()
+        case .turbo: "TURBO".localized()
+        case .custom: "CUSTOM".localized()
+        case .vacuum: "VACUUM".localized()
+        case .mop: "MOP".localized()
+        case .vacuumAndMop: "VACUUM_AND_MOP".localized()
+        case .vacuumThenMop: "VACUUM_THEN_MOP".localized()
         }
     }
 }
 
 public enum VTStatusValue: String, Codable, Sendable, Describable {
     case docked, error, idle, returning, cleaning, paused, manualControl = "manual_control", moving
-    
+
     public var description: String {
         switch self {
         case .docked: "DOCKED".localized()
@@ -58,21 +58,21 @@ public enum VTStatusValue: String, Codable, Sendable, Describable {
         case .moving: "MOVING".localized()
         }
     }
-    
+
     var isStarted: Bool {
         switch self {
         case .cleaning, .returning, .moving: true
         default: false
         }
     }
-    
+
     var isPaused: Bool {
         switch self {
         case .idle, .docked, .paused, .error: true
         default: false
         }
     }
-    
+
     var canReturnHome: Bool {
         switch self {
         case .idle, .error, .paused: true
@@ -87,7 +87,7 @@ public enum VTStatusFlag: String, Codable, Sendable {
 
 public enum VTDockStatusValue: String, Codable, Sendable, Describable {
     case error, idle, pause, emptying, cleaning, drying
-    
+
     public var description: String {
         switch self {
         case .error: "ERROR".localized()
@@ -106,40 +106,40 @@ public enum VTConsumableUnit: String, Codable, Sendable {
 
 public enum VTConsumableType: String, Codable, Sendable, Describable {
     case brush, filter, cleaning, mop, detergent
-    
+
     public var description: String {
-        switch(self) {
-        case .brush:        return "BRUSH".localized()
-        case .cleaning:     return "CLEANING".localized()
-        case .detergent:    return "DETERGENT".localized()
-        case .filter:       return "FILTER".localized()
-        case .mop:          return "MOP".localized()
+        switch self {
+        case .brush: "BRUSH".localized()
+        case .cleaning: "CLEANING".localized()
+        case .detergent: "DETERGENT".localized()
+        case .filter: "FILTER".localized()
+        case .mop: "MOP".localized()
         }
     }
 }
 
 public enum VTConsumableSubType: String, Codable, Sendable, Describable {
     case main, sideRight = "side_right", sensor, all, dock
-    
+
     public var description: String {
-        switch(self) {
-        case .all:          "ALL".localized()
-        case .dock:         "DOCK".localized()
-        case .main:         "MAIN".localized()
-        case .sensor:       "SENSOR".localized()
-        case .sideRight:    "RIGHT".localized()
+        switch self {
+        case .all: "ALL".localized()
+        case .dock: "DOCK".localized()
+        case .main: "MAIN".localized()
+        case .sensor: "SENSOR".localized()
+        case .sideRight: "RIGHT".localized()
         }
     }
 }
 
 public enum VTAttachmentType: String, Codable, Sendable, Describable {
     case dustbin, watertank, mop
-    
+
     public var description: String {
         switch self {
-        case .dustbin:      "DUSTBIN".localized()
-        case .watertank:    "WATERTANK".localized()
-        case .mop:          "MOP".localized()
+        case .dustbin: "DUSTBIN".localized()
+        case .watertank: "WATERTANK".localized()
+        case .mop: "MOP".localized()
         }
     }
 }
@@ -148,16 +148,16 @@ public enum VTBatteryFlag: String, Codable, Sendable {
     case none, charging, discharging, charged
 }
 
-public protocol VTStateAttribute: Decodable, Equatable, Sendable  {
+public protocol VTStateAttribute: Decodable, Equatable, Sendable {
     var __class: String { get }
     var metaData: [String: VTAnyCodable] { get }
 }
 
 extension VTStateAttribute {
-  func isEqual(to other: any VTStateAttribute) -> Bool {
-    guard let otherSame = other as? Self else { return false }
-    return self == otherSame
-  }
+    func isEqual(to other: any VTStateAttribute) -> Bool {
+        guard let otherSame = other as? Self else { return false }
+        return self == otherSame
+    }
 }
 
 public struct VTAttachmentStateAttribute: VTStateAttribute {
@@ -208,10 +208,10 @@ extension VTStatusStateAttribute: Equatable {}
 public struct VTConsumableRemaining: Codable, Sendable, Describable {
     public let value: Double
     public let unit: VTConsumableUnit
-    
+
     public var description: String {
-        switch (unit) {
-        case .percent: 
+        switch unit {
+        case .percent:
             return "\(Int(value)) %"
         case .minutes:
             let formatter = DateComponentsFormatter()
@@ -234,7 +234,6 @@ public struct VTConsumableStateAttribute: VTStateAttribute {
 }
 
 extension VTConsumableStateAttribute: Equatable {}
-
 
 public struct VTConsumableStateAttributeProperties: Decodable, Sendable, Equatable {
     public let type: VTConsumableType
@@ -259,153 +258,153 @@ extension VTAnyCodable {
 
 public struct VTStateAttributeList: Decodable, Sendable {
     public let attributes: [any VTStateAttribute]
-    
+
     public var dockStatusStateAttributes: [VTDockStatusStateAttribute] {
         attributes.compactMap {
-            if ($0.__class == "DockStatusStateAttribute") {
+            if $0.__class == "DockStatusStateAttribute" {
                 $0 as? VTDockStatusStateAttribute
             } else {
                 nil
             }
         }
     }
-    
+
     public var attachmentStateAttributes: [VTAttachmentStateAttribute] {
         attributes.compactMap {
-            if ($0.__class == "AttachmentStateAttribute") {
+            if $0.__class == "AttachmentStateAttribute" {
                 $0 as? VTAttachmentStateAttribute
             } else {
                 nil
             }
         }
     }
-    
+
     public var presetSelectionStateAttributes: [VTPresetSelectionStateAttribute] {
         attributes.compactMap {
-            if ($0.__class == "PresetSelectionStateAttribute") {
+            if $0.__class == "PresetSelectionStateAttribute" {
                 $0 as? VTPresetSelectionStateAttribute
             } else {
                 nil
             }
         }
     }
-    
+
     public var batteryStateAttributes: [VTBatteryStateAttribute] {
         attributes.compactMap {
-            if ($0.__class == "BatteryStateAttribute") {
+            if $0.__class == "BatteryStateAttribute" {
                 $0 as? VTBatteryStateAttribute
             } else {
                 nil
             }
         }
     }
-    
+
     public var statusStateAttributes: [VTStatusStateAttribute] {
         attributes.compactMap {
-            if ($0.__class == "StatusStateAttribute") {
+            if $0.__class == "StatusStateAttribute" {
                 $0 as? VTStatusStateAttribute
             } else {
                 nil
             }
         }
     }
-    
+
     /*
-    // Valetudo 2025.10.0: Consumables are no longer state attributes
-    public var consumableStateAttributes: [VTConsumableStateAttribute] {
-        attributes.compactMap {
-            if ($0.__class == "ConsumableStateAttribute") {
-                $0 as? VTConsumableStateAttribute
-            } else {
-                nil
-            }
-        }
-    }
-    */
-    
+     // Valetudo 2025.10.0: Consumables are no longer state attributes
+     public var consumableStateAttributes: [VTConsumableStateAttribute] {
+         attributes.compactMap {
+             if ($0.__class == "ConsumableStateAttribute") {
+                 $0 as? VTConsumableStateAttribute
+             } else {
+                 nil
+             }
+         }
+     }
+     */
+
     // MARK: - AttachmentStateAttributes
-    
+
     public var attachmendTypes: [VTAttachmentType] {
-        return attachmentStateAttributes.map { $0.type }
+        attachmentStateAttributes.map(\.type)
     }
-    
+
     public var mopPadsAreAttached: Bool {
-        return attachmentStateAttributes.first(where: { $0.type == .mop })?.attached ?? false
+        attachmentStateAttributes.first(where: { $0.type == .mop })?.attached ?? false
     }
-    
+
     // MARK: - BatteryStateAttributes
-    
+
     public var batterLevel: Double {
-        return batteryStateAttributes.first?.level ?? 100.0
+        batteryStateAttributes.first?.level ?? 100.0
     }
-    
+
     // MARK: - DockStatusStateAttribute
-    
+
     public var isDryingMopPads: Bool {
-        return dockStatusStateAttributes.first?.value == .drying
+        dockStatusStateAttributes.first?.value == .drying
     }
-    
+
     public var isCleaningMopPads: Bool {
-        return dockStatusStateAttributes.first?.value == .cleaning
+        dockStatusStateAttributes.first?.value == .cleaning
     }
-    
+
     public var isEmptyingIntoDock: Bool {
-        return dockStatusStateAttributes.first?.value == .emptying
+        dockStatusStateAttributes.first?.value == .emptying
     }
-    
+
     public var dockIsReady: Bool {
         guard let dockState = dockStatusStateAttributes.first?.value else { return false }
         return (dockState == .idle) || (dockState == .pause)
     }
-    
+
     // MARK: - StatusStateAttributes
-    
+
     public var statusState: VTStatusValue {
-        return statusStateAttributes.first?.value ?? .docked
+        statusStateAttributes.first?.value ?? .docked
     }
-    
+
     public var isPaused: Bool {
-        return statusStateAttributes.first?.value?.isPaused ?? false
+        statusStateAttributes.first?.value?.isPaused ?? false
     }
-    
+
     public var isStarted: Bool {
-        return statusStateAttributes.first?.value?.isStarted ?? false
+        statusStateAttributes.first?.value?.isStarted ?? false
     }
-    
+
     public var isStoppable: Bool {
         guard let state = statusStateAttributes.first?.value else { return false }
-        return (state != .idle && state != .docked) && !self.isResumable
+        return (state != .idle && state != .docked) && !isResumable
     }
-    
+
     public var canReturnHome: Bool {
-        return statusStateAttributes.first?.value?.canReturnHome ?? false
+        statusStateAttributes.first?.value?.canReturnHome ?? false
     }
-    
+
     public var isResumable: Bool {
-        return statusStateAttributes.first?.flag == .resumable
+        statusStateAttributes.first?.flag == .resumable
     }
-    
+
     public var isDocked: Bool {
         guard let state = statusStateAttributes.first?.value else { return false }
         return state == .docked
     }
-    
+
     // MARK: - PresetSelectionStateAttributes
-    
+
     public var fanSpeed: VTPresetValue {
-        return self.presetSelectionStateAttributes.first(where: {
+        presetSelectionStateAttributes.first(where: {
             $0.type == .fanSpeed
         })?.value ?? .low
     }
-    
+
     public var waterGrade: VTPresetValue {
-        return self.presetSelectionStateAttributes.first(where: {
+        presetSelectionStateAttributes.first(where: {
             $0.type == .waterGrade
         })?.value ?? .low
     }
-    
+
     public var operationMode: VTPresetValue {
-        return self.presetSelectionStateAttributes.first(where: {
+        presetSelectionStateAttributes.first(where: {
             $0.type == .operationMode
         })?.value ?? .vacuum
     }
@@ -413,36 +412,36 @@ public struct VTStateAttributeList: Decodable, Sendable {
     public init(from decoder: Decoder) throws {
         let container = try decoder.singleValueContainer()
         let rawArray = try container.decode([[String: VTAnyCodable]].self)
-        
+
         var decodedAttributes: [any VTStateAttribute] = []
         let jsonDecoder = JSONDecoder()
-        
+
         for dict in rawArray {
             guard let className = dict["__class"] else { continue }
-            
+
             // Convert back to Data for decoding the specific type
             let jsonData = try JSONEncoder().encode(dict)
 
             switch className {
             case .attachmentStateAttribute:
-                decodedAttributes.append(try jsonDecoder.decode(VTAttachmentStateAttribute.self, from: jsonData))
+                try decodedAttributes.append(jsonDecoder.decode(VTAttachmentStateAttribute.self, from: jsonData))
             case .dockStatusStateAttribute:
-                decodedAttributes.append(try jsonDecoder.decode(VTDockStatusStateAttribute.self, from: jsonData))
+                try decodedAttributes.append(jsonDecoder.decode(VTDockStatusStateAttribute.self, from: jsonData))
             case .presetSelectionStateAttribute:
-                decodedAttributes.append(try jsonDecoder.decode(VTPresetSelectionStateAttribute.self, from: jsonData))
+                try decodedAttributes.append(jsonDecoder.decode(VTPresetSelectionStateAttribute.self, from: jsonData))
             case .batteryStateAttribute:
-                decodedAttributes.append(try jsonDecoder.decode(VTBatteryStateAttribute.self, from: jsonData))
+                try decodedAttributes.append(jsonDecoder.decode(VTBatteryStateAttribute.self, from: jsonData))
             case .statusStateAttribute:
-                decodedAttributes.append(try jsonDecoder.decode(VTStatusStateAttribute.self, from: jsonData))
+                try decodedAttributes.append(jsonDecoder.decode(VTStatusStateAttribute.self, from: jsonData))
             case .consumableStateAttribute, .valetudoConsumable:
-                decodedAttributes.append(try jsonDecoder.decode(VTConsumableStateAttribute.self, from: jsonData))
+                try decodedAttributes.append(jsonDecoder.decode(VTConsumableStateAttribute.self, from: jsonData))
             default:
                 log(message: "Unknown __class: \(className)", forSubsystem: .stateAttribute, level: .error)
                 continue
             }
         }
 
-        self.attributes = decodedAttributes
+        attributes = decodedAttributes
     }
 }
 

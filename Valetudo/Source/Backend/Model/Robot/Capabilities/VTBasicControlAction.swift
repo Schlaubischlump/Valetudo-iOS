@@ -6,17 +6,13 @@
 //
 import Foundation
 
-enum VTBasicControlCapabilityActionType: String, Encodable, Hashable, Sendable {
-    case start  = "start"
-    case stop   = "stop"
-    case pause  = "pause"
-    case home   = "home"
+enum VTBasicControlCapabilityActionType: String, Encodable, Hashable {
+    case start
+    case stop
+    case pause
+    case home
 }
 
-struct VTBasicControlAction: Encodable, Hashable, Sendable {
+struct VTBasicControlAction: Encodable, Hashable {
     let action: VTBasicControlCapabilityActionType
-
-    enum CodingKeys: String, CodingKey {
-        case action
-    }
 }

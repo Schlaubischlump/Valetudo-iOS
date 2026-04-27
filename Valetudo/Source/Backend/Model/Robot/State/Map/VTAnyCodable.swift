@@ -14,51 +14,51 @@ public enum VTAnyCodable: Codable, Sendable, Hashable, Equatable {
     case array([VTAnyCodable])
     case dict([String: VTAnyCodable])
     case null
-    
+
     public var boolValue: Bool? {
-        return switch self {
-        case .bool(let b): b
+        switch self {
+        case let .bool(b): b
         default: nil
         }
     }
 
     public var stringValue: String? {
-        return switch self {
-        case .string(let s): s
+        switch self {
+        case let .string(s): s
         default: nil
         }
     }
 
     public var intValue: Int? {
-        return switch self {
-        case .int(let i): i
+        switch self {
+        case let .int(i): i
         default: nil
         }
     }
 
     public var doubleValue: Double? {
-        return switch self {
-        case .double(let d): d
-        case .int(let i): Double(i)
+        switch self {
+        case let .double(d): d
+        case let .int(i): Double(i)
         default: nil
         }
     }
 
     public var arrayValue: [VTAnyCodable]? {
-        return switch self {
-        case .array(let a): a
+        switch self {
+        case let .array(a): a
         default: nil
         }
     }
 
     public var dictionaryValue: [String: VTAnyCodable]? {
-        return switch self {
-        case .dict(let d): d
+        switch self {
+        case let .dict(d): d
         default: nil
         }
     }
-    
-    /// This is a best effort decoding strategy. E.g we might end up decoding a float value as an int or a data value as a string. 
+
+    /// This is a best effort decoding strategy. E.g we might end up decoding a float value as an int or a data value as a string.
     public init(from decoder: Decoder) throws {
         let container = try decoder.singleValueContainer()
         if let int = try? container.decode(Int.self) {
@@ -85,18 +85,18 @@ public enum VTAnyCodable: Codable, Sendable, Hashable, Equatable {
             )
         }
     }
-    
+
     public func encode(to encoder: Encoder) throws {
         var container = encoder.singleValueContainer()
 
         switch self {
-        case .int(let i): try container.encode(i)
-        case .double(let d): try container.encode(d)
-        case .bool(let b): try container.encode(b)
-        case .string(let s): try container.encode(s)
+        case let .int(i): try container.encode(i)
+        case let .double(d): try container.encode(d)
+        case let .bool(b): try container.encode(b)
+        case let .string(s): try container.encode(s)
         case .null: try container.encodeNil()
-        case .array(let arr): try container.encode(arr)
-        case .dict(let dict): try container.encode(dict)
+        case let .array(arr): try container.encode(arr)
+        case let .dict(dict): try container.encode(dict)
         }
     }
 }

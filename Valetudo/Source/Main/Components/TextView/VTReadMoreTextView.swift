@@ -21,6 +21,7 @@ final class VTReadMoreTextView: UITextView, UITextViewDelegate {
     var baseFont: UIFont = .systemFont(ofSize: 14) {
         didSet { updateText() }
     }
+
     var baseTextColor: UIColor = .secondaryLabel {
         didSet { updateText() }
     }
@@ -32,7 +33,7 @@ final class VTReadMoreTextView: UITextView, UITextViewDelegate {
     }
 
     required init?(coder: NSCoder) {
-        self.maxLength = 150
+        maxLength = 150
         super.init(coder: coder)
         setup()
     }
@@ -67,7 +68,7 @@ final class VTReadMoreTextView: UITextView, UITextViewDelegate {
         // Apply base font + color to all text
         let baseAttributes: [NSAttributedString.Key: Any] = [
             .font: baseFont,
-            .foregroundColor: baseTextColor
+            .foregroundColor: baseTextColor,
         ]
         mutable.addAttributes(baseAttributes, range: NSRange(location: 0, length: mutable.length))
 
@@ -79,7 +80,7 @@ final class VTReadMoreTextView: UITextView, UITextViewDelegate {
                 attributes: [
                     .link: actionURL,
                     .font: baseFont,
-                    .foregroundColor: tintColor ?? .systemBlue
+                    .foregroundColor: tintColor ?? .systemBlue,
                 ]
             )
             mutable.append(readActionLink)
@@ -93,8 +94,8 @@ final class VTReadMoreTextView: UITextView, UITextViewDelegate {
 
     // MARK: - UITextViewDelegate
 
-    func textView(_ textView: UITextView, primaryActionFor textItem: UITextItem, defaultAction: UIAction) -> UIAction? {
-        guard case .link(let url) = textItem.content else { return nil }
+    func textView(_: UITextView, primaryActionFor textItem: UITextItem, defaultAction: UIAction) -> UIAction? {
+        guard case let .link(url) = textItem.content else { return nil }
 
         switch url.absoluteString {
         case Self.readMoreAction:
@@ -112,4 +113,3 @@ final class VTReadMoreTextView: UITextView, UITextViewDelegate {
         }
     }
 }
-

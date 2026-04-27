@@ -9,7 +9,7 @@ import UIKit
 /**
  * Horizontal stack that automatically breaks the line if the row is full.
  */
-fileprivate final class VTHorizontalFlowStack: UIView {
+private final class VTHorizontalFlowStack: UIView {
     var arrangedSubviews: [UIView] = [] {
         didSet {
             oldValue.forEach { $0.removeFromSuperview() }
@@ -18,20 +18,20 @@ fileprivate final class VTHorizontalFlowStack: UIView {
             layoutIfNeeded()
         }
     }
-    
+
     var availableWidth: CGFloat = 0
-    
+
     var spacing: CGFloat = 0
-    
+
     func addArrangedSubview(_ view: UIView) {
-        self.arrangedSubviews.append(view)
+        arrangedSubviews.append(view)
     }
-    
+
     override func layoutSubviews() {
         super.layoutSubviews()
         var x: CGFloat = 0
         var y: CGFloat = 0
-        
+
         for subview in arrangedSubviews {
             let size = subview.systemLayoutSizeFitting(
                 CGSize(width: availableWidth, height: .greatestFiniteMagnitude)
@@ -49,7 +49,7 @@ fileprivate final class VTHorizontalFlowStack: UIView {
         var x: CGFloat = 0
         var y: CGFloat = 0
         var rowHeight: CGFloat = 0
-                
+
         for subview in arrangedSubviews {
             let size = subview.systemLayoutSizeFitting(
                 CGSize(width: width, height: .greatestFiniteMagnitude)
@@ -62,23 +62,23 @@ fileprivate final class VTHorizontalFlowStack: UIView {
             x += size.width + spacing
             rowHeight = max(rowHeight, size.height) // compute the height of the heighest item in this row
         }
-        
+
         // Add the last row
         y += rowHeight
         return y
     }
-    
+
     override var intrinsicContentSize: CGSize {
         let height = computeIntrinsicContentHeight(in: availableWidth)
         return CGSize(width: UIView.noIntrinsicMetric, height: height)
     }
 }
 
-
 final class VTStackedProgressBarCellContentView: UIView, UIContentView {
     private var currentConfiguration: VTStackedProgressBarCellContentConfiguration!
 
     // MARK: Subviews
+
     private lazy var titleLabel: UILabel = {
         let label = UILabel()
         label.textColor = .label
@@ -104,11 +104,13 @@ final class VTStackedProgressBarCellContentView: UIView, UIContentView {
         apply(configuration: configuration)
     }
 
-    required init?(coder: NSCoder) {
+    @available(*, unavailable)
+    required init?(coder _: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
 
     // MARK: - Setup
+
     private func setupViews() {
         rootStack.axis = .vertical
         rootStack.spacing = 8
@@ -123,16 +125,17 @@ final class VTStackedProgressBarCellContentView: UIView, UIContentView {
         addSubview(rootStack)
 
         preservesSuperviewLayoutMargins = true
-        
+
         NSLayoutConstraint.activate([
             rootStack.topAnchor.constraint(equalTo: layoutMarginsGuide.topAnchor),
             rootStack.leadingAnchor.constraint(equalTo: layoutMarginsGuide.leadingAnchor),
             rootStack.trailingAnchor.constraint(equalTo: layoutMarginsGuide.trailingAnchor),
-            rootStack.bottomAnchor.constraint(equalTo: layoutMarginsGuide.bottomAnchor)
+            rootStack.bottomAnchor.constraint(equalTo: layoutMarginsGuide.bottomAnchor),
         ])
     }
 
     // MARK: - Apply Configuration
+
     private func apply(configuration: VTStackedProgressBarCellContentConfiguration) {
         guard currentConfiguration != configuration else { return }
         currentConfiguration = configuration
@@ -142,7 +145,7 @@ final class VTStackedProgressBarCellContentView: UIView, UIContentView {
         barsStack.arrangedSubviews.forEach { $0.removeFromSuperview() }
         legendStack.arrangedSubviews.forEach { $0.removeFromSuperview() }
         legendStack.availableWidth = configuration.availableWidth
-        
+
         // title
         if let title = configuration.title {
             titleLabel.text = title
@@ -151,21 +154,21 @@ final class VTStackedProgressBarCellContentView: UIView, UIContentView {
 
         // bars
         let barHeight = 8.0
-        
+
         for bar in configuration.bars {
             let horizontalStack = UIStackView()
             horizontalStack.axis = .horizontal
             horizontalStack.spacing = 0
             horizontalStack.distribution = .fill
             horizontalStack.translatesAutoresizingMaskIntoConstraints = false
-            horizontalStack.layer.cornerRadius = barHeight/2
+            horizontalStack.layer.cornerRadius = barHeight / 2
             horizontalStack.layer.masksToBounds = true
-            
+
             for segment in bar {
                 let segmentView = UIView()
                 segmentView.backgroundColor = segment.color
                 horizontalStack.addArrangedSubview(segmentView)
-                
+
                 let widthConstraint = segmentView.widthAnchor.constraint(
                     equalTo: horizontalStack.widthAnchor,
                     multiplier: max(0.0, min(segment.value, 1.0))
