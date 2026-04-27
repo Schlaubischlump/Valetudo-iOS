@@ -22,8 +22,4 @@ extension VTEntity: Comparable {
     public static func < (lhs: VTEntity, rhs: VTEntity) -> Bool {
         lhs.type.order < rhs.type.order
     }
-
-    public static func == (lhs: VTEntity, rhs: VTEntity) -> Bool {
-        lhs.type == rhs.type
-    }
 }

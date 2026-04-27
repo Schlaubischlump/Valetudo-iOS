@@ -48,16 +48,7 @@ public struct VTLayer: Decodable, Sendable {
     }
 }
 
-extension VTLayer: Equatable, Hashable {
-    public static func == (lhs: VTLayer, rhs: VTLayer) -> Bool {
-        guard let lhsId = lhs.segmentId, let rhsId = rhs.segmentId else { return false }
-        return lhsId == rhsId
-    }
-
-    public func hash(into hasher: inout Hasher) {
-        hasher.combine(segmentId)
-    }
-}
+extension VTLayer: Equatable, Hashable {}
 
 extension VTLayer: Describable {
     public var description: String {

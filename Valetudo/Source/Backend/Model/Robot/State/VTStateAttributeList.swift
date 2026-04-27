@@ -447,6 +447,7 @@ public struct VTStateAttributeList: Decodable, Sendable {
 
 extension VTStateAttributeList: Equatable {
     public static func == (lhs: VTStateAttributeList, rhs: VTStateAttributeList) -> Bool {
-        zip(lhs.attributes, rhs.attributes).allSatisfy { $0.0.isEqual(to: $0.1) }
+        lhs.attributes.count == rhs.attributes.count &&
+            zip(lhs.attributes, rhs.attributes).allSatisfy { $0.0.isEqual(to: $0.1) }
     }
 }
