@@ -9,7 +9,11 @@ import UIKit
 class VTControlButton: UIButton, VTControlItem {
     var onTap: (() -> Void)?
 
-    static let baseBackgroundColor: UIColor = .secondarySystemFill
+    static let baseBackgroundColor: UIColor = .systemGray5 /* UIColor { traitCollection in
+         traitCollection.userInterfaceStyle == .dark
+         ? UIColor(red: 49.0/255.0, green: 49.0/255.0, blue: 52.0/255.0, alpha: 1.0)
+         : UIColor(red: 233.0/255.0, green: 233.0/255.0, blue: 234.0/255.0, alpha: 1.0)
+     } */ // .quaternarySystemFill //.systemFill //.secondarySystemFill
     static let baseForegroundColor: UIColor = .label
     static let highlightedBackgroundColor: UIColor = .tintColor
 
@@ -23,8 +27,13 @@ class VTControlButton: UIButton, VTControlItem {
         var config = UIButton.Configuration.plain()
         config.imagePadding = 4
         config.baseForegroundColor = .label
-        config.cornerStyle = .medium
+        // let glassEffect = UIGlassEffect(style: .regular)
+        // glassEffect.tintColor = VTControlButton.baseBackgroundColor
+        // config.background.visualEffect = glassEffect//UIBlurEffect(style: .systemChromeMaterialDark)
+        // UIBlurEffect(style: .systemThickMaterial)
+        config.background.backgroundColor = VTControlButton.baseBackgroundColor
         config.baseBackgroundColor = VTControlButton.baseBackgroundColor
+        config.cornerStyle = .medium
         config.titleLineBreakMode = .byTruncatingTail
         config.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in
             var outgoing = incoming
@@ -37,6 +46,8 @@ class VTControlButton: UIButton, VTControlItem {
     init(title: String?, icon: UIImage?, config _: UIButton.Configuration = VTControlButton.defaultConfiguration()) {
         _title = title
         super.init(frame: .zero)
+
+        preferredBehavioralStyle = .pad
         var config = VTControlButton.defaultConfiguration()
         config.title = title
         config.image = icon

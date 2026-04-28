@@ -37,8 +37,9 @@ final class VTSegmentedControlRow<T: VTSegmentedItem>: VTControlRow<UISegmentedC
     var onValueChanged: ((T?, T) -> Void)?
 
     init(title: String, titleIcon: UIImage?) {
-        let segmentedControl = UISegmentedControl() // RoundedSegmentedControl()
+        let segmentedControl = UISegmentedControl()
         segmentedControl.selectedSegmentTintColor = .tintColor
+        segmentedControl.backgroundColor = VTControlButton.baseBackgroundColor
         segmentedControl.setTitleTextAttributes([.foregroundColor: UIColor.white], for: .selected)
         super.init(title: title, titleIcon: titleIcon, content: segmentedControl)
     }

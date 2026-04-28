@@ -64,7 +64,7 @@ final class VTStartPauseStopControlRow: UIView {
         translatesAutoresizingMaskIntoConstraints = false
         heightAnchor.constraint(equalToConstant: 50).isActive = true
 
-        buttonContainerView.isUserInteractionEnabled = false
+        buttonContainerView.isUserInteractionEnabled = true
         buttonContainerView.clipsToBounds = true
         addSubview(buttonContainerView)
 
@@ -89,15 +89,17 @@ final class VTStartPauseStopControlRow: UIView {
         config.cornerStyle = .fixed
         config.background.cornerRadius = 0
         config.background.backgroundInsets = .zero
+        // config.background.visualEffect = UIVibrancyEffect(blurEffect: UIBlurEffect(style: .dark), style: .fill)
         button.configuration = config
     }
 
     override func layoutSubviews() {
         super.layoutSubviews()
 
-        let scale = window?.screen.scale ?? UIScreen.main.scale
+        // Force the visible strip to use a width divisible by 3 so each button gets an
+        // exact third. That avoids fractional button widths and the visual glitches they cause on macOS.
         let snappedWidth = snappedControlWidth(for: bounds.width)
-        let alignedOriginX = pixelAligned((bounds.width - snappedWidth) / 2, scale: scale)
+        let alignedOriginX = (bounds.width - snappedWidth) / 2
         let height = bounds.height
         let buttonWidth = snappedWidth / 3
 
@@ -107,15 +109,14 @@ final class VTStartPauseStopControlRow: UIView {
         startPauseButton.frame = CGRect(x: 0, y: 0, width: buttonWidth, height: height)
         stopButton.frame = CGRect(x: buttonWidth, y: 0, width: buttonWidth, height: height)
         homeButton.frame = CGRect(x: buttonWidth * 2, y: 0, width: buttonWidth, height: height)
+
+        // Add a left and right border on the middle button.
+        stopButton.updateBorder(edge: [.left, .right], color: .opaqueSeparator.withAlphaComponent(0.5), thickness: 1.0)
     }
 
     private func snappedControlWidth(for availableWidth: CGFloat) -> CGFloat {
-        let snappedWidth = floor(availableWidth / 3) * 3
-        return max(0, snappedWidth)
-    }
-
-    private func pixelAligned(_ value: CGFloat, scale: CGFloat) -> CGFloat {
-        (value * scale).rounded() / scale
+        // Round down to the nearest multiple of 3 to keep all three button widths whole.
+        max(0, floor(availableWidth / 3) * 3)
     }
 
     // MARK: - Actions

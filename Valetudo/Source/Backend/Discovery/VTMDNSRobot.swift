@@ -43,7 +43,6 @@ struct VTMDNSRobot: Identifiable, Hashable {
         // Try to get the hostname based url, e.g. http://my-valetudo-robot:80
         // Note, the URL does not include .local, instead we let the system resolver find the DNS search domain.
         // This allows us to access a robot even trough VPN.
-
         // As a fallback we are also fine with an IPv4 or IPv6 based result, although this is probably changing on
         // next router reboot.
         await resolveEndpoint()
