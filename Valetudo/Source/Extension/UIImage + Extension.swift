@@ -18,6 +18,9 @@ public extension UIImage {
         return image.slashed(fillColor: .black, lineWidth: 1.25)
     }()
 
+    static let rectangle3GroupFill = UIImage(systemName: "rectangle.3.group.fill")
+    static let nosign = UIImage(systemName: "nosign")
+
     static let chartLineTextClipboardFill = UIImage(systemName: "chart.line.text.clipboard.fill")
     static let roboticVacuumFill = UIImage(systemName: "robotic.vacuum.fill")
     static let clockFill = UIImage(systemName: "clock.fill")

@@ -7,7 +7,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "action"
+            "value" : "Action"
           }
         }
       }
@@ -936,6 +936,28 @@
         }
       }
     },
+    "MAP_OPTIONS_SEGMENT_MANAGEMENT_SUBTITLE" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modify the Map segments"
+          }
+        }
+      }
+    },
+    "MAP_OPTIONS_SEGMENT_MANAGEMENT_TITLE" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Segment Managment"
+          }
+        }
+      }
+    },
     "MAP_OPTIONS_SUBTITLE" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -943,6 +965,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Map Features managed by the robot"
+          }
+        }
+      }
+    },
+    "MAP_OPTIONS_VIRTUAL_RESTRICTION_MANAGEMENT_SUBTITLE" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Create, modify and delete virtual restrictions"
+          }
+        }
+      }
+    },
+    "MAP_OPTIONS_VIRTUAL_RESTRICTION_MANAGEMENT_TITLE" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Virtual Restriction Managment"
           }
         }
       }

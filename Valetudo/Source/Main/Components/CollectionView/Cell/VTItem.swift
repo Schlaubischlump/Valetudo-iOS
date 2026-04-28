@@ -13,58 +13,69 @@ protocol VTItem: Sendable, Hashable {
     var id: String { get }
 }
 
+/// A boolean on/off row rendered as a checkbox-style control.
 struct VTCheckboxItem: VTItem {
     let id: String
     let title: String
     let enabled: Bool
 }
 
+/// A free-form text input row.
 struct VTTextFieldItem: VTItem {
     let id: String
     let text: String
 }
 
+/// A single-selection row backed by a dropdown menu.
 struct VTDropDownItem<T: Hashable & Sendable>: VTItem {
     let id: String
     let active: T
     let options: [T]
 }
 
+/// A segmented control row with one or more active options.
 struct VTSegmentItem<T: Hashable & Sendable>: VTItem {
     let id: String
     let active: Set<T>
     let options: [T]
 }
 
+/// A row for editing an hour/minute time value.
 struct VTTimePickerItem: VTItem {
     let id: String
     let hours: Int
     let minutes: Int
 }
 
+/// A row that presents and edits an ordered multi-selection list.
 struct VTListSelectionItem<T: Hashable & Sendable>: VTItem {
     let id: String
     let active: [T]
     let options: [T]
 }
 
+/// A non-interactive loading state row with a status message.
 struct VTLoadingItem: VTItem {
     let id: String
     let message: String
 }
 
+/// A progress row with a message and numeric completion value.
 struct VTProgressItem: VTItem {
     let id: String
     let message: String
     let progress: CGFloat
 }
 
+/// A title/value row that can optionally include a leading image.
 struct VTKeyValueItem: VTItem {
     let id: String
     let title: String
     let value: String?
+    let image: UIImage?
 }
 
+/// A row with title, subtitle, optional icon, and a trailing action button.
 struct VTActionItem: VTItem {
     let id: String
     let title: String
@@ -138,8 +149,8 @@ struct VTAnyItem: Hashable {
         VTAnyItem(VTProgressItem(id: id, message: message, progress: progress))
     }
 
-    static func keyValue(_ id: String, title: String, value: String?) -> VTAnyItem {
-        VTAnyItem(VTKeyValueItem(id: id, title: title, value: value))
+    static func keyValue(_ id: String, title: String, value: String?, image: UIImage? = nil) -> VTAnyItem {
+        VTAnyItem(VTKeyValueItem(id: id, title: title, value: value, image: image))
     }
 
     static func action(

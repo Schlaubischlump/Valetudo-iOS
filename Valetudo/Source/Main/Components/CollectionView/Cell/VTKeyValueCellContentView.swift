@@ -11,6 +11,8 @@ final class VTKeyValueCellContentView: UIView, UIContentView {
     private var currentConfiguration: VTKeyValueCellContentConfiguration!
 
     private let rootStack = UIStackView()
+    private let textStack = UIStackView()
+    private let iconImageView = UIImageView()
     private let titleLabel = UILabel()
     private let valueLabel = UILabel()
     private lazy var titleWidthConstraint = titleLabel.widthAnchor.constraint(equalToConstant: 170)
@@ -56,10 +58,21 @@ final class VTKeyValueCellContentView: UIView, UIContentView {
         preservesSuperviewLayoutMargins = true
         directionalLayoutMargins = .init(top: 10, leading: 0, bottom: 10, trailing: 0)
 
-        rootStack.alignment = .top
-        rootStack.axis = .vertical
-        rootStack.spacing = 6
+        rootStack.alignment = .center
+        rootStack.axis = .horizontal
+        rootStack.spacing = 12
         rootStack.translatesAutoresizingMaskIntoConstraints = false
+
+        iconImageView.contentMode = .scaleAspectFit
+        iconImageView.tintColor = .label
+        iconImageView.setContentHuggingPriority(.required, for: .horizontal)
+        iconImageView.setContentCompressionResistancePriority(.required, for: .horizontal)
+        iconImageView.translatesAutoresizingMaskIntoConstraints = false
+
+        textStack.alignment = .top
+        textStack.axis = .vertical
+        textStack.spacing = 6
+        textStack.translatesAutoresizingMaskIntoConstraints = false
 
         titleLabel.font = .preferredFont(forTextStyle: .body)
         titleLabel.textColor = .label
@@ -74,8 +87,10 @@ final class VTKeyValueCellContentView: UIView, UIContentView {
         valueLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
 
         addSubview(rootStack)
-        rootStack.addArrangedSubview(titleLabel)
-        rootStack.addArrangedSubview(valueLabel)
+        rootStack.addArrangedSubview(iconImageView)
+        rootStack.addArrangedSubview(textStack)
+        textStack.addArrangedSubview(titleLabel)
+        textStack.addArrangedSubview(valueLabel)
 
         NSLayoutConstraint.activate([
             minimumHeightConstraint,
@@ -84,6 +99,8 @@ final class VTKeyValueCellContentView: UIView, UIContentView {
             rootStack.trailingAnchor.constraint(equalTo: layoutMarginsGuide.trailingAnchor),
             rootStack.bottomAnchor.constraint(lessThanOrEqualTo: layoutMarginsGuide.bottomAnchor),
             rootStack.centerYAnchor.constraint(equalTo: layoutMarginsGuide.centerYAnchor),
+            iconImageView.widthAnchor.constraint(equalToConstant: 28),
+            iconImageView.heightAnchor.constraint(equalToConstant: 28),
         ])
     }
 
@@ -92,13 +109,16 @@ final class VTKeyValueCellContentView: UIView, UIContentView {
         currentConfiguration = configuration
 
         let hasValue = !(configuration.value?.isEmpty ?? true)
+        let hasImage = configuration.image != nil
         titleLabel.text = configuration.title
         valueLabel.text = configuration.value
         valueLabel.isHidden = !hasValue
+        iconImageView.image = configuration.image?.withRenderingMode(.alwaysTemplate)
+        iconImageView.isHidden = !hasImage
 
         let usesHorizontalLayout = configuration.usesHorizontalLayout && hasValue
-        rootStack.axis = usesHorizontalLayout ? .horizontal : .vertical
-        rootStack.spacing = hasValue ? (usesHorizontalLayout ? 20 : 6) : 0
+        textStack.axis = usesHorizontalLayout ? .horizontal : .vertical
+        textStack.spacing = hasValue ? (usesHorizontalLayout ? 20 : 6) : 0
         valueLabel.textAlignment = usesHorizontalLayout ? .right : .left
         titleWidthConstraint.isActive = usesHorizontalLayout
     }

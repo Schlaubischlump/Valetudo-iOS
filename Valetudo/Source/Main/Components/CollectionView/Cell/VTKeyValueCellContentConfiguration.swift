@@ -12,6 +12,7 @@ struct VTKeyValueCellContentConfiguration: UIContentConfiguration, Hashable {
     let title: String
     let value: String?
     let usesHorizontalLayout: Bool
+    var image: UIImage?
 
     func makeContentView() -> any UIView & UIContentView {
         VTKeyValueCellContentView(configuration: self)

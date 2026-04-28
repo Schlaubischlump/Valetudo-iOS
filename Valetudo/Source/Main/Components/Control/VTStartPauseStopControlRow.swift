@@ -76,8 +76,8 @@ final class VTStartPauseStopControlRow: UIView {
         stopButton.onTap = stopTapped
         homeButton.onTap = homeTapped
 
-        [startPauseButton, stopButton, homeButton].forEach {
-            buttonContainerView.addSubview($0)
+        for item in [startPauseButton, stopButton, homeButton] {
+            buttonContainerView.addSubview(item)
         }
 
         disableButtons()

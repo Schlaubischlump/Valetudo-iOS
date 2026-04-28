@@ -9,6 +9,7 @@ import UIKit
 final class VTActionCellContentView: UIView, UIContentView {
     private var currentConfiguration: VTActionCellContentConfiguration!
     private var actionButton = VTOutlineButton(title: "", tintColor: .tintColor)
+    private lazy var minimumHeightConstraint = heightAnchor.constraint(greaterThanOrEqualToConstant: 50)
 
     private let iconImageView: UIImageView = {
         let imageView = UIImageView()
@@ -20,22 +21,28 @@ final class VTActionCellContentView: UIView, UIContentView {
 
     private let titleLabel: UILabel = {
         let label = UILabel()
+        label.font = .preferredFont(forTextStyle: .body)
         label.textColor = .label
+        label.numberOfLines = 0
+        label.setContentCompressionResistancePriority(.required, for: .horizontal)
+        label.setContentHuggingPriority(.required, for: .horizontal)
         return label
     }()
 
     private let subtitleLabel: UILabel = {
         let label = UILabel()
-        label.font = .systemFont(ofSize: UIFont.smallSystemFontSize, weight: .semibold)
+        label.font = .preferredFont(forTextStyle: .body)
         label.textColor = .secondaryLabel
         label.numberOfLines = 0
+        label.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
         return label
     }()
 
     private lazy var textStack: UIStackView = {
         let stack = UIStackView(arrangedSubviews: [titleLabel, subtitleLabel])
+        stack.alignment = .top
         stack.axis = .vertical
-        stack.spacing = 4
+        stack.spacing = 6
         return stack
     }()
 
@@ -67,8 +74,27 @@ final class VTActionCellContentView: UIView, UIContentView {
         fatalError("init(coder:) has not been implemented")
     }
 
+    override func systemLayoutSizeFitting(
+        _ targetSize: CGSize,
+        withHorizontalFittingPriority horizontalFittingPriority: UILayoutPriority,
+        verticalFittingPriority _: UILayoutPriority
+    ) -> CGSize {
+        let availableWidth = max(0, targetSize.width - directionalLayoutMargins.leading - directionalLayoutMargins.trailing)
+        let contentSize = container.systemLayoutSizeFitting(
+            CGSize(width: availableWidth, height: UIView.layoutFittingCompressedSize.height),
+            withHorizontalFittingPriority: horizontalFittingPriority,
+            verticalFittingPriority: .fittingSizeLevel
+        )
+
+        let minCellHeight = 44.0
+        let height = max(minCellHeight, contentSize.height + directionalLayoutMargins.top + directionalLayoutMargins.bottom)
+        return CGSize(width: targetSize.width, height: height)
+    }
+
     private func setupViews() {
         backgroundColor = .clear
+        preservesSuperviewLayoutMargins = true
+        directionalLayoutMargins = .init(top: 10, leading: 0, bottom: 10, trailing: 0)
 
         iconImageView.translatesAutoresizingMaskIntoConstraints = false
         textStack.translatesAutoresizingMaskIntoConstraints = false
@@ -77,10 +103,12 @@ final class VTActionCellContentView: UIView, UIContentView {
         addSubview(container)
 
         NSLayoutConstraint.activate([
-            container.topAnchor.constraint(equalTo: layoutMarginsGuide.topAnchor),
+            minimumHeightConstraint,
+            container.topAnchor.constraint(greaterThanOrEqualTo: layoutMarginsGuide.topAnchor),
             container.leadingAnchor.constraint(equalTo: layoutMarginsGuide.leadingAnchor),
             container.trailingAnchor.constraint(equalTo: layoutMarginsGuide.trailingAnchor),
-            container.bottomAnchor.constraint(equalTo: layoutMarginsGuide.bottomAnchor),
+            container.bottomAnchor.constraint(lessThanOrEqualTo: layoutMarginsGuide.bottomAnchor),
+            container.centerYAnchor.constraint(equalTo: layoutMarginsGuide.centerYAnchor),
             iconImageView.widthAnchor.constraint(equalToConstant: 28),
             iconImageView.heightAnchor.constraint(equalToConstant: 28),
         ])

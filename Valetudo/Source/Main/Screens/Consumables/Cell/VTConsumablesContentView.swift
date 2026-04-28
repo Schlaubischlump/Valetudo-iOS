@@ -11,8 +11,9 @@ class VTConsumablesContentView: UIView, UIContentView {
 
     private lazy var titleLabel = {
         let label = UILabel()
-        // label.font = .systemFont(ofSize: UIFont.systemFontSize, weight: .semibold)
+        label.font = .preferredFont(forTextStyle: .body)
         label.textColor = .label
+        label.numberOfLines = 0
         return label
     }()
 
@@ -25,8 +26,9 @@ class VTConsumablesContentView: UIView, UIContentView {
 
     private lazy var remainingLabel: UILabel = {
         let label = UILabel()
-        label.font = .systemFont(ofSize: UIFont.smallSystemFontSize, weight: .semibold)
+        label.font = .preferredFont(forTextStyle: .body)
         label.textColor = .secondaryLabel
+        label.numberOfLines = 0
         return label
     }()
 
@@ -56,7 +58,7 @@ class VTConsumablesContentView: UIView, UIContentView {
 
         let textStack = UIStackView(arrangedSubviews: [titleLabel, progressView, remainingLabel])
         textStack.axis = .vertical
-        textStack.spacing = 8
+        textStack.spacing = 6
 
         textStack.translatesAutoresizingMaskIntoConstraints = false
         resetButton.translatesAutoresizingMaskIntoConstraints = false

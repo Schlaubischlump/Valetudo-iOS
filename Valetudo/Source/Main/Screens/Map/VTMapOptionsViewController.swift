@@ -8,6 +8,8 @@ import UIKit
 
 private let kMappingPass = "MAPPING_PASS"
 private let kMapReset = "MAP_RESET"
+private let kSegmentManagement = "SEGMENT_MANAGEMENT"
+private let kVirtualRestrictionManagement = "VIRTUAL_RESTRICTION_MANAGEMENT"
 
 final class VTMapOptionsViewController: VTCollectionViewController {
     private typealias DataSource = UICollectionViewDiffableDataSource<VTMapOptionsSection, VTAnyItem>
@@ -76,7 +78,7 @@ final class VTMapOptionsViewController: VTCollectionViewController {
     }
 
     private func configureDataSource() {
-        let cellRegistration = VTCellRegistration { [weak self] cell, _, wrappedItem in
+        let actionCellRegistration = VTCellRegistration { [weak self] cell, _, wrappedItem in
             guard let self else { return }
             guard let item = wrappedItem.base as? VTActionItem else {
                 fatalError("Unsupported map options item: \(wrappedItem.base)")
@@ -103,8 +105,31 @@ final class VTMapOptionsViewController: VTCollectionViewController {
             cell.backgroundConfiguration = .adaptiveListCell()
         }
 
+        let linkCellRegistration = VTCellRegistration { cell, _, wrappedItem in
+            guard let item = wrappedItem.base as? VTKeyValueItem else {
+                fatalError("Unsupported map options item: \(wrappedItem.base)")
+            }
+
+            cell.contentConfiguration = VTKeyValueCellContentConfiguration(
+                id: item.id,
+                title: item.title,
+                value: item.value,
+                usesHorizontalLayout: false,
+                image: item.image
+            )
+            cell.backgroundConfiguration = .adaptiveListCell()
+            cell.accessories = [.disclosureIndicator()]
+        }
+
         dataSource = DataSource(collectionView: collectionView) { collectionView, indexPath, item in
-            collectionView.dequeueConfiguredReusableCell(using: cellRegistration, for: indexPath, item: item)
+            switch item.base {
+            case is VTActionItem:
+                collectionView.dequeueConfiguredReusableCell(using: actionCellRegistration, for: indexPath, item: item)
+            case is VTKeyValueItem:
+                collectionView.dequeueConfiguredReusableCell(using: linkCellRegistration, for: indexPath, item: item)
+            default:
+                fatalError("Unsupported map options item: \(item.base)")
+            }
         }
 
         dataSource.supplementaryViewProvider = { collectionView, kind, indexPath in
@@ -114,7 +139,11 @@ final class VTMapOptionsViewController: VTCollectionViewController {
                 withReuseIdentifier: VTFooterView.reuseIdentifier,
                 for: indexPath
             ) as? VTFooterView
-            footer?.configure(attributedText: "MAP_OPTIONS_FOOTER_DESCRIPTION".localizedMarkdown())
+            if indexPath.section == VTMapOptionsSection.allCases.indices.last {
+                footer?.configure(attributedText: "MAP_OPTIONS_FOOTER_DESCRIPTION".localizedMarkdown())
+            } else {
+                footer?.configure(attributedText: NSAttributedString(string: ""))
+            }
             return footer
         }
     }
@@ -135,7 +164,7 @@ final class VTMapOptionsViewController: VTCollectionViewController {
         availableCapabilities = await Set((try? client.getCapabilities()) ?? [])
 
         var snapshot = Snapshot()
-        snapshot.appendSections([.main])
+        snapshot.appendSections([.mapping, .segmentationManagement])
         if availableCapabilities.contains(.mappingPass) {
             snapshot.appendItems([
                 .action(
@@ -145,7 +174,7 @@ final class VTMapOptionsViewController: VTCollectionViewController {
                     image: .mapFill,
                     buttonTitle: "MAP_OPTIONS_MAPPING_PASS_BUTTON".localized()
                 ),
-            ], toSection: .main)
+            ], toSection: .mapping)
         }
         if availableCapabilities.contains(.mapReset) {
             snapshot.appendItems([
@@ -157,7 +186,27 @@ final class VTMapOptionsViewController: VTCollectionViewController {
                     buttonTitle: "MAP_OPTIONS_MAPPING_PASS_BUTTON".localized(),
                     buttonStyle: .destructive
                 ),
-            ], toSection: .main)
+            ], toSection: .mapping)
+        }
+        if availableCapabilities.contains(.mapSegmentation) {
+            snapshot.appendItems([
+                .keyValue(
+                    kSegmentManagement,
+                    title: "MAP_OPTIONS_SEGMENT_MANAGEMENT_TITLE".localized(),
+                    value: "MAP_OPTIONS_SEGMENT_MANAGEMENT_SUBTITLE".localized(),
+                    image: .rectangle3GroupFill
+                ),
+            ], toSection: .segmentationManagement)
+        }
+        if availableCapabilities.contains(.combinedVirtualRestrictions) {
+            snapshot.appendItems([
+                .keyValue(
+                    kVirtualRestrictionManagement,
+                    title: "MAP_OPTIONS_VIRTUAL_RESTRICTION_MANAGEMENT_TITLE".localized(),
+                    value: "MAP_OPTIONS_VIRTUAL_RESTRICTION_MANAGEMENT_SUBTITLE".localized(),
+                    image: .nosign
+                ),
+            ], toSection: .segmentationManagement)
         }
         await dataSource.apply(snapshot, animatingDifferences: animated)
 
