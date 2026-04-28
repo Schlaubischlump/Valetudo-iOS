@@ -20,6 +20,9 @@ public extension UIImage {
 
     static let rectangle3GroupFill = UIImage(systemName: "rectangle.3.group.fill")
     static let nosign = UIImage(systemName: "nosign")
+    static let pencil = UIImage(systemName: "pencil")
+    static let scissors = UIImage(systemName: "scissors")
+    static let union = UIImage.unionImage()
 
     static let chartLineTextClipboardFill = UIImage(systemName: "chart.line.text.clipboard.fill")
     static let roboticVacuumFill = UIImage(systemName: "robotic.vacuum.fill")
@@ -155,6 +158,38 @@ public extension UIImage {
             fillColor.setStroke()
             slashPath.lineWidth = lineWidth
             slashPath.stroke()
+        }
+
+        return image.withRenderingMode(.alwaysTemplate)
+    }
+
+    private static func unionImage() -> UIImage {
+        let size = CGSize(width: 24, height: 24)
+        let renderer = UIGraphicsImageRenderer(size: size, format: .default())
+        let image = renderer.image { context in
+            UIColor.black.setFill()
+
+            let leftRect = UIBezierPath(
+                roundedRect: CGRect(x: 3, y: 6, width: 11, height: 11),
+                cornerRadius: 2.5
+            )
+            let rightRect = UIBezierPath(
+                roundedRect: CGRect(x: 10, y: 8, width: 11, height: 11),
+                cornerRadius: 2.5
+            )
+            leftRect.append(rightRect)
+            leftRect.fill()
+
+            // Carve a transparent outline around the shared overlap so the
+            // intersection remains legible inside the merged union icon.
+            let overlapCutout = UIBezierPath(
+                roundedRect: CGRect(x: 10, y: 8, width: 4, height: 9),
+                cornerRadius: 1.5
+            )
+            overlapCutout.lineWidth = 1.25
+
+            context.cgContext.setBlendMode(.clear)
+            overlapCutout.stroke()
         }
 
         return image.withRenderingMode(.alwaysTemplate)

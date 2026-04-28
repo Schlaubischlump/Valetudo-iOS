@@ -179,7 +179,7 @@ final class VTRobotsListViewController: VTCollectionViewController {
     }
 
     override func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        collectionView.deselectItem(at: indexPath, animated: true)
+        defer { collectionView.deselectItem(at: indexPath, animated: true) }
 
         guard let item = dataSource.itemIdentifier(for: indexPath),
               case let .robot(robot) = item else { return }

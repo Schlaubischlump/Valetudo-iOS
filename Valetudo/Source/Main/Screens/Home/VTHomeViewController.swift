@@ -18,6 +18,7 @@ class VTHomeViewController: VTViewController {
     var mapInteractionEnabled: Bool = true
 
     private let mapScrollView = VTZoomableScrollView()
+    private let activityIndicator = UIActivityIndicatorView(style: .large)
     private var mapView: VTMapView? {
         mapScrollView.zoomableView as? VTMapView
     }
@@ -70,8 +71,10 @@ class VTHomeViewController: VTViewController {
         mapScrollView.maximumZoomScale = 3.0
 
         view.addSubview(mapScrollView)
+        view.addSubview(activityIndicator)
 
         mapScrollView.translatesAutoresizingMaskIntoConstraints = false
+        activityIndicator.translatesAutoresizingMaskIntoConstraints = false
         mapScrollViewBottomAnchor = mapScrollView.bottomAnchor.constraint(
             equalTo: view.safeAreaLayoutGuide.bottomAnchor,
             constant: bottomPad
@@ -81,6 +84,8 @@ class VTHomeViewController: VTViewController {
             mapScrollView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
             mapScrollView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
             mapScrollViewBottomAnchor,
+            activityIndicator.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            activityIndicator.centerYAnchor.constraint(equalTo: view.centerYAnchor),
         ])
 
         // legend
@@ -333,6 +338,9 @@ class VTHomeViewController: VTViewController {
 
     @MainActor
     func loadInitialData() async throws {
+        activityIndicator.startAnimating()
+        defer { activityIndicator.stopAnimating() }
+
         let mapData = try await client.getMap()
         robotInfo = try? await client.getRobotInfo()
         robotState = try? await client.getStateAttributes()

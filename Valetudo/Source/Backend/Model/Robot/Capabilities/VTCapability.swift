@@ -45,6 +45,9 @@ public enum VTCapability: Equatable, Hashable, Sendable, Decodable {
     case collisionAvoidantNavigationControl
     case autoEmptyDockAutoEmptyIntervalControl
     case quirks
+    case mapSegmentMaterialControl
+    case floorMaterialDirectionAwareNavigationControl
+    case mopTwistControl
     case unknown(String)
 
     var name: String {
@@ -87,6 +90,9 @@ public enum VTCapability: Equatable, Hashable, Sendable, Decodable {
         case .collisionAvoidantNavigationControl: "CollisionAvoidantNavigationControlCapability"
         case .autoEmptyDockAutoEmptyIntervalControl: "AutoEmptyDockAutoEmptyIntervalControlCapability"
         case .quirks: "QuirksCapability"
+        case .mapSegmentMaterialControl: "MapSegmentMaterialControlCapability"
+        case .floorMaterialDirectionAwareNavigationControl: "FloorMaterialDirectionAwareNavigationControlCapability"
+        case .mopTwistControl: "MopTwistControlCapability"
         case let .unknown(str): str
         }
     }
@@ -131,6 +137,9 @@ public enum VTCapability: Equatable, Hashable, Sendable, Decodable {
         case "CollisionAvoidantNavigationControlCapability": self = .collisionAvoidantNavigationControl
         case "AutoEmptyDockAutoEmptyIntervalControlCapability": self = .autoEmptyDockAutoEmptyIntervalControl
         case "QuirksCapability": self = .quirks
+        case "MapSegmentMaterialControlCapability": self = .mapSegmentMaterialControl
+        case "FloorMaterialDirectionAwareNavigationControlCapability": self = .floorMaterialDirectionAwareNavigationControl
+        case "MopTwistControlCapability": self = .mopTwistControl
         default: self = .unknown(name)
         }
     }

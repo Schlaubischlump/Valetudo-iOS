@@ -159,6 +159,32 @@ final class VTMapOptionsViewController: VTCollectionViewController {
         await reloadData(animated: false)
     }
 
+    override func collectionView(_: UICollectionView, shouldSelectItemAt indexPath: IndexPath) -> Bool {
+        guard let item = dataSource.itemIdentifier(for: indexPath) else { return false }
+        return switch item.id {
+        case kSegmentManagement, kVirtualRestrictionManagement: true
+        default: false
+        }
+    }
+
+    override func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        defer { collectionView.deselectItem(at: indexPath, animated: true) }
+        guard let item = dataSource.itemIdentifier(for: indexPath) else { return }
+
+        let destination: UIViewController? = switch item.id {
+        case kSegmentManagement:
+            VTSegmentManagementViewController(client: client, capabilities: availableCapabilities)
+        case kVirtualRestrictionManagement:
+            VTVirtualRestrictionManagementViewController(client: client, capabilities: availableCapabilities)
+        default:
+            nil
+        }
+
+        if let destination {
+            navigationController?.pushViewController(destination, animated: true)
+        }
+    }
+
     @MainActor
     private func reloadData(animated: Bool) async {
         availableCapabilities = await Set((try? client.getCapabilities()) ?? [])

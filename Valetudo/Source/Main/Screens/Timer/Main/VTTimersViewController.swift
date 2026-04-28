@@ -256,7 +256,7 @@ final class VTTimersViewController: VTCollectionViewController {
     }
 
     override func collectionView(_: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        collectionView.deselectItem(at: indexPath, animated: false)
+        defer { collectionView.deselectItem(at: indexPath, animated: true) }
 
         guard let item = dataSource.itemIdentifier(for: indexPath),
               case let .timer(timer) = item else { return }

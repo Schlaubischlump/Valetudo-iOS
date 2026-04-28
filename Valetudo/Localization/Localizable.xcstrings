@@ -144,6 +144,28 @@
         }
       }
     },
+    "CANCEL" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancel"
+          }
+        }
+      }
+    },
+    "CUTTING_LINE" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cutting Line"
+          }
+        }
+      }
+    },
     "CLEAN" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -371,6 +393,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Docked"
+          }
+        }
+      }
+    },
+    "DISCARD_CHANGES" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Discard Changes"
           }
         }
       }
@@ -738,6 +771,17 @@
         }
       }
     },
+    "KEEP_EDITING" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keep Editing"
+          }
+        }
+      }
+    },
     "ITERATIONS" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -745,6 +789,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Iterations"
+          }
+        }
+      }
+    },
+    "JOIN" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Join"
           }
         }
       }
@@ -987,6 +1042,39 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Virtual Restriction Managment"
+          }
+        }
+      }
+    },
+    "MAP_EDITING_DISCARD_ALERT_MESSAGE" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Going back now will discard the changes you just made."
+          }
+        }
+      }
+    },
+    "MAP_EDITING_DISCARD_ALERT_TITLE" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Discard Changes?"
+          }
+        }
+      }
+    },
+    "MATERIAL" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Material"
           }
         }
       }
@@ -1295,6 +1383,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Release"
+          }
+        }
+      }
+    },
+    "RENAME" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rename"
           }
         }
       }
