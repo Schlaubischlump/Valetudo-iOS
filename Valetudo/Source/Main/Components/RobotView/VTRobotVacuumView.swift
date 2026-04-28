@@ -260,7 +260,7 @@ private final class VTRobotVaccuumBrushView: UIView {
             context.saveGState()
             context.rotate(by: CGFloat(index) * 2 * .pi / 3)
 
-            lineColor.withAlphaComponent(index == 0 ? 1 : 0.55).setStroke()
+            lineColor.withAlphaComponent(0.55).setStroke()
             let path = UIBezierPath()
             path.move(to: CGPoint(x: 0, y: -centerRadius * 0.45))
             path.addCurve(
@@ -281,14 +281,6 @@ private final class VTRobotVaccuumBrushView: UIView {
             y: -centerRadius,
             width: centerRadius * 2,
             height: centerRadius * 2
-        )).fill()
-
-        UIColor.white.withAlphaComponent(0.7).setFill()
-        UIBezierPath(ovalIn: CGRect(
-            x: -size * 0.035,
-            y: -bristleLength - size * 0.035,
-            width: size * 0.07,
-            height: size * 0.07
         )).fill()
 
         context.restoreGState()

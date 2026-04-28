@@ -6,7 +6,7 @@
 //
 import UIKit
 
-final class VTStartPauseStopControlRow: UIStackView {
+final class VTStartPauseStopControlRow: UIView {
     var onStartPauseCliked: ((_ isStarted: Bool) -> Void)?
     var onStopClicked: (() -> Void)?
     var onHomeClicked: (() -> Void)?
@@ -45,26 +45,28 @@ final class VTStartPauseStopControlRow: UIStackView {
         }
     }
 
-    private var startPauseButton = VTControlButton(title: nil, icon: .playFill)
-    private var stopButton = VTControlButton(title: nil, icon: .stopFill)
-    private var homeButton = VTControlButton(title: nil, icon: .houseFill)
+    private let buttonContainerView = UIView()
+    private let startPauseButton = VTControlButton(title: nil, icon: .playFill)
+    private let stopButton = VTControlButton(title: nil, icon: .stopFill)
+    private let homeButton = VTControlButton(title: nil, icon: .houseFill)
 
     override init(frame: CGRect) {
         super.init(frame: frame)
         setup()
     }
 
-    required init(coder: NSCoder) {
+    required init?(coder: NSCoder) {
         super.init(coder: coder)
         setup()
     }
 
     private func setup() {
-        axis = .horizontal
-        distribution = .fillEqually
-        spacing = 0
         translatesAutoresizingMaskIntoConstraints = false
         heightAnchor.constraint(equalToConstant: 50).isActive = true
+
+        buttonContainerView.isUserInteractionEnabled = false
+        buttonContainerView.clipsToBounds = true
+        addSubview(buttonContainerView)
 
         setupButton(startPauseButton)
         setupButton(stopButton)
@@ -74,11 +76,11 @@ final class VTStartPauseStopControlRow: UIStackView {
         stopButton.onTap = stopTapped
         homeButton.onTap = homeTapped
 
-        disableButtons()
+        [startPauseButton, stopButton, homeButton].forEach {
+            buttonContainerView.addSubview($0)
+        }
 
-        addArrangedSubview(startPauseButton)
-        addArrangedSubview(stopButton)
-        addArrangedSubview(homeButton)
+        disableButtons()
     }
 
     private func setupButton(_ button: UIButton) {
@@ -86,38 +88,34 @@ final class VTStartPauseStopControlRow: UIStackView {
         config.imagePadding = 6
         config.cornerStyle = .fixed
         config.background.cornerRadius = 0
+        config.background.backgroundInsets = .zero
         button.configuration = config
-    }
-
-    private enum SegmentPosition {
-        case left, middle, right
     }
 
     override func layoutSubviews() {
         super.layoutSubviews()
-        applySegmentedStyle(to: startPauseButton, position: .left)
-        applySegmentedStyle(to: stopButton, position: .middle)
-        applySegmentedStyle(to: homeButton, position: .right)
+
+        let scale = window?.screen.scale ?? UIScreen.main.scale
+        let snappedWidth = snappedControlWidth(for: bounds.width)
+        let alignedOriginX = pixelAligned((bounds.width - snappedWidth) / 2, scale: scale)
+        let height = bounds.height
+        let buttonWidth = snappedWidth / 3
+
+        buttonContainerView.frame = CGRect(x: alignedOriginX, y: 0, width: snappedWidth, height: height)
+        buttonContainerView.layer.cornerRadius = height / 2
+
+        startPauseButton.frame = CGRect(x: 0, y: 0, width: buttonWidth, height: height)
+        stopButton.frame = CGRect(x: buttonWidth, y: 0, width: buttonWidth, height: height)
+        homeButton.frame = CGRect(x: buttonWidth * 2, y: 0, width: buttonWidth, height: height)
     }
 
-    private func applySegmentedStyle(to button: UIButton, position: SegmentPosition) {
-        let radius: CGFloat = button.frame.height / 2
-        let (roundedCorners, borderEdge): (UIRectCorner, UIRectEdge) = switch position {
-        case .left: ([.topLeft, .bottomLeft], [.right])
-        case .middle: ([], [])
-        case .right: ([.topRight, .bottomRight], [.left])
-        }
+    private func snappedControlWidth(for availableWidth: CGFloat) -> CGFloat {
+        let snappedWidth = floor(availableWidth / 3) * 3
+        return max(0, snappedWidth)
+    }
 
-        let path = UIBezierPath(
-            roundedRect: button.bounds,
-            byRoundingCorners: roundedCorners,
-            cornerRadii: CGSize(width: radius, height: radius)
-        )
-
-        let mask = CAShapeLayer()
-        mask.path = path.cgPath
-        button.layer.mask = mask
-        button.updateBorder(edge: borderEdge, color: .opaqueSeparator.withAlphaComponent(0.5), thickness: 1.0)
+    private func pixelAligned(_ value: CGFloat, scale: CGFloat) -> CGFloat {
+        (value * scale).rounded() / scale
     }
 
     // MARK: - Actions
