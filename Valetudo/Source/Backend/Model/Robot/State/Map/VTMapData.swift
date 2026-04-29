@@ -13,7 +13,7 @@ public struct VTMapData: Decodable, Sendable {
     public let layers: [VTLayer]
     public let entities: [VTEntity]
     public let metaData: VTMetaData
-    
+
     /// Computed property, not part of the decodable.
     let boundingRect: CGRect
 
