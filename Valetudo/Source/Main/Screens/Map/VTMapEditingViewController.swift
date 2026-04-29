@@ -217,11 +217,9 @@ class VTMapEditingViewController: VTViewController {
     /// Filters incoming map data for editing, then refreshes the map view, legend, and toolbar
     /// state from that normalized snapshot.
     func applyMapData(_ data: VTMapData) async {
-        let filteredMapData = mapEditingData(from: data)
-        guard currentMapData != filteredMapData else {
-            print("No change!")
-            return
-        }
+        let filteredMapData = filterMapData(from: data)
+        // We only need to redraw and clear the selection if something actually changed
+        guard currentMapData != filteredMapData else { return }
         currentMapData = filteredMapData
 
         let viewSize = view.bounds.size == .zero ? (UIScreen.current?.bounds.size ?? .zero) : view.bounds.size
@@ -250,23 +248,8 @@ class VTMapEditingViewController: VTViewController {
 
     /// Removes transient runtime entities that are useful on the home screen but unnecessary while
     /// editing the map structure.
-    private func mapEditingData(from mapData: VTMapData) -> VTMapData {
-        let filteredEntities = mapData.entities.filter {
-            switch $0.type {
-            case .robot_position, .path, .predicted_path:
-                false
-            default:
-                true
-            }
-        }
-
-        return VTMapData(
-            size: mapData.size,
-            pixelSize: mapData.pixelSize,
-            layers: mapData.layers,
-            entities: filteredEntities,
-            metaData: mapData.metaData
-        )
+    func filterMapData(from mapData: VTMapData) -> VTMapData {
+        mapData
     }
 
     /// Rebuilds the legend items from the current segment layers shown in the editor.

@@ -92,8 +92,27 @@ final class VTSegmentManagementViewController: VTMapEditingViewController {
         fatalError("init(coder:) has not been implemented")
     }
 
+    // MARK: - Map handling
+    
     override func canChangeSelection(forLayer _: VTLayer, isSelected _: Bool) async -> Bool {
         mode == .standard
+    }
+    
+    override func filterMapData(from mapData: VTMapData) -> VTMapData {
+        let filteredEntities = mapData.entities.filter {
+            switch $0.type {
+            case .charger_location, .virtual_wall, .obstacle, .carpet: true
+            default: false
+            }
+        }
+
+        return VTMapData(
+            size: mapData.size,
+            pixelSize: mapData.pixelSize,
+            layers: mapData.layers,
+            entities: filteredEntities,
+            metaData: mapData.metaData
+        )
     }
 
     override func applyMapData(_ data: VTMapData) async {
@@ -104,6 +123,8 @@ final class VTSegmentManagementViewController: VTMapEditingViewController {
         refreshToolbarItems()
     }
 
+    // MARK: - Toolbar item Callbacks
+    
     private func showMaterialSelectionPopup() async throws -> VTMaterial? {
         guard let selectedMaterial = selectedSegments.first?.material else { return nil }
 
@@ -124,7 +145,7 @@ final class VTSegmentManagementViewController: VTMapEditingViewController {
             present(navigationController, animated: true)
         }
     }
-
+    
     private func didTapMaterial() {
         Task { [weak self] in
             guard let self else { return }
@@ -143,7 +164,7 @@ final class VTSegmentManagementViewController: VTMapEditingViewController {
             }
         }
     }
-
+    
     private func didTapCuttingLine() {
         mode = .split
         refreshToolbarItems()
