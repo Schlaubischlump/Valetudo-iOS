@@ -353,17 +353,17 @@ class VTHomeViewController: VTViewController {
             )
         }
 
-        let screenSize = UIScreen.current?.bounds.size ?? .zero
-        let mapSize = CGSize(width: min(screenSize.width, 500), height: min(screenSize.height, 500))
+        let viewSize = view.bounds.size == .zero ? (UIScreen.current?.bounds.size ?? .zero) : view.bounds.size
+        let mapSize = CGSize(width: min(viewSize.width, 500), height: min(viewSize.height, 500))
         let mapRect = CGRect(origin: .zero, size: mapSize)
         let mapView = VTMapView(frame: mapRect, data: mapData)
-        mapView.onLayerSelectionChange = mapChangedSelection
+        mapView.shouldChangeLayerSelection = mapChangedSelection
         mapView.onEntityClicked = showEntityPopup
 
         mapScrollView.zoomableView = mapView
 
         await updateLegend(data: mapView.data)
-        legendView.onSelectionChange = legendChangedSelection
+        legendView.shouldChangeSelection = legendChangedSelection
     }
 }
 

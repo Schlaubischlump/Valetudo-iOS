@@ -15,6 +15,10 @@ extension VTStateAttributeList {
 }
 
 actor VTMockAPIClient: VTAPIClientProtocol {
+    func getSupportedMapSegmentMaterials() async throws -> [VTMaterial] {
+        VTMaterial.allCases
+    }
+
     static let shared: VTMockAPIClient? = VTMockAPIClient()
 
     private static let defaultPresetSelections: [VTPresetType: VTPresetValue] = [
@@ -32,6 +36,7 @@ actor VTMockAPIClient: VTAPIClientProtocol {
     private var highResolutionManualControlEnabled = false
     private var obstacleImagesEnabled = true
     private var presetSelections = VTMockAPIClient.defaultPresetSelections
+    private var mapData = VTMockAPIClient.makeMockMap()
     private var observerTasks: [VTListenerToken: Task<Void, Never>] = [:]
     private var nextEventNumber = 1
 
@@ -69,7 +74,7 @@ actor VTMockAPIClient: VTAPIClientProtocol {
     }
 
     func getMap() async throws -> VTMapData {
-        mockMap()
+        mapData
     }
 
     @discardableResult
@@ -123,6 +128,9 @@ actor VTMockAPIClient: VTAPIClientProtocol {
             .basicControl,
             .currentStatistics,
             .mapSegmentation,
+            .mapSegmentEdit,
+            .mapSegmentRename,
+            .mapSegmentMaterialControl,
             .fanSpeedControl,
             .waterUsageControl,
             .operationModeControl,
@@ -273,6 +281,28 @@ actor VTMockAPIClient: VTAPIClientProtocol {
 
     func getMappingPassProperties() async throws -> [String: VTAnyCodable] {
         [:]
+    }
+
+    func setMapSegmentMaterial(segmentID: String, material: VTMaterial) async throws {
+        mapData = VTMapData(
+            size: mapData.size,
+            pixelSize: mapData.pixelSize,
+            layers: mapData.layers.map { layer in
+                guard layer.segmentId == segmentID else { return layer }
+                var metaData = layer.metaData
+                metaData["material"] = .string(material.rawValue)
+                return VTLayer(
+                    __class: layer.__class,
+                    metaData: metaData,
+                    type: layer.type,
+                    pixels: layer.pixels,
+                    compressedPixels: layer.compressedPixels,
+                    dimensions: layer.dimensions
+                )
+            },
+            entities: mapData.entities,
+            metaData: mapData.metaData
+        )
     }
 
     // MARK: - 1.3 Properties
@@ -437,7 +467,7 @@ actor VTMockAPIClient: VTAPIClientProtocol {
         case .stateAttributes:
             yield(stateAttributes, to: continuation)
         case .map:
-            yield(mockMap(), to: continuation)
+            yield(mapData, to: continuation)
         case .valetudoEvent:
             yield(events, to: continuation)
         }
@@ -538,7 +568,7 @@ actor VTMockAPIClient: VTAPIClientProtocol {
         ])
     }
 
-    private func mockMap() -> VTMapData {
+    private static func makeMockMap() -> VTMapData {
         do {
             return try JSONDecoder().decode(VTMapData.self, from: Data(VTMockMapData.mapJSON.utf8))
         } catch {

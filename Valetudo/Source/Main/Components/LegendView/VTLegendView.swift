@@ -14,7 +14,7 @@ class VTLegendView: UIView {
         }
     }
 
-    var onSelectionChange: ((Int, Bool) async -> Bool)?
+    var shouldChangeSelection: ((Int, Bool) async -> Bool)?
 
     private let scrollView = UIScrollView()
     private let stackView = UIStackView()
@@ -88,7 +88,7 @@ class VTLegendView: UIView {
         guard let tappedView = gesture.view as? VTLegendItemView else { return }
         let index = tappedView.tag
         let wasSelected = tappedView.isSelected
-        let shouldChange = await onSelectionChange?(index, wasSelected) ?? true
+        let shouldChange = await shouldChangeSelection?(index, wasSelected) ?? true
 
         if shouldChange {
             tappedView.isSelected.toggle()

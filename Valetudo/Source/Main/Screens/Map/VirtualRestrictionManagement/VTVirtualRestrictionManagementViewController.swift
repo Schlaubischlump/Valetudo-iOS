@@ -10,7 +10,7 @@ import UIKit
 @MainActor
 final class VTVirtualRestrictionManagementViewController: VTMapEditingViewController {
     private let capabilities: Set<VTCapability>
-    
+
     init(client: VTAPIClientProtocol, capabilities: Set<VTCapability>) {
         self.capabilities = capabilities
         super.init(client: client)

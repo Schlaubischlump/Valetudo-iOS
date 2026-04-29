@@ -7,14 +7,6 @@
 import Foundation
 
 public struct VTLayer: Decodable, Sendable {
-    public enum Material: String {
-        case generic
-        case tile
-        case wood
-        case woodHorizontal = "wood_horizontal"
-        case woodVertical = "wood_vertical"
-    }
-
     public let __class: String
     public let metaData: [String: VTAnyCodable]
     public let type: VTLayerType
@@ -22,9 +14,9 @@ public struct VTLayer: Decodable, Sendable {
     public let compressedPixels: [Int]?
     public let dimensions: VTDimensions
 
-    public var material: Material {
+    public var material: VTMaterial {
         guard let materialString = metaData["material"]?.stringValue else { return .generic }
-        return Material(rawValue: materialString) ?? .generic
+        return VTMaterial(rawValue: materialString) ?? .generic
     }
 
     public var active: Bool? {

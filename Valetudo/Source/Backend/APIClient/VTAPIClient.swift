@@ -440,6 +440,24 @@ public actor VTAPIClient: VTAPIClientProtocol {
         return dictValue
     }
 
+    // MARK: - 1.2.14 MapSegmentMaterialControlCapability
+
+    public func setMapSegmentMaterial(segmentID: String, material: VTMaterial) async throws {
+        let url = capabilitiesURL
+            .appendingPathComponent("MapSegmentMaterialControlCapability")
+        let action = VTMapMaterialAction(action: .setMaterial, segmentID: segmentID, material: material)
+        let request = VTRequest<Void>(method: .PUT, url: url, body: action)
+        return try await send(request)
+    }
+
+    public func getSupportedMapSegmentMaterials() async throws -> [VTMaterial] {
+        let url = capabilitiesURL
+            .appendingPathComponent("MapSegmentMaterialControlCapability")
+            .appendingPathComponent("properties")
+        let request = VTRequest<VTMapMaterialProperties>(method: .GET, url: url)
+        return try await send(request).supportedMaterials
+    }
+
     // MARK: - 1.3 Properties
 
     public func getRobotProperties() async throws -> VTRobotProperties {

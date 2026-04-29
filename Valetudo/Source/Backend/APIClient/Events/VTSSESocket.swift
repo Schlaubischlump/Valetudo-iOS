@@ -13,6 +13,17 @@ import Foundation
 /// is registered, attempts a limited number of reconnects after transient failures, and stops
 /// when the final listener is removed.
 final actor VTSSESocket<E: Decodable & Equatable & Sendable, O: Sendable>: VTEventSocketProtocol {
+    private struct SSEEventBoundary {
+        let totalLength: Int
+        let delimiterLength: Int
+    }
+
+    private struct SSEMessage {
+        let event: String?
+        let data: String
+        let isKeepAlive: Bool
+    }
+
     typealias Action = VTEventAction<E>
 
     private var continuations: [VTListenerToken: AsyncStream<Action>.Continuation] = [:]
@@ -57,16 +68,67 @@ final actor VTSSESocket<E: Decodable & Equatable & Sendable, O: Sendable>: VTEve
 
     // MARK: - SSE Lifecycle
 
+    /// Parses a complete SSE frame into its event name and concatenated data payload.
+    private func parse(eventPayload: String) -> SSEMessage? {
+        let normalizedPayload = eventPayload
+            .replacingOccurrences(of: "\r\n", with: "\n")
+            .replacingOccurrences(of: "\r", with: "\n")
+        let lines = normalizedPayload.split(separator: "\n", omittingEmptySubsequences: false)
+
+        var event: String?
+        var dataLines: [String] = []
+        var sawNonCommentContent = false
+
+        for line in lines {
+            if line.hasPrefix(":") {
+                continue
+            }
+
+            if line.isEmpty {
+                continue
+            }
+
+            sawNonCommentContent = true
+
+            let parts = line.split(separator: ":", maxSplits: 1, omittingEmptySubsequences: false)
+            let field = String(parts[0])
+            let value: String
+            if parts.count > 1 {
+                let rawValue = String(parts[1])
+                value = rawValue.hasPrefix(" ") ? String(rawValue.dropFirst()) : rawValue
+            } else {
+                value = ""
+            }
+
+            switch field {
+            case "event":
+                event = value
+            case "data":
+                dataLines.append(value)
+            default:
+                break
+            }
+        }
+
+        if !sawNonCommentContent {
+            return SSEMessage(event: nil, data: "", isKeepAlive: true)
+        }
+
+        return SSEMessage(event: event, data: dataLines.joined(separator: "\n"), isKeepAlive: false)
+    }
+
     /// Decodes a complete SSE payload and broadcasts matching endpoint data.
     private func process(eventPayload: String) {
-        guard !eventPayload.starts(with: ":") else { return } // skip : sse-keep-alive
-        let substrings = eventPayload.components(separatedBy: "\n")
+        guard let message = parse(eventPayload: eventPayload) else { return }
 
-        guard substrings.count >= 2 else { return }
-        let event = substrings[0].replacing("event: ", with: "")
-        let data = substrings[1].replacing("data: ", with: "").data(using: .utf8)
+        if message.isKeepAlive {
+            continuations.values.forEach { $0.yield(.didReceiveKeepAlive) }
+            return
+        }
 
-        guard endpoint.eventID.rawValue == event, let data else { return }
+        guard endpoint.eventID.rawValue == message.event,
+              let data = message.data.data(using: .utf8)
+        else { return }
 
         do {
             let decoder = JSONDecoder()
@@ -78,15 +140,29 @@ final actor VTSSESocket<E: Decodable & Equatable & Sendable, O: Sendable>: VTEve
         }
     }
 
-    /// Finds the next blank-line delimiter that terminates an SSE event payload.
-    private func searchForEvent(inBuffer: NSData, searchRange: NSRange) -> NSRange? {
-        for whitespace in ["\n", "\r"] {
-            let delimiter = "\(whitespace)\(whitespace)".data(using: .utf8)!
-            let foundRange = inBuffer.range(of: delimiter, in: searchRange)
-            if foundRange.location != NSNotFound {
-                return foundRange
-            }
+    /// Returns the next SSE frame boundary, including the full frame length and delimiter length.
+    private func nextEventBoundary(in buffer: Data) -> SSEEventBoundary? {
+        if let range = buffer.range(of: Data("\r\n\r\n".utf8)) {
+            return SSEEventBoundary(
+                totalLength: buffer.distance(from: buffer.startIndex, to: range.upperBound),
+                delimiterLength: 4
+            )
         }
+
+        if let range = buffer.range(of: Data("\n\n".utf8)) {
+            return SSEEventBoundary(
+                totalLength: buffer.distance(from: buffer.startIndex, to: range.upperBound),
+                delimiterLength: 2
+            )
+        }
+
+        if let range = buffer.range(of: Data("\r\r".utf8)) {
+            return SSEEventBoundary(
+                totalLength: buffer.distance(from: buffer.startIndex, to: range.upperBound),
+                delimiterLength: 2
+            )
+        }
+
         return nil
     }
 
@@ -108,32 +184,25 @@ final actor VTSSESocket<E: Decodable & Equatable & Sendable, O: Sendable>: VTEve
                 c.yield(.didConnect)
             }
 
-            let buffer = NSMutableData() // accumulate partial SSE data
+            var buffer = Data() // accumulate partial SSE data
 
             repeat {
                 do {
                     let (bytes, _) = try await URLSession.shared.bytes(from: url)
                     for try await byte in bytes {
-                        var byte = UInt8(byte)
-                        buffer.append(&byte, length: 1)
+                        buffer.append(UInt8(byte))
 
-                        var events: [String] = []
-                        var searchRange = NSRange(location: 0, length: buffer.length)
-                        while let foundRange = searchForEvent(inBuffer: buffer, searchRange: searchRange) {
-                            let dataLengthBeforeDelimiter = foundRange.location - searchRange.location
-                            if dataLengthBeforeDelimiter > 0 {
-                                let dataRange = NSRange(location: searchRange.location, length: dataLengthBeforeDelimiter)
-                                let eventPayload = String(bytes: buffer.subdata(with: dataRange), encoding: .utf8)
-                                if let eventPayload {
-                                    events.append(eventPayload)
-                                }
+                        while let boundary = nextEventBoundary(in: buffer) {
+                            let eventData = Data(buffer.prefix(boundary.totalLength))
+                            buffer.removeFirst(boundary.totalLength)
+                            let payloadData = eventData.dropLast(boundary.delimiterLength)
+
+                            guard let eventPayload = String(data: payloadData, encoding: .utf8) else {
+                                continue
                             }
-                            searchRange.location = foundRange.location + foundRange.length
-                            searchRange.length = buffer.length - searchRange.location
-                        }
 
-                        buffer.replaceBytes(in: NSRange(location: 0, length: searchRange.location), withBytes: nil, length: 0)
-                        events.forEach { process(eventPayload: $0) }
+                            process(eventPayload: eventPayload)
+                        }
                     }
 
                     // Connection closed normally

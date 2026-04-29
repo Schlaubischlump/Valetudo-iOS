@@ -16,7 +16,7 @@ class VTMapView: UIView {
 
     var hideNoGoAreas: Bool = true
 
-    var onLayerSelectionChange: ((VTLayer, Bool) async -> Bool)?
+    var shouldChangeLayerSelection: ((VTLayer, Bool) async -> Bool)?
     var onEntityClicked: ((VTEntity, CGPoint) async -> Bool)?
 
     init(frame: CGRect, data: VTMapData) {
@@ -60,6 +60,7 @@ class VTMapView: UIView {
         mapLayer = newMapLayer
         mapLayer.transform = transform
         layer.addSublayer(mapLayer)
+        selectedLayers = []
     }
 
     func select(layer: VTLayer) async {
@@ -125,7 +126,7 @@ class VTMapView: UIView {
         var updateSelectionColor = false
 
         if triggerCallback {
-            if await (onLayerSelectionChange?(vtLayer, isSelected) ?? true) {
+            if await (shouldChangeLayerSelection?(vtLayer, isSelected) ?? true) {
                 updateSelectionColor = true
             }
         } else {

@@ -75,16 +75,6 @@ struct VTKeyValueItem: VTItem {
     let image: UIImage?
 }
 
-/// A row with title, subtitle, optional icon, and a trailing action button.
-struct VTActionItem: VTItem {
-    let id: String
-    let title: String
-    let subtitle: String
-    let image: UIImage?
-    let buttonTitle: String
-    let buttonStyle: VTButtonStyle?
-}
-
 /// Protocol conformance to Hashable is not enough for the typechecker to understand that this type is indeed Hashable.
 /// That means, UICollectionView diffable datasource can not be polymorphic over `any Hashable`.
 /// That is why we use a type erasure instead that wraps our items and is indeed Hashable.
@@ -149,26 +139,18 @@ struct VTAnyItem: Hashable {
         VTAnyItem(VTProgressItem(id: id, message: message, progress: progress))
     }
 
-    static func keyValue(_ id: String, title: String, value: String?, image: UIImage? = nil) -> VTAnyItem {
-        VTAnyItem(VTKeyValueItem(id: id, title: title, value: value, image: image))
-    }
-
-    static func action(
+    static func keyValue(
         _ id: String,
         title: String,
-        subtitle: String,
-        image: UIImage?,
-        buttonTitle: String,
-        buttonStyle: VTButtonStyle? = nil
+        value: String?,
+        image: UIImage? = nil
     ) -> VTAnyItem {
         VTAnyItem(
-            VTActionItem(
+            VTKeyValueItem(
                 id: id,
                 title: title,
-                subtitle: subtitle,
-                image: image,
-                buttonTitle: buttonTitle,
-                buttonStyle: buttonStyle
+                value: value,
+                image: image
             )
         )
     }

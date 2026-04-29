@@ -120,6 +120,11 @@ public protocol VTAPIClientProtocol: Actor {
     func startMappingPass() async throws
     func getMappingPassProperties() async throws -> [String: VTAnyCodable]
 
+    // MARK: - 1.2.14 MapSegmentMaterialControlCapability
+
+    func setMapSegmentMaterial(segmentID: String, material: VTMaterial) async throws
+    func getSupportedMapSegmentMaterials() async throws -> [VTMaterial]
+
     // MARK: - 1.3 Properties
 
     func getRobotProperties() async throws -> VTRobotProperties

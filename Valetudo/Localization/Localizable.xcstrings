@@ -980,6 +980,39 @@
         }
       }
     },
+    "MAP_OPTIONS_RESET_CONFIRMATION_ACTION" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reset Map"
+          }
+        }
+      }
+    },
+    "MAP_OPTIONS_RESET_CONFIRMATION_MESSAGE" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This will permanently delete the current map. This action cannot be undone."
+          }
+        }
+      }
+    },
+    "MAP_OPTIONS_RESET_CONFIRMATION_TITLE" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reset Map?"
+          }
+        }
+      }
+    },
     "MAP_OPTIONS_RESET_TITLE" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1075,6 +1108,61 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Material"
+          }
+        }
+      }
+    },
+    "MATERIAL_GENERIC" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Generic"
+          }
+        }
+      }
+    },
+    "MATERIAL_TILE" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tile"
+          }
+        }
+      }
+    },
+    "MATERIAL_WOOD" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wood"
+          }
+        }
+      }
+    },
+    "MATERIAL_WOOD_HORIZONTAL" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wood Horizontal"
+          }
+        }
+      }
+    },
+    "MATERIAL_WOOD_VERTICAL" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wood Vertical"
           }
         }
       }

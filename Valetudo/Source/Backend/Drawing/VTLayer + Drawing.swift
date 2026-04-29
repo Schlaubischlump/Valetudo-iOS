@@ -85,7 +85,7 @@ extension VTLayer {
     }
 }
 
-public extension VTLayer.Material {
+public extension VTMaterial {
     var color: CGColor? {
         .lightGray.copy(alpha: 0.2)
     }

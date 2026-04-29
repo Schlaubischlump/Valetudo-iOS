@@ -78,33 +78,6 @@ final class VTMapOptionsViewController: VTCollectionViewController {
     }
 
     private func configureDataSource() {
-        let actionCellRegistration = VTCellRegistration { [weak self] cell, _, wrappedItem in
-            guard let self else { return }
-            guard let item = wrappedItem.base as? VTActionItem else {
-                fatalError("Unsupported map options item: \(wrappedItem.base)")
-            }
-
-            cell.contentConfiguration = VTActionCellContentConfiguration(
-                id: item.id,
-                title: item.title,
-                subtitle: item.subtitle,
-                image: item.image,
-                buttonTitle: item.buttonTitle,
-                buttonStyle: item.buttonStyle,
-                onAction: { [weak self] in
-                    switch item.id {
-                    case kMappingPass:
-                        self?.didTapMappingPass()
-                    case kMapReset:
-                        self?.didTapMapReset()
-                    default:
-                        break
-                    }
-                }
-            )
-            cell.backgroundConfiguration = .adaptiveListCell()
-        }
-
         let linkCellRegistration = VTCellRegistration { cell, _, wrappedItem in
             guard let item = wrappedItem.base as? VTKeyValueItem else {
                 fatalError("Unsupported map options item: \(wrappedItem.base)")
@@ -118,13 +91,16 @@ final class VTMapOptionsViewController: VTCollectionViewController {
                 image: item.image
             )
             cell.backgroundConfiguration = .adaptiveListCell()
-            cell.accessories = [.disclosureIndicator()]
+            cell.accessories = switch item.id {
+            case kSegmentManagement, kVirtualRestrictionManagement:
+                [.disclosureIndicator()]
+            default:
+                []
+            }
         }
 
         dataSource = DataSource(collectionView: collectionView) { collectionView, indexPath, item in
             switch item.base {
-            case is VTActionItem:
-                collectionView.dequeueConfiguredReusableCell(using: actionCellRegistration, for: indexPath, item: item)
             case is VTKeyValueItem:
                 collectionView.dequeueConfiguredReusableCell(using: linkCellRegistration, for: indexPath, item: item)
             default:
@@ -159,29 +135,23 @@ final class VTMapOptionsViewController: VTCollectionViewController {
         await reloadData(animated: false)
     }
 
-    override func collectionView(_: UICollectionView, shouldSelectItemAt indexPath: IndexPath) -> Bool {
-        guard let item = dataSource.itemIdentifier(for: indexPath) else { return false }
-        return switch item.id {
-        case kSegmentManagement, kVirtualRestrictionManagement: true
-        default: false
-        }
-    }
-
     override func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         defer { collectionView.deselectItem(at: indexPath, animated: true) }
         guard let item = dataSource.itemIdentifier(for: indexPath) else { return }
 
-        let destination: UIViewController? = switch item.id {
+        switch item.id {
+        case kMappingPass:
+            didTapMappingPass()
+        case kMapReset:
+            presentMapResetConfirmation()
         case kSegmentManagement:
-            VTSegmentManagementViewController(client: client, capabilities: availableCapabilities)
+            let vc = VTSegmentManagementViewController(client: client, capabilities: availableCapabilities)
+            navigationController?.pushViewController(vc, animated: true)
         case kVirtualRestrictionManagement:
-            VTVirtualRestrictionManagementViewController(client: client, capabilities: availableCapabilities)
+            let vc = VTVirtualRestrictionManagementViewController(client: client, capabilities: availableCapabilities)
+            navigationController?.pushViewController(vc, animated: true)
         default:
-            nil
-        }
-
-        if let destination {
-            navigationController?.pushViewController(destination, animated: true)
+            break
         }
     }
 
@@ -193,24 +163,21 @@ final class VTMapOptionsViewController: VTCollectionViewController {
         snapshot.appendSections([.mapping, .segmentationManagement])
         if availableCapabilities.contains(.mappingPass) {
             snapshot.appendItems([
-                .action(
+                .keyValue(
                     kMappingPass,
                     title: "MAP_OPTIONS_MAPPING_PASS_TITLE".localized(),
-                    subtitle: "MAP_OPTIONS_MAPPING_PASS_SUBTITLE".localized(),
-                    image: .mapFill,
-                    buttonTitle: "MAP_OPTIONS_MAPPING_PASS_BUTTON".localized()
+                    value: "MAP_OPTIONS_MAPPING_PASS_SUBTITLE".localized(),
+                    image: .mapFill
                 ),
             ], toSection: .mapping)
         }
         if availableCapabilities.contains(.mapReset) {
             snapshot.appendItems([
-                .action(
+                .keyValue(
                     kMapReset,
                     title: "MAP_OPTIONS_RESET_TITLE".localized(),
-                    subtitle: "MAP_OPTIONS_RESET_SUBTITLE".localized(),
-                    image: .mapSlash,
-                    buttonTitle: "MAP_OPTIONS_MAPPING_PASS_BUTTON".localized(),
-                    buttonStyle: .destructive
+                    value: "MAP_OPTIONS_RESET_SUBTITLE".localized(),
+                    image: .mapSlash
                 ),
             ], toSection: .mapping)
         }
@@ -261,5 +228,19 @@ final class VTMapOptionsViewController: VTCollectionViewController {
                 log(message: "MapResetCapability trigger failed: \(error.localizedDescription)", forSubsystem: .mapOptions, level: .error)
             }
         }
+    }
+
+    private func presentMapResetConfirmation() {
+        let alert = UIAlertController(
+            title: "MAP_OPTIONS_RESET_CONFIRMATION_TITLE".localized(),
+            message: "MAP_OPTIONS_RESET_CONFIRMATION_MESSAGE".localized(),
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "CANCEL".localized(), style: .cancel))
+        alert.addAction(UIAlertAction(title: "MAP_OPTIONS_RESET_CONFIRMATION_ACTION".localized(), style: .destructive) { [weak self] _ in
+            self?.didTapMapReset()
+        })
+
+        present(alert, animated: true)
     }
 }

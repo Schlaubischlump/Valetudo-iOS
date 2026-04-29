@@ -9,13 +9,23 @@ import UIKit
 
 private let legendHeight: CGFloat = 45.0
 
+// TODO: Introduce VTMapViewController to unify home screen and this editing screen
+// TODO: Can we unify this whole SSE observation and the resumePendingMapUpdatesIfNeeded into VTViewController or
+// TODO: a VTEventViewController?
+
 @MainActor
 class VTMapEditingViewController: VTViewController {
+    /// Tracks callers waiting for the next server-pushed map snapshot after a mutating action.
+    private struct PendingMapUpdate {
+        let baselineMapData: VTMapData?
+        let continuation: CheckedContinuation<VTMapData, any Error>
+    }
+
     struct ToolbarActionDefinition {
         let title: String
         let image: UIImage?
-        let handler: @MainActor (VTMapEditingViewController) -> Void
-        let isVisible: @MainActor (VTMapEditingViewController) -> Bool
+        let handler: @MainActor () -> Void
+        let isVisible: @MainActor (_ selectedSegments: Set<String>) -> Bool
     }
 
     let client: VTAPIClientProtocol
@@ -24,26 +34,29 @@ class VTMapEditingViewController: VTViewController {
     private let legendView = VTLegendView()
     private let activityIndicator = UIActivityIndicatorView(style: .large)
     private var currentMapData: VTMapData?
-    private var pendingSelectedSegmentCount: Int?
+    private var observerToken: VTListenerToken?
+    private var eventObservationTask: Task<Void, Never>?
+    private var pendingMapUpdates: [UUID: PendingMapUpdate] = [:]
 
     private var mapView: VTMapView? {
         mapScrollView.zoomableView as? VTMapView
     }
 
-    var selectedSegmentCount: Int {
-        pendingSelectedSegmentCount ?? mapView?.selectedLayers.count ?? 0
+    var selectedSegments: [VTLayer] {
+        Array(mapView?.selectedLayers ?? [])
     }
 
     private var segmentLayer: [VTLayer] {
         currentMapData?.segmentLayer ?? []
     }
 
-    private var visibleToolbarActionDefinitions: [ToolbarActionDefinition] {
-        toolbarActionDefinitions.filter { $0.isVisible(self) }
-    }
-
     var toolbarActionDefinitions: [ToolbarActionDefinition] {
         []
+    }
+
+    /// Lets subclasses restrict segment selection changes when a specialized editing mode is active.
+    func canChangeSelection(forLayer _: VTLayer, isSelected _: Bool) async -> Bool {
+        true
     }
 
     init(client: VTAPIClientProtocol) {
@@ -63,41 +76,30 @@ class VTMapEditingViewController: VTViewController {
         super.viewDidLoad()
 
         view.backgroundColor = .systemBackground
-        navigationItem.hidesBackButton = true
-        navigationItem.rightBarButtonItem = UIBarButtonItem(
-            barButtonSystemItem: .done,
-            target: self,
-            action: #selector(didTapDone)
-        )
-        navigationItem.leftBarButtonItem = UIBarButtonItem(
-            barButtonSystemItem: .cancel,
-            target: self,
-            action: #selector(didTapCancel)
-        )
+        navigationItem.hidesBackButton = false
 
         configureViewHierarchy()
         configureLegend()
         configureToolbar()
-
-        Task {
-            await loadMap()
-        }
     }
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         navigationController?.setToolbarHidden(false, animated: animated)
+        startSSEObservation()
     }
 
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
+        stopSSEObservation()
         if isMovingFromParent || isBeingDismissed {
             navigationController?.setToolbarHidden(true, animated: animated)
         }
     }
 
     override func reconnectAndRefresh() async {
-        await loadMap()
+        stopSSEObservation()
+        startSSEObservation()
     }
 
     private func configureViewHierarchy() {
@@ -127,25 +129,26 @@ class VTMapEditingViewController: VTViewController {
 
     private func configureLegend() {
         legendView.backgroundColor = .clear
-        legendView.onSelectionChange = { [weak self] index, isSelected in
+        legendView.shouldChangeSelection = { [weak self] index, isSelected in
             guard let self else { return false }
-            return await legendChangedSelection(atIndex: index, isSelected: isSelected)
+            return await legendShouldChangedSelection(atIndex: index, isSelected: isSelected)
         }
     }
 
     private func configureToolbar() {
-        updateToolbarItems()
+        updateToolbarItems(forSelectedSegmentIDs: [])
     }
 
-    func updateToolbarItems() {
-        let visibleDefinitions = visibleToolbarActionDefinitions
+    func updateToolbarItems(forSelectedSegmentIDs: Set<String>) {
+        let visibleDefinitions = toolbarActionDefinitions.filter {
+            $0.isVisible(forSelectedSegmentIDs)
+        }
 
         var items: [UIBarButtonItem] = [.flexibleSpace()]
 
         for definition in visibleDefinitions {
-            let action = UIAction(title: definition.title, image: definition.image) { [weak self] _ in
-                guard let self else { return }
-                definition.handler(self)
+            let action = UIAction(title: definition.title, image: definition.image) { _ in
+                definition.handler()
             }
             let button = UIBarButtonItem(
                 title: definition.title,
@@ -158,12 +161,64 @@ class VTMapEditingViewController: VTViewController {
         setToolbarItems(items, animated: true)
     }
 
-    private func loadMap() async {
-        activityIndicator.startAnimating()
-        defer { activityIndicator.stopAnimating() }
+    /// Fetches the current map snapshot once and applies it to the editor immediately.
+    @discardableResult
+    func loadMap() async -> VTMapData? {
+        setMapInteractionBlocked(true)
+        defer { setMapInteractionBlocked(false) }
 
-        guard let mapData = try? await client.getMap() else { return }
-        let filteredMapData = mapEditingData(from: mapData)
+        guard let mapData = try? await client.getMap() else { return nil }
+        await applyMapData(mapData)
+        return mapData
+    }
+
+    /// Runs a mutating map request and waits until the SSE stream publishes a different map
+    /// snapshot, ensuring the UI reflects server state instead of an optimistic local guess.
+    @discardableResult
+    func performAndWaitForMapUpdate(_ operation: @escaping @Sendable () async throws -> Void) async throws -> VTMapData {
+        setMapInteractionBlocked(true)
+        defer { setMapInteractionBlocked(false) }
+
+        let pendingID = UUID()
+        let baselineMapData = currentMapData
+
+        return try await withTaskCancellationHandler {
+            try await withCheckedThrowingContinuation { continuation in
+                // Record the current map so we can ignore unrelated SSE events that do not reflect
+                // a real server-side change yet.
+                pendingMapUpdates[pendingID] = PendingMapUpdate(
+                    baselineMapData: baselineMapData,
+                    continuation: continuation
+                )
+
+                Task { @MainActor [weak self] in
+                    guard let self else {
+                        continuation.resume(throwing: CancellationError())
+                        return
+                    }
+
+                    do {
+                        try await operation()
+                    } catch {
+                        resumePendingMapUpdate(id: pendingID, with: .failure(error))
+                    }
+                }
+            }
+        } onCancel: { [weak self] in
+            Task { @MainActor in
+                self?.resumePendingMapUpdate(id: pendingID, with: .failure(CancellationError()))
+            }
+        }
+    }
+
+    /// Filters incoming map data for editing, then refreshes the map view, legend, and toolbar
+    /// state from that normalized snapshot.
+    func applyMapData(_ data: VTMapData) async {
+        let filteredMapData = mapEditingData(from: data)
+        guard currentMapData != filteredMapData else {
+            print("No change!")
+            return
+        }
         currentMapData = filteredMapData
 
         let viewSize = view.bounds.size == .zero ? (UIScreen.current?.bounds.size ?? .zero) : view.bounds.size
@@ -172,21 +227,24 @@ class VTMapEditingViewController: VTViewController {
 
         if let mapView = mapScrollView.zoomableView as? VTMapView {
             mapView.hideNoGoAreas = false
-            mapView.onLayerSelectionChange = mapChangedSelection
+            mapView.shouldChangeLayerSelection = mapShouldChangedSelection
             await mapView.updateData(data: filteredMapData)
         } else {
             let mapView = VTMapView(frame: mapRect, data: filteredMapData)
             mapView.hideNoGoAreas = false
-            mapView.onLayerSelectionChange = mapChangedSelection
+            mapView.shouldChangeLayerSelection = mapShouldChangedSelection
             mapScrollView.zoomableView = mapView
             await mapView.updateData(data: filteredMapData)
         }
 
         await legendView.clearSelection()
         await updateLegend(data: filteredMapData)
-        updateToolbarItems()
+        let selectedSegmentIDs = Set(selectedSegments.compactMap(\.segmentId))
+        updateToolbarItems(forSelectedSegmentIDs: selectedSegmentIDs)
     }
 
+    /// Removes transient runtime entities that are useful on the home screen but unnecessary while
+    /// editing the map structure.
     private func mapEditingData(from mapData: VTMapData) -> VTMapData {
         let filteredEntities = mapData.entities.filter {
             switch $0.type {
@@ -206,51 +264,157 @@ class VTMapEditingViewController: VTViewController {
         )
     }
 
+    /// Rebuilds the legend items from the current segment layers shown in the editor.
     private func updateLegend(data _: VTMapData) async {
         legendView.items = segmentLayer.map { layer in
             VTLegendItem(color: layer.fillColor ?? .black, text: layer.name ?? layer.segmentId ?? "")
         }
     }
 
-    private func mapChangedSelection(forLayer layer: VTLayer, isSelected: Bool) async -> Bool {
+    /// Starts observing `.map` SSE events so the editor stays live and pending edit actions can
+    /// complete when the backend publishes an updated snapshot.
+    private func startSSEObservation() {
+        guard eventObservationTask == nil else { return }
+
+        eventObservationTask = Task { @MainActor [weak self] in
+            guard let self else { return }
+
+            do {
+                try await loadInitialMapData()
+
+                let (token, stream) = await client.registerEventObserver(for: .map)
+                observerToken = token
+
+                for await event in stream {
+                    switch event {
+                    case let .didReceiveData(mapData):
+                        // Always render the freshest server state first, then resolve any callers
+                        // waiting for a changed snapshot from a previous mutation request.
+                        print("Did receive....")
+                        await applyMapData(mapData)
+                        resumePendingMapUpdatesIfNeeded(with: currentMapData)
+                    case let .didReceiveError(message):
+                        print("Did error receive....")
+                        log(message: message, forSubsystem: .map, level: .error)
+                    default:
+                        print("Differnt event: \(event)")
+                        break
+                    }
+                }
+            } catch {
+                print("Fuck this....")
+                log(message: error.localizedDescription, forSubsystem: .map, level: .error)
+            }
+        }
+    }
+
+    /// Stops map observation and fails any callers still waiting for a post-mutation map update.
+    private func stopSSEObservation() {
+        eventObservationTask?.cancel()
+        eventObservationTask = nil
+
+        // Any pending mutation should fail once observation stops, otherwise callers would wait
+        // forever for an event that can no longer arrive.
+        for id in pendingMapUpdates.keys {
+            resumePendingMapUpdate(id: id, with: .failure(CancellationError()))
+        }
+
+        if let token = observerToken {
+            let client = client
+            Task { await client.removeEventObserver(token: token, for: .map) }
+            observerToken = nil
+        }
+    }
+
+    /// Loads the initial map before the SSE loop begins so the editor has content as soon as it
+    /// appears.
+    private func loadInitialMapData() async throws {
+        setMapInteractionBlocked(true)
+        defer { setMapInteractionBlocked(false) }
+
+        let mapData = try await client.getMap()
+        await applyMapData(mapData)
+    }
+
+    /// Applies the shared loading state used while fetching a map or waiting for the next SSE
+    /// snapshot after an editing action.
+    private func setMapInteractionBlocked(_ isBlocked: Bool) {
+        view.isUserInteractionEnabled = !isBlocked
+        if isBlocked {
+            activityIndicator.startAnimating()
+        } else {
+            activityIndicator.stopAnimating()
+        }
+    }
+
+    /// Resolves all pending waiters whose baseline snapshot differs from the latest applied map.
+    private func resumePendingMapUpdatesIfNeeded(with mapData: VTMapData?) {
+        let resumableIDs = pendingMapUpdates.compactMap { id, pending in
+            pending.baselineMapData != mapData ? id : nil
+        }
+
+        for id in resumableIDs {
+            guard let mapData else { continue }
+            resumePendingMapUpdate(id: id, with: .success(mapData))
+        }
+    }
+
+    /// Finishes a single pending map-update wait and removes it from the tracking table.
+    private func resumePendingMapUpdate(
+        id: UUID,
+        with result: Result<VTMapData, any Error>
+    ) {
+        guard let pending = pendingMapUpdates.removeValue(forKey: id) else { return }
+
+        switch result {
+        case let .success(mapData):
+            pending.continuation.resume(returning: mapData)
+        case let .failure(error):
+            pending.continuation.resume(throwing: error)
+        }
+    }
+
+    /// Handles map taps by mirroring the selection into the legend and recalculating visible
+    /// toolbar actions.
+    private func mapShouldChangedSelection(forLayer layer: VTLayer, isSelected: Bool) async -> Bool {
         guard let index = segmentLayer.firstIndex(of: layer) else { return false }
+        guard await canChangeSelection(forLayer: layer, isSelected: isSelected) else { return false }
+
+        var selectedSegmentIDs = Set(selectedSegments.compactMap(\.segmentId))
+        let segmentId = layer.segmentId
+
         if !isSelected {
             await legendView.select(at: index)
+            _ = segmentId.map { selectedSegmentIDs.insert($0) }
         } else {
             await legendView.deselect(at: index)
+            _ = segmentId.map { selectedSegmentIDs.remove($0) }
         }
-        let currentCount = mapView?.selectedLayers.count ?? 0
-        pendingSelectedSegmentCount = max(0, currentCount + (isSelected ? -1 : 1))
-        updateToolbarItems()
-        pendingSelectedSegmentCount = nil
+
+        updateToolbarItems(forSelectedSegmentIDs: selectedSegmentIDs)
+
         return true
     }
 
-    private func legendChangedSelection(atIndex index: Int, isSelected: Bool) async -> Bool {
+    /// Handles legend taps by updating the map selection while preserving the same selection rules
+    /// used for direct map interaction.
+    private func legendShouldChangedSelection(atIndex index: Int, isSelected: Bool) async -> Bool {
         let layer = segmentLayer[index]
+        guard await canChangeSelection(forLayer: layer, isSelected: isSelected) else { return false }
+
+        var selectedSegmentIDs = Set(selectedSegments.compactMap(\.segmentId))
+        let segmentId = layer.segmentId
+
         if !isSelected {
             await mapView?.select(layer: layer)
+            _ = segmentId.map { selectedSegmentIDs.insert($0) }
         } else {
             await mapView?.deselect(layer: layer)
+            _ = segmentId.map { selectedSegmentIDs.remove($0) }
         }
-        updateToolbarItems()
+
+        updateToolbarItems(forSelectedSegmentIDs: selectedSegmentIDs)
+
         return true
-    }
-
-    @objc private func didTapDone() {
-        navigationController?.popViewController(animated: true)
-    }
-
-    @objc private func didTapCancel() {
-        let alert = UIAlertController(
-            title: "MAP_EDITING_DISCARD_ALERT_TITLE".localized(),
-            message: "MAP_EDITING_DISCARD_ALERT_MESSAGE".localized(),
-            preferredStyle: .alert
-        )
-        alert.addAction(UIAlertAction(title: "KEEP_EDITING".localized(), style: .cancel))
-        alert.addAction(UIAlertAction(title: "DISCARD_CHANGES".localized(), style: .destructive) { [weak self] _ in
-            self?.navigationController?.popViewController(animated: true)
-        })
-        present(alert, animated: true)
     }
 }
