@@ -306,11 +306,18 @@ class VTHomeViewController: VTViewController {
         }
     }
 
-    private func mapChangedSelection(forLayer layer: VTLayer, isSelected: Bool) async -> Bool {
+    private func mapShouldChangeSelection(forLayer layer: VTLayer, isSelected: Bool) async -> Bool {
         guard mapInteractionEnabled, //! self.refreshMap,
-              var config = robotControlViewController?.currentConfiguration,
-              let index = segmentLayer.firstIndex(of: layer) else { return false }
-        if !isSelected {
+              robotControlViewController?.currentConfiguration != nil,
+              segmentLayer.contains(layer) else { return false }
+        return true
+    }
+
+    private func mapDidChangeSelection(forLayer layer: VTLayer, isSelected: Bool) async {
+        guard let index = segmentLayer.firstIndex(of: layer),
+              var config = robotControlViewController?.currentConfiguration else { return }
+
+        if isSelected {
             await legendView.select(at: index)
             config = config.appending(segmentId: layer.segmentId!)
         } else {
@@ -318,14 +325,21 @@ class VTHomeViewController: VTViewController {
             config = config.removing(segmentId: layer.segmentId!)
         }
         robotControlViewController?.currentConfiguration = config
+    }
+
+    private func legendShouldChangedSelection(atIndex index: Int, isSelected: Bool) async -> Bool {
+        guard mapInteractionEnabled, //! self.refreshMap
+              robotControlViewController?.currentConfiguration != nil,
+              segmentLayer.indices.contains(index) else { return false }
         return true
     }
 
-    private func legendChangedSelection(atIndex index: Int, isSelected: Bool) async -> Bool {
-        guard mapInteractionEnabled, //! self.refreshMap
-              var config = robotControlViewController?.currentConfiguration else { return false }
+    private func legendDidChangeSelection(atIndex index: Int, isSelected: Bool) async {
+        guard segmentLayer.indices.contains(index),
+              var config = robotControlViewController?.currentConfiguration else { return }
         let layer = segmentLayer[index]
-        if !isSelected {
+
+        if isSelected {
             await mapView?.select(layer: layer)
             config = config.appending(segmentId: layer.segmentId!)
         } else {
@@ -333,7 +347,6 @@ class VTHomeViewController: VTViewController {
             config = config.removing(segmentId: layer.segmentId!)
         }
         robotControlViewController?.currentConfiguration = config
-        return true
     }
 
     @MainActor
@@ -357,13 +370,15 @@ class VTHomeViewController: VTViewController {
         let mapSize = CGSize(width: min(viewSize.width, 500), height: min(viewSize.height, 500))
         let mapRect = CGRect(origin: .zero, size: mapSize)
         let mapView = VTMapView(frame: mapRect, data: mapData)
-        mapView.shouldChangeLayerSelection = mapChangedSelection
+        mapView.shouldChangeLayerSelection = mapShouldChangeSelection
+        mapView.didChangeLayerSelection = mapDidChangeSelection
         mapView.onEntityClicked = showEntityPopup
 
         mapScrollView.zoomableView = mapView
 
         await updateLegend(data: mapView.data)
-        legendView.shouldChangeSelection = legendChangedSelection
+        legendView.shouldChangeSelection = legendShouldChangedSelection
+        legendView.didChangeSelection = legendDidChangeSelection
     }
 }
 

@@ -133,6 +133,9 @@ class VTMapEditingViewController: VTViewController {
             guard let self else { return false }
             return await legendShouldChangedSelection(atIndex: index, isSelected: isSelected)
         }
+        legendView.didChangeSelection = { [weak self] index, isSelected in
+            await self?.legendDidChangeSelection(atIndex: index, isSelected: isSelected)
+        }
     }
 
     private func configureToolbar() {
@@ -228,11 +231,13 @@ class VTMapEditingViewController: VTViewController {
         if let mapView = mapScrollView.zoomableView as? VTMapView {
             mapView.hideNoGoAreas = false
             mapView.shouldChangeLayerSelection = mapShouldChangedSelection
+            mapView.didChangeLayerSelection = mapDidChangeSelection
             await mapView.updateData(data: filteredMapData)
         } else {
             let mapView = VTMapView(frame: mapRect, data: filteredMapData)
             mapView.hideNoGoAreas = false
             mapView.shouldChangeLayerSelection = mapShouldChangedSelection
+            mapView.didChangeLayerSelection = mapDidChangeSelection
             mapScrollView.zoomableView = mapView
             await mapView.updateData(data: filteredMapData)
         }
@@ -290,19 +295,15 @@ class VTMapEditingViewController: VTViewController {
                     case let .didReceiveData(mapData):
                         // Always render the freshest server state first, then resolve any callers
                         // waiting for a changed snapshot from a previous mutation request.
-                        print("Did receive....")
                         await applyMapData(mapData)
                         resumePendingMapUpdatesIfNeeded(with: currentMapData)
                     case let .didReceiveError(message):
-                        print("Did error receive....")
                         log(message: message, forSubsystem: .map, level: .error)
                     default:
-                        print("Differnt event: \(event)")
                         break
                     }
                 }
             } catch {
-                print("Fuck this....")
                 log(message: error.localizedDescription, forSubsystem: .map, level: .error)
             }
         }
@@ -374,47 +375,45 @@ class VTMapEditingViewController: VTViewController {
         }
     }
 
-    /// Handles map taps by mirroring the selection into the legend and recalculating visible
-    /// toolbar actions.
+    /// Validates map taps against the active editing mode before the map mutates its selection.
     private func mapShouldChangedSelection(forLayer layer: VTLayer, isSelected: Bool) async -> Bool {
-        guard let index = segmentLayer.firstIndex(of: layer) else { return false }
-        guard await canChangeSelection(forLayer: layer, isSelected: isSelected) else { return false }
-
-        var selectedSegmentIDs = Set(selectedSegments.compactMap(\.segmentId))
-        let segmentId = layer.segmentId
-
-        if !isSelected {
-            await legendView.select(at: index)
-            _ = segmentId.map { selectedSegmentIDs.insert($0) }
-        } else {
-            await legendView.deselect(at: index)
-            _ = segmentId.map { selectedSegmentIDs.remove($0) }
-        }
-
-        updateToolbarItems(forSelectedSegmentIDs: selectedSegmentIDs)
-
-        return true
+        guard segmentLayer.contains(layer) else { return false }
+        return await canChangeSelection(forLayer: layer, isSelected: isSelected)
     }
 
-    /// Handles legend taps by updating the map selection while preserving the same selection rules
-    /// used for direct map interaction.
-    private func legendShouldChangedSelection(atIndex index: Int, isSelected: Bool) async -> Bool {
-        let layer = segmentLayer[index]
-        guard await canChangeSelection(forLayer: layer, isSelected: isSelected) else { return false }
+    /// Handles confirmed map selection changes by mirroring them into the legend and recalculating
+    /// visible toolbar actions.
+    private func mapDidChangeSelection(forLayer layer: VTLayer, isSelected: Bool) async {
+        guard let index = segmentLayer.firstIndex(of: layer) else { return }
 
-        var selectedSegmentIDs = Set(selectedSegments.compactMap(\.segmentId))
-        let segmentId = layer.segmentId
-
-        if !isSelected {
-            await mapView?.select(layer: layer)
-            _ = segmentId.map { selectedSegmentIDs.insert($0) }
+        if isSelected {
+            await legendView.select(at: index)
         } else {
-            await mapView?.deselect(layer: layer)
-            _ = segmentId.map { selectedSegmentIDs.remove($0) }
+            await legendView.deselect(at: index)
         }
 
-        updateToolbarItems(forSelectedSegmentIDs: selectedSegmentIDs)
+        updateToolbarItems(forSelectedSegmentIDs: Set(selectedSegments.compactMap(\.segmentId)))
+    }
 
-        return true
+    /// Handles confirmed legend selection changes by mirroring them into the map and recalculating
+    /// visible toolbar actions.
+    private func legendDidChangeSelection(atIndex index: Int, isSelected: Bool) async {
+        guard segmentLayer.indices.contains(index) else { return }
+        let layer = segmentLayer[index]
+
+        if isSelected {
+            await mapView?.select(layer: layer)
+        } else {
+            await mapView?.deselect(layer: layer)
+        }
+
+        updateToolbarItems(forSelectedSegmentIDs: Set(selectedSegments.compactMap(\.segmentId)))
+    }
+
+    /// Validates legend taps against the same selection rules used for direct map interaction.
+    private func legendShouldChangedSelection(atIndex index: Int, isSelected: Bool) async -> Bool {
+        guard segmentLayer.indices.contains(index) else { return false }
+        let layer = segmentLayer[index]
+        return await canChangeSelection(forLayer: layer, isSelected: isSelected)
     }
 }

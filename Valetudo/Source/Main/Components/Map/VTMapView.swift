@@ -17,6 +17,7 @@ class VTMapView: UIView {
     var hideNoGoAreas: Bool = true
 
     var shouldChangeLayerSelection: ((VTLayer, Bool) async -> Bool)?
+    var didChangeLayerSelection: ((VTLayer, Bool) async -> Void)?
     var onEntityClicked: ((VTEntity, CGPoint) async -> Bool)?
 
     init(frame: CGRect, data: VTMapData) {
@@ -141,6 +142,10 @@ class VTMapView: UIView {
         } else {
             selectedLayers.insert(vtLayer)
             shapeLayer.fillColor = vtLayer.fillColor?.darker(by: 0.5)
+        }
+
+        if triggerCallback {
+            await didChangeLayerSelection?(vtLayer, !isSelected)
         }
         return true
     }

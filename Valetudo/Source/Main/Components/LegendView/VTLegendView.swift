@@ -15,6 +15,7 @@ class VTLegendView: UIView {
     }
 
     var shouldChangeSelection: ((Int, Bool) async -> Bool)?
+    var didChangeSelection: ((Int, Bool) async -> Void)?
 
     private let scrollView = UIScrollView()
     private let stackView = UIStackView()
@@ -92,6 +93,7 @@ class VTLegendView: UIView {
 
         if shouldChange {
             tappedView.isSelected.toggle()
+            await didChangeSelection?(index, tappedView.isSelected)
         }
     }
 
