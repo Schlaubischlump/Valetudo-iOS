@@ -16,6 +16,7 @@ final class VTSegmentManagementViewController: VTMapEditingViewController {
 
     private let capabilities: Set<VTCapability>
     private var mode: Mode = .standard
+    private var splitOverlayID: UUID?
 
     override var toolbarActionDefinitions: [ToolbarActionDefinition] {
         switch mode {
@@ -93,11 +94,11 @@ final class VTSegmentManagementViewController: VTMapEditingViewController {
     }
 
     // MARK: - Map handling
-    
+
     override func canChangeSelection(forLayer _: VTLayer, isSelected _: Bool) async -> Bool {
         mode == .standard
     }
-    
+
     override func filterMapData(from mapData: VTMapData) -> VTMapData {
         let filteredEntities = mapData.entities.filter {
             switch $0.type {
@@ -120,11 +121,12 @@ final class VTSegmentManagementViewController: VTMapEditingViewController {
 
         guard mode == .split, selectedSegments.isEmpty else { return }
         mode = .standard
+        splitOverlayID = nil
         refreshToolbarItems()
     }
 
     // MARK: - Toolbar item Callbacks
-    
+
     private func showMaterialSelectionPopup() async throws -> VTMaterial? {
         guard let selectedMaterial = selectedSegments.first?.material else { return nil }
 
@@ -145,7 +147,7 @@ final class VTSegmentManagementViewController: VTMapEditingViewController {
             present(navigationController, animated: true)
         }
     }
-    
+
     private func didTapMaterial() {
         Task { [weak self] in
             guard let self else { return }
@@ -164,19 +166,51 @@ final class VTSegmentManagementViewController: VTMapEditingViewController {
             }
         }
     }
-    
+
     private func didTapCuttingLine() {
         mode = .split
+        if let segment = selectedSegments.first {
+            let segmentWidth = CGFloat(segment.dimensions.x.max - segment.dimensions.x.min)
+            let segmentHeight = CGFloat(segment.dimensions.y.max - segment.dimensions.y.min)
+            let lineLength = max(32.0, min(max(segmentWidth, segmentHeight) * 0.5, 96.0))
+            let lineThickness = max(6.0, min(segmentWidth, segmentHeight) * 0.05)
+            let overlay = VTSplitLineMapOverlay(
+                center: .zero,
+                length: lineLength,
+                thickness: lineThickness
+            )
+            splitOverlayID = mapView?.addOverlay(overlay)
+        }
         refreshToolbarItems()
     }
 
     private func didTapSplit(segment _: VTLayer) {
-        // TODO: Split segment
+        if let currentSplitLine {
+            print(currentSplitLine)
+        }
+        let id = selectedSegments.first?.segmentId
+        print(mapView?.data.layers.first(where: { $0.segmentId == id })?.dimensions ?? "No dim")
+        // TODO: Split segment with client call
     }
 
     private func didTapCancelSplitMode() {
         mode = .standard
+        splitOverlayID = nil
+        mapView?.clearTransientOverlays()
         refreshToolbarItems()
+    }
+
+    /// Returns the current split line geometry in raw `VTMapData` coordinates.
+    private var currentSplitLine: (start: CGPoint, end: CGPoint)? {
+        guard let splitOverlayID,
+              let splitLine = mapView?.overlay(withID: splitOverlayID) as? VTSplitLineMapOverlay,
+              let mapView
+        else { return nil }
+
+        return (
+            start: mapView.mapCoordinate(fromOverlayPoint: splitLine.startPoint),
+            end: mapView.mapCoordinate(fromOverlayPoint: splitLine.endPoint)
+        )
     }
 
     private func refreshToolbarItems() {

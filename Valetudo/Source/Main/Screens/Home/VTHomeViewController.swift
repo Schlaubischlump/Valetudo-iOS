@@ -306,7 +306,7 @@ class VTHomeViewController: VTViewController {
         }
     }
 
-    private func mapShouldChangeSelection(forLayer layer: VTLayer, isSelected: Bool) async -> Bool {
+    private func mapShouldChangeSelection(forLayer layer: VTLayer, isSelected _: Bool) async -> Bool {
         guard mapInteractionEnabled, //! self.refreshMap,
               robotControlViewController?.currentConfiguration != nil,
               segmentLayer.contains(layer) else { return false }
@@ -327,7 +327,7 @@ class VTHomeViewController: VTViewController {
         robotControlViewController?.currentConfiguration = config
     }
 
-    private func legendShouldChangedSelection(atIndex index: Int, isSelected: Bool) async -> Bool {
+    private func legendShouldChangedSelection(atIndex index: Int, isSelected _: Bool) async -> Bool {
         guard mapInteractionEnabled, //! self.refreshMap
               robotControlViewController?.currentConfiguration != nil,
               segmentLayer.indices.contains(index) else { return false }

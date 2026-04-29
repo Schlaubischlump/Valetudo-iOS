@@ -38,7 +38,7 @@ class VTMapEditingViewController: VTViewController {
     private var eventObservationTask: Task<Void, Never>?
     private var pendingMapUpdates: [UUID: PendingMapUpdate] = [:]
 
-    private var mapView: VTMapView? {
+    var mapView: VTMapView? {
         mapScrollView.zoomableView as? VTMapView
     }
 

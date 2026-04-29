@@ -9,23 +9,6 @@ import Foundation
 import QuartzCore
 
 extension VTMapData {
-    private func calculatedBoundingRect() -> CGRect {
-        var minPoint = CGPoint(x: CGFloat.infinity, y: CGFloat.infinity)
-        var maxPoint = CGPoint(x: -CGFloat.infinity, y: -CGFloat.infinity)
-        for layer in layers {
-            minPoint.x = min(CGFloat(layer.dimensions.x.min), minPoint.x)
-            minPoint.y = min(CGFloat(layer.dimensions.y.min), minPoint.y)
-            maxPoint.x = max(CGFloat(layer.dimensions.x.max), maxPoint.x)
-            maxPoint.y = max(CGFloat(layer.dimensions.y.max), maxPoint.y)
-        }
-        return CGRect(
-            x: minPoint.x,
-            y: minPoint.y,
-            width: maxPoint.x - minPoint.x,
-            height: maxPoint.y - minPoint.y
-        )
-    }
-
     /// Check if a point is in a no-go area. We assume no-go areas to be always rectangular.
     @inline(__always) private func isPoint(_ point: CGPoint,
                                            boundedByX x: CGFloat,
@@ -83,14 +66,14 @@ extension VTMapData {
 
             guard !path.isEmpty else { continue }
 
-            // 1.1. Fill room with color
+            // Fill room with color
             let shapeLayer = VTLayerShapeLayer(data: layer)
             shapeLayer.path = path
             shapeLayer.strokeColor = nil
             shapeLayer.fillColor = layer.fillColor
             container.addSublayer(shapeLayer)
 
-            // 1.2 Apply Material pattern
+            // Apply Material pattern
             let patternPath: CGPath? = switch layer.material {
             case .generic: nil
             case .tile: VTPatternFactory.makeTilePattern(withPoints: pixels)
@@ -245,7 +228,7 @@ extension VTMapData {
 
     @MainActor
     func toLayer(fitting size: CGSize, screenScale: CGFloat, hideNoGoAreas: Bool) -> CALayer {
-        let boundingBox = calculatedBoundingRect()
+        let boundingBox = boundingRect
         let x = boundingBox.minX
         let y = boundingBox.minY
         let width = boundingBox.width
@@ -264,51 +247,4 @@ extension VTMapData {
         container.setAffineTransform(CGAffineTransform(scaleX: scale, y: scale))
         return container
     }
-
-    /* func toCGImage(size: CGSize) -> CGImage? {
-         let boundingBox = calculatedBoundingRect()
-         let x = boundingBox.minX
-         let y = boundingBox.minY
-         let width = boundingBox.width
-         let height = boundingBox.height
-
-         // keep aspect ratio
-         let scale = min(size.width / width, size.height / height).rounded(.towardZero)
-         let scaleX = scale
-         let scaleY = scale
-
-         guard let context = CGContext(
-             data: nil,
-             width: Int(width * scaleX),
-             height: Int(height * scaleY),
-             bitsPerComponent: 8,
-             bytesPerRow: Int(width * scaleX) * 4, // 4 bytes per pixel (RGBA)
-             space: CGColorSpaceCreateDeviceRGB(),
-             bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
-         ) else {
-             return nil
-         }
-         context.scaleBy(x: scaleX, y: scaleY)
-
-         for layer in layers {
-             switch (layer.type) {
-             case .segment:
-                 context.setFillColor(layer.color)
-                 for pixel in layer.pixelData() {
-                     let rect = CGRect(x: pixel.x - x, y: pixel.y - y, width: 1, height: 1)
-                     context.fill(rect)
-                 }
-             case .floor:
-                 continue
-             case .wall:
-                 context.setFillColor(.black)
-                 for pixel in layer.pixelData() {
-                     let rect = CGRect(x: pixel.x - x, y: pixel.y - y, width: 1, height: 1)
-                     context.fill(rect)
-                 }
-             }
-         }
-
-         return context.makeImage()
-     } */
 }

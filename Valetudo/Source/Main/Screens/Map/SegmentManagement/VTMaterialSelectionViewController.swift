@@ -2,7 +2,7 @@
 //  VTMaterialSelectionViewController.swift
 //  Valetudo
 //
-//  Created by OpenAI Codex on 29.09.25.
+//  Created by David Klopp on 29.09.25.
 //
 
 import UIKit
