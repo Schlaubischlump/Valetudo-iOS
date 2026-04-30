@@ -324,6 +324,9 @@ class VTRobotControlViewController: VTViewController {
             await run {
                 let capibilities = await Set((try? client.getCapabilities()) ?? [])
                 self.supportsSegmentation = capibilities.contains(.mapSegmentation)
+                if !self.supportsSegmentation {
+                    self.currentConfiguration = .none
+                }
                 self.startPauseStopControl.isHidden = !capibilities.contains(.basicControl)
                 self.statisticsControls.isHidden = !capibilities.contains(.currentStatistics)
                 self.iterationsRow.isHidden = !capibilities.contains(.mapSegmentation)

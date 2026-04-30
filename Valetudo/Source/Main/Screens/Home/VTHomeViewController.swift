@@ -54,6 +54,7 @@ class VTHomeViewController: VTViewController {
     private var robotInfo: VTRobotInfo?
     private var robotState: VTStateAttributeList?
     private var obstacleImagesCapabilityIsEnabled = false
+    private var supportsSegmentation = false
 
     private var segmentLayer: [VTLayer] {
         mapView?.data.segmentLayer ?? []
@@ -301,13 +302,20 @@ class VTHomeViewController: VTViewController {
     }
 
     private func updateLegend(data _: VTMapData) async {
+        legendView.isHidden = !supportsSegmentation || segmentLayer.isEmpty
+        guard supportsSegmentation else {
+            legendView.items = []
+            return
+        }
+
         legendView.items = segmentLayer.map { layer in
             VTLegendItem(color: layer.fillColor ?? .black, text: layer.name ?? layer.segmentId!)
         }
     }
 
     private func mapShouldChangeSelection(forLayer layer: VTLayer, isSelected _: Bool) async -> Bool {
-        guard mapInteractionEnabled, //! self.refreshMap,
+        guard supportsSegmentation,
+              mapInteractionEnabled, //! self.refreshMap,
               robotControlViewController?.currentConfiguration != nil,
               segmentLayer.contains(layer) else { return false }
         return true
@@ -328,7 +336,8 @@ class VTHomeViewController: VTViewController {
     }
 
     private func legendShouldChangedSelection(atIndex index: Int, isSelected _: Bool) async -> Bool {
-        guard mapInteractionEnabled, //! self.refreshMap
+        guard supportsSegmentation,
+              mapInteractionEnabled, //! self.refreshMap
               robotControlViewController?.currentConfiguration != nil,
               segmentLayer.indices.contains(index) else { return false }
         return true
@@ -357,6 +366,8 @@ class VTHomeViewController: VTViewController {
         let mapData = try await client.getMap()
         robotInfo = try? await client.getRobotInfo()
         robotState = try? await client.getStateAttributes()
+        let capabilities = await Set((try? client.getCapabilities()) ?? [])
+        supportsSegmentation = capabilities.contains(.mapSegmentation)
         obstacleImagesCapabilityIsEnabled = await (try? client.getObstacleImagesCapabilityIsEnabled()) ?? false
 
         if let state = robotState {

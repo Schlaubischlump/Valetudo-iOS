@@ -31,6 +31,8 @@ final class VTTimerDetailViewController: VTCollectionViewController {
     private var dataSource: DataSource!
 
     private var timer: VTTimer
+    private var supportedActions: [VTTimer.Action.ActionType] = [.fullCleanup]
+    private var supportedPreActions: [VTTimer.PreAction.PreActionType] = []
 
     var onDone: ((VTTimer) -> Void)?
 
@@ -440,12 +442,17 @@ final class VTTimerDetailViewController: VTCollectionViewController {
         ], toSection: .schedule)
 
         // pre-actions
+        let filteredPreActions = timer.preActions.filter { supportedPreActions.contains($0.type) }
+        if filteredPreActions != timer.preActions {
+            timer = timer.copy(preActions: filteredPreActions)
+        }
+
         var possibleGroups: [VTTimersDetailSection] = [.preActions, freshGroup(), freshGroup()]
         let preActionTypes: [(String, String, String, VTTimer.PreAction.PreActionType, VTPresetType)] = [
             (kFan, kSetFan, "FAN_SPEED", .fanSpeedControl, .fanSpeed),
             (kWater, kSetWater, "WATER_GRADE", .waterUsageControl, .waterGrade),
             (kMode, kSetMode, "OPERATION_MODE", .operationModeControl, .operationMode),
-        ]
+        ].filter { supportedPreActions.contains($0.3) }
 
         for (toggleID, dropDownID, title, preActionTy, presetTy) in preActionTypes {
             let preAction = timer.preActions.first(where: { $0.type == preActionTy })
@@ -470,7 +477,12 @@ final class VTTimerDetailViewController: VTCollectionViewController {
 
         // action
         snapshot.appendSections([.action])
-        let allActions = VTTimer.Action.ActionType.allCases
+        let allActions = supportedActions
+        // Should never happen unless something goes very wrong...
+        if !allActions.contains(timer.action.type) {
+            timer = timer.copy(action: .init(type: .fullCleanup, params: .empty))
+        }
+
         let isFullCleanup = timer.action.type == .fullCleanup
 
         if isFullCleanup {
@@ -489,7 +501,7 @@ final class VTTimerDetailViewController: VTCollectionViewController {
 
             // Add base actions
             snapshot.appendItems([
-                .dropDown(kAction, active: .segmentCleanup, options: allActions),
+                .dropDown(kAction, active: timer.action.type, options: allActions),
                 .dropDown(kIterations, active: currentIter, options: allIters),
                 .checkbox(kCustomOrder, title: "USE_CUSTOM_ORDER".localized(), enabled: customOrder),
             ], toSection: .action)
@@ -517,9 +529,14 @@ final class VTTimerDetailViewController: VTCollectionViewController {
     // MARK: - Data Loading
 
     private func reloadData(animated: Bool) async {
-        Task {
-            await self.applySnapshot(animated: animated)
+        let timerProperties = try? await client.getTimerProperties()
+        supportedPreActions = timerProperties?.supportedPreActions ?? []
+        supportedActions = timerProperties?.supportedActions ?? [.fullCleanup]
+        if supportedActions.isEmpty {
+            supportedActions = [.fullCleanup]
         }
+
+        await applySnapshot(animated: animated)
     }
 
     // MARK: - VTViewController
