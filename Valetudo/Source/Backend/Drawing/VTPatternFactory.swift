@@ -171,51 +171,51 @@ enum VTPatternFactory {
 
     // MARK: - Parquet
 
-    /*static func makeParquetPattern(withPoints pts: [CGPoint], blockSize: Int = 8, plankGap: Int = 2) -> CGPath {
-        let path = CGMutablePath()
+    /* static func makeParquetPattern(withPoints pts: [CGPoint], blockSize: Int = 8, plankGap: Int = 2) -> CGPath {
+         let path = CGMutablePath()
 
-        guard let bounds = getBounds(from: pts) else { return path }
+         guard let bounds = getBounds(from: pts) else { return path }
 
-        // 1. Draw block borders
-        let startX = ((bounds.minX / blockSize) - 1) * blockSize
-        for x in stride(from: startX, to: bounds.maxX + blockSize, by: blockSize) {
-            path.move(to: CGPoint(x: x, y: bounds.minY))
-            path.addLine(to: CGPoint(x: x, y: bounds.maxY))
-        }
+         // 1. Draw block borders
+         let startX = ((bounds.minX / blockSize) - 1) * blockSize
+         for x in stride(from: startX, to: bounds.maxX + blockSize, by: blockSize) {
+             path.move(to: CGPoint(x: x, y: bounds.minY))
+             path.addLine(to: CGPoint(x: x, y: bounds.maxY))
+         }
 
-        let startY = ((bounds.minY / blockSize) - 1) * blockSize
-        for y in stride(from: startY, to: bounds.maxY + blockSize, by: blockSize) {
-            path.move(to: CGPoint(x: bounds.minX, y: y))
-            path.addLine(to: CGPoint(x: bounds.maxX, y: y))
-        }
+         let startY = ((bounds.minY / blockSize) - 1) * blockSize
+         for y in stride(from: startY, to: bounds.maxY + blockSize, by: blockSize) {
+             path.move(to: CGPoint(x: bounds.minX, y: y))
+             path.addLine(to: CGPoint(x: bounds.maxX, y: y))
+         }
 
-        // 2. Draw inner alternating planks
-        let startGridX = (bounds.minX / blockSize) - 1
-        let endGridX = (bounds.maxX / blockSize) + 1
-        let startGridY = (bounds.minY / blockSize) - 1
-        let endGridY = (bounds.maxY / blockSize) + 1
+         // 2. Draw inner alternating planks
+         let startGridX = (bounds.minX / blockSize) - 1
+         let endGridX = (bounds.maxX / blockSize) + 1
+         let startGridY = (bounds.minY / blockSize) - 1
+         let endGridY = (bounds.maxY / blockSize) + 1
 
-        for gX in startGridX ... endGridX {
-            for gY in startGridY ... endGridY {
-                let isVerticalBlock = (gX + gY) % 2 == 0
-                let blockMinX = gX * blockSize
-                let blockMaxX = (gX + 1) * blockSize
-                let blockMinY = gY * blockSize
-                let blockMaxY = (gY + 1) * blockSize
+         for gX in startGridX ... endGridX {
+             for gY in startGridY ... endGridY {
+                 let isVerticalBlock = (gX + gY) % 2 == 0
+                 let blockMinX = gX * blockSize
+                 let blockMaxX = (gX + 1) * blockSize
+                 let blockMinY = gY * blockSize
+                 let blockMaxY = (gY + 1) * blockSize
 
-                if isVerticalBlock {
-                    for lx in stride(from: blockMinX + plankGap, to: blockMaxX, by: plankGap) {
-                        path.move(to: CGPoint(x: lx, y: blockMinY))
-                        path.addLine(to: CGPoint(x: lx, y: blockMaxY))
-                    }
-                } else {
-                    for ly in stride(from: blockMinY + plankGap, to: blockMaxY, by: plankGap) {
-                        path.move(to: CGPoint(x: blockMinX, y: ly))
-                        path.addLine(to: CGPoint(x: blockMaxX, y: ly))
-                    }
-                }
-            }
-        }
-        return path
-    }*/
+                 if isVerticalBlock {
+                     for lx in stride(from: blockMinX + plankGap, to: blockMaxX, by: plankGap) {
+                         path.move(to: CGPoint(x: lx, y: blockMinY))
+                         path.addLine(to: CGPoint(x: lx, y: blockMaxY))
+                     }
+                 } else {
+                     for ly in stride(from: blockMinY + plankGap, to: blockMaxY, by: plankGap) {
+                         path.move(to: CGPoint(x: blockMinX, y: ly))
+                         path.addLine(to: CGPoint(x: blockMaxX, y: ly))
+                     }
+                 }
+             }
+         }
+         return path
+     } */
 }

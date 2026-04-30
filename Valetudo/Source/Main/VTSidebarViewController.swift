@@ -177,10 +177,17 @@ class VTSidebarViewController: VTCollectionViewController {
 
     private func configureDataSource() {
         let cellRegistration = UICollectionView.CellRegistration<UICollectionViewListCell, VTSidebarItem> { cell, _, item in
-            var content = cell.defaultContentConfiguration()
-            content.text = item.title
-            content.image = item.icon
-            cell.contentConfiguration = content
+            cell.configurationUpdateHandler = { cell, state in
+                var content = UIListContentConfiguration.cell().updated(for: state)
+                content.text = item.title
+                content.image = item.icon
+                content.imageProperties.tintColorTransformer = UIConfigurationColorTransformer { _ in
+                    state.isSelected ? .white : .label
+                }
+                cell.contentConfiguration = content
+            }
+
+            cell.setNeedsUpdateConfiguration()
         }
 
         dataSource = VTSidebarDataSource(collectionView: collectionView) { collectionView, indexPath, item in

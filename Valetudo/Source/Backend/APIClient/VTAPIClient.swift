@@ -1,3 +1,4 @@
+import CoreGraphics
 import CoreImage
 import Foundation
 import Network
@@ -178,14 +179,14 @@ public actor VTAPIClient: VTAPIClientProtocol {
         let request = VTRequest<[VTMapSegment]>(method: .GET, url: url)
         return try await send(request)
     }
-    
+
     public func clean(segmentIDs: [String], customOrder: Bool, iterations: Int) async throws {
         let url = capabilitiesURL.appendingPathComponent("MapSegmentationCapability")
         let data = VTMapSegmentationAction(segmentIDs: segmentIDs, iterations: iterations, customOrder: customOrder)
         let request = VTRequest<Void>(method: .PUT, url: url, query: nil, body: data)
         try await send(request)
     }
-    
+
     public func getMapSegmentationProperties() async throws -> VTMapSegmentationProperties {
         let url = capabilitiesURL
             .appendingPathComponent("MapSegmentationCapability")
@@ -423,7 +424,8 @@ public actor VTAPIClient: VTAPIClientProtocol {
         return try await send(request)
     }
 
-    public func getMapResetProperties() async throws -> [String: VTAnyCodable] {
+    /// Seems to be currently unused
+    public func getMapResetProperties() async throws -> VTMapResetProperties {
         let url = capabilitiesURL
             .appendingPathComponent("MapResetCapability")
             .appendingPathComponent("properties")
@@ -443,7 +445,8 @@ public actor VTAPIClient: VTAPIClientProtocol {
         return try await send(request)
     }
 
-    public func getMappingPassProperties() async throws -> [String: VTAnyCodable] {
+    /// Seems to be currently unused
+    public func getMappingPassProperties() async throws -> VTMappingPassProperties {
         let url = capabilitiesURL
             .appendingPathComponent("MappingPassCapability")
             .appendingPathComponent("properties")
@@ -470,6 +473,57 @@ public actor VTAPIClient: VTAPIClientProtocol {
             .appendingPathComponent("properties")
         let request = VTRequest<VTMapMaterialProperties>(method: .GET, url: url)
         return try await send(request).supportedMaterials
+    }
+
+    // MARK: - 1.2.15 MapSegmentEditCapability
+
+    public func joinMapSegments(segmentAID: String, segmentBID: String) async throws {
+        let url = capabilitiesURL.appendingPathComponent("MapSegmentEditCapability")
+        let data = VTMapSegmentJoinAction(segmentAID: segmentAID, segmentBID: segmentBID)
+        let request = VTRequest<Void>(method: .PUT, url: url, body: data)
+        try await send(request)
+    }
+
+    public func splitMapSegment(segmentID: String, pointA: CGPoint, pointB: CGPoint) async throws {
+        let url = capabilitiesURL.appendingPathComponent("MapSegmentEditCapability")
+        let mapPointA = VTMapCoordinate(x: Int(pointA.x.rounded()), y: Int(pointA.y.rounded()))
+        let mapPointB = VTMapCoordinate(x: Int(pointB.x.rounded()), y: Int(pointB.y.rounded()))
+        let data = VTMapSegmentSplitAction(segmentID: segmentID, pointA: mapPointA, pointB: mapPointB)
+        let request = VTRequest<Void>(method: .PUT, url: url, body: data)
+        try await send(request)
+    }
+
+    /// Seems to be currently unused
+    public func getMapSegmentEditProperties() async throws -> VTMapSegmentEditProperties {
+        let url = capabilitiesURL
+            .appendingPathComponent("MapSegmentEditCapability")
+            .appendingPathComponent("properties")
+        let request = VTRequest<VTAnyCodable>(method: .GET, url: url)
+        guard let dictValue = try await send(request).dictionaryValue else {
+            throw VTAPIError.noDictionary
+        }
+        return dictValue
+    }
+
+    // MARK: - 1.2.15 MapSegmentRenameCapability
+
+    public func renameMapSegment(segmentID: String, name: String) async throws {
+        let url = capabilitiesURL.appendingPathComponent("MapSegmentRenameCapability")
+        let data = VTMapSegmentRenameAction(segmentID: segmentID, name: name)
+        let request = VTRequest<Void>(method: .PUT, url: url, body: data)
+        try await send(request)
+    }
+
+    /// Seems to be currently unused
+    public func getMapSegmentRenameProperties() async throws -> VTMapSegmentRenameProperties {
+        let url = capabilitiesURL
+            .appendingPathComponent("MapSegmentRenameCapability")
+            .appendingPathComponent("properties")
+        let request = VTRequest<VTAnyCodable>(method: .GET, url: url)
+        guard let dictValue = try await send(request).dictionaryValue else {
+            throw VTAPIError.noDictionary
+        }
+        return dictValue
     }
 
     // MARK: - 1.3 Properties

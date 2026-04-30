@@ -30,9 +30,9 @@ final class VTSplitLineMapOverlay: VTMapOverlay {
         thickness: CGFloat,
         fillColor: UIColor = .white,
         strokeColor: UIColor = .black,
-        dashPattern: [NSNumber] = [8, 6],
-        strokeWidth: CGFloat = 2.0,
-        hitTestThickness: CGFloat = 28.0
+        dashPattern: [NSNumber] = [2, 2],
+        strokeWidth: CGFloat = 1.0,
+        hitTestThickness: CGFloat? = nil
     ) {
         self.center = center
         self.angle = angle
@@ -42,7 +42,7 @@ final class VTSplitLineMapOverlay: VTMapOverlay {
         self.strokeColor = strokeColor
         self.dashPattern = dashPattern
         self.strokeWidth = strokeWidth
-        self.hitTestThickness = hitTestThickness
+        self.hitTestThickness = hitTestThickness ?? thickness * 2
         super.init()
     }
 
@@ -106,6 +106,42 @@ final class VTSplitLineMapOverlay: VTMapOverlay {
         }
     }
 
+    fileprivate func updateLineKeepingStart(start: CGPoint, end: CGPoint) {
+        let deltaX = end.x - start.x
+        let deltaY = end.y - start.y
+        let distance = hypot(deltaX, deltaY)
+
+        guard distance > 0.0 else { return }
+
+        let nextAngle = atan2(deltaY, deltaX)
+        let nextLength = max(Self.minimumLength, distance)
+
+        angle = nextAngle
+        length = nextLength
+        center = CGPoint(
+            x: start.x + cos(nextAngle) * nextLength / 2,
+            y: start.y + sin(nextAngle) * nextLength / 2
+        )
+    }
+
+    fileprivate func updateLineKeepingEnd(start: CGPoint, end: CGPoint) {
+        let deltaX = end.x - start.x
+        let deltaY = end.y - start.y
+        let distance = hypot(deltaX, deltaY)
+
+        guard distance > 0.0 else { return }
+
+        let nextAngle = atan2(deltaY, deltaX)
+        let nextLength = max(Self.minimumLength, distance)
+
+        angle = nextAngle
+        length = nextLength
+        center = CGPoint(
+            x: end.x - cos(nextAngle) * nextLength / 2,
+            y: end.y - sin(nextAngle) * nextLength / 2
+        )
+    }
+
     fileprivate var fillColorValue: CGColor {
         fillColor.cgColor
     }
@@ -130,19 +166,28 @@ final class VTSplitLineMapOverlay: VTMapOverlay {
 /// Shape layer that owns split-line interaction details, including endpoint dragging.
 @MainActor
 final class VTSplitLineMapOverlayLayer: VTMapOverlayLayer {
+    private enum HandleTarget {
+        case start
+        case end
+    }
+
     private enum Interaction {
         case move(offsetFromCenter: CGPoint)
         case dragStart(fixedEnd: CGPoint)
         case dragEnd(fixedStart: CGPoint)
     }
 
+    private static let minimumHandleVisibleRadius: CGFloat = 5.0
+    private static let minimumHandleHitRadius: CGFloat = 26.0
+    private static let minimumBodyHitThickness: CGFloat = 24.0
+
     private let startHandleLayer = CAShapeLayer()
     private let endHandleLayer = CAShapeLayer()
 
     private var splitOverlay: VTSplitLineMapOverlay?
     private var interaction: Interaction?
-    private var startHandleHitPath: CGPath?
-    private var endHandleHitPath: CGPath?
+    private var startHandleHitRadius: CGFloat = 26.0
+    private var endHandleHitRadius: CGFloat = 26.0
 
     override init(overlayID: UUID) {
         super.init(overlayID: overlayID)
@@ -185,22 +230,22 @@ final class VTSplitLineMapOverlayLayer: VTMapOverlayLayer {
     }
 
     override func containsInteractivePoint(_ point: CGPoint) -> Bool {
-        if startHandleHitPath?.contains(point) == true || endHandleHitPath?.contains(point) == true {
+        if nearestHandle(to: point) != nil {
             return true
         }
-        return containsOverlayPoint(point)
+        return containsLine(at: point)
     }
 
     @discardableResult
     override func beginInteraction(at point: CGPoint) -> Bool {
         guard let overlay = splitOverlay else { return false }
 
-        if isOverlaySelected, startHandleHitPath?.contains(point) == true {
+        if isOverlaySelected, nearestHandle(to: point) == .start {
             interaction = .dragStart(fixedEnd: overlay.endPoint)
             return true
         }
 
-        if isOverlaySelected, endHandleHitPath?.contains(point) == true {
+        if isOverlaySelected, nearestHandle(to: point) == .end {
             interaction = .dragEnd(fixedStart: overlay.startPoint)
             return true
         }
@@ -217,9 +262,9 @@ final class VTSplitLineMapOverlayLayer: VTMapOverlayLayer {
         case let .move(offsetFromCenter):
             overlay.center = CGPoint(x: point.x + offsetFromCenter.x, y: point.y + offsetFromCenter.y)
         case let .dragStart(fixedEnd):
-            overlay.updateLine(start: point, end: fixedEnd)
+            overlay.updateLineKeepingEnd(start: point, end: fixedEnd)
         case let .dragEnd(fixedStart):
-            overlay.updateLine(start: fixedStart, end: point)
+            overlay.updateLineKeepingStart(start: fixedStart, end: point)
         }
 
         configure(with: overlay)
@@ -231,33 +276,19 @@ final class VTSplitLineMapOverlayLayer: VTMapOverlayLayer {
 
     /// Draws two endpoint handles so the user can discover and grab the rotation anchors.
     private func configureHandleLayers(for overlay: VTSplitLineMapOverlay) {
-        let visibleRadius = max(overlay.thickness * 0.6, 7.0)
-        let hitRadius = visibleRadius + 18.0
+        let visibleRadius = max(overlay.thickness * 0.6, Self.minimumHandleVisibleRadius)
+        let hitRadius = max(visibleRadius + 18.0, Self.minimumHandleHitRadius)
 
-        configureHandleLayer(startHandleLayer, center: overlay.startPoint, visibleRadius: visibleRadius)
-        configureHandleLayer(endHandleLayer, center: overlay.endPoint, visibleRadius: visibleRadius)
-
-        startHandleHitPath = UIBezierPath(
-            ovalIn: CGRect(
-                x: overlay.startPoint.x - hitRadius,
-                y: overlay.startPoint.y - hitRadius,
-                width: hitRadius * 2,
-                height: hitRadius * 2
-            )
-        ).cgPath
-        endHandleHitPath = UIBezierPath(
-            ovalIn: CGRect(
-                x: overlay.endPoint.x - hitRadius,
-                y: overlay.endPoint.y - hitRadius,
-                width: hitRadius * 2,
-                height: hitRadius * 2
-            )
-        ).cgPath
+        let strokeWidth = overlay.strokeWidthValue
+        configureHandleLayer(startHandleLayer, center: overlay.startPoint, strokeWidth: strokeWidth, visibleRadius: visibleRadius)
+        configureHandleLayer(endHandleLayer, center: overlay.endPoint, strokeWidth: strokeWidth, visibleRadius: visibleRadius)
+        startHandleHitRadius = hitRadius
+        endHandleHitRadius = hitRadius
 
         selectionStateDidChange()
     }
 
-    private func configureHandleLayer(_ handleLayer: CAShapeLayer, center: CGPoint, visibleRadius: CGFloat) {
+    private func configureHandleLayer(_ handleLayer: CAShapeLayer, center: CGPoint, strokeWidth: CGFloat, visibleRadius: CGFloat) {
         handleLayer.path = UIBezierPath(
             ovalIn: CGRect(
                 x: center.x - visibleRadius,
@@ -268,7 +299,50 @@ final class VTSplitLineMapOverlayLayer: VTMapOverlayLayer {
         ).cgPath
         handleLayer.fillColor = UIColor.white.cgColor
         handleLayer.strokeColor = UIColor.black.cgColor
-        handleLayer.lineWidth = 2.0
+        handleLayer.lineWidth = strokeWidth
         handleLayer.isHidden = !isOverlaySelected
+    }
+
+    private func nearestHandle(to point: CGPoint) -> HandleTarget? {
+        guard let overlay = splitOverlay else { return nil }
+
+        let startDistance = point.distance(to: overlay.startPoint)
+        let endDistance = point.distance(to: overlay.endPoint)
+        let minDistance = min(startDistance, endDistance)
+
+        guard minDistance <= max(startHandleHitRadius, endHandleHitRadius) else { return nil }
+        return startDistance <= endDistance ? .start : .end
+    }
+
+    private func containsLine(at point: CGPoint) -> Bool {
+        guard let overlay = splitOverlay else { return false }
+
+        let hitThickness = max(overlay.thickness, overlay.hitTestThicknessValue, Self.minimumBodyHitThickness)
+        return point.distanceToSegment(start: overlay.startPoint, end: overlay.endPoint) <= hitThickness / 2
+    }
+}
+
+private extension CGPoint {
+    func distance(to other: CGPoint) -> CGFloat {
+        hypot(x - other.x, y - other.y)
+    }
+
+    func distanceToSegment(start: CGPoint, end: CGPoint) -> CGFloat {
+        let deltaX = end.x - start.x
+        let deltaY = end.y - start.y
+        let lengthSquared = deltaX * deltaX + deltaY * deltaY
+
+        guard lengthSquared > 0 else {
+            return distance(to: start)
+        }
+
+        let projection = ((x - start.x) * deltaX + (y - start.y) * deltaY) / lengthSquared
+        let clampedProjection = min(max(projection, 0.0), 1.0)
+        let closestPoint = CGPoint(
+            x: start.x + deltaX * clampedProjection,
+            y: start.y + deltaY * clampedProjection
+        )
+
+        return distance(to: closestPoint)
     }
 }

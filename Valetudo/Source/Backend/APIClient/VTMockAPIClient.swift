@@ -15,13 +15,16 @@ extension VTStateAttributeList {
 }
 
 actor VTMockAPIClient: VTAPIClientProtocol {
+    private let emptyMapSegmentEditProperties: VTMapSegmentEditProperties = [:]
+    private let emptyMapSegmentRenameProperties: VTMapSegmentRenameProperties = [:]
+
     func getSupportedMapSegmentMaterials() async throws -> [VTMaterial] {
         [
             .generic,
             .tile,
             .wood,
             .woodVertical,
-            .woodVertical
+            .woodVertical,
         ]
     }
 
@@ -168,6 +171,7 @@ actor VTMockAPIClient: VTAPIClientProtocol {
             customOrderSupport: true
         )
     }
+
     func getMapSegments() async throws -> [VTMapSegment] {
         mapData.segmentLayer.compactMap { layer in
             guard let id = layer.segmentId else { return nil }
@@ -181,6 +185,39 @@ actor VTMockAPIClient: VTAPIClientProtocol {
             )
         }
     }
+
+    func joinMapSegments(segmentAID _: String, segmentBID _: String) async throws {}
+    func splitMapSegment(segmentID _: String, pointA _: CGPoint, pointB _: CGPoint) async throws {}
+    func getMapSegmentEditProperties() async throws -> VTMapSegmentEditProperties {
+        emptyMapSegmentEditProperties
+    }
+
+    func renameMapSegment(segmentID: String, name: String) async throws {
+        mapData = VTMapData(
+            size: mapData.size,
+            pixelSize: mapData.pixelSize,
+            layers: mapData.layers.map { layer in
+                guard layer.segmentId == segmentID else { return layer }
+                var metaData = layer.metaData
+                metaData["name"] = .string(name)
+                return VTLayer(
+                    __class: layer.__class,
+                    metaData: metaData,
+                    type: layer.type,
+                    pixels: layer.pixels,
+                    compressedPixels: layer.compressedPixels,
+                    dimensions: layer.dimensions
+                )
+            },
+            entities: mapData.entities,
+            metaData: mapData.metaData
+        )
+    }
+
+    func getMapSegmentRenameProperties() async throws -> VTMapSegmentRenameProperties {
+        emptyMapSegmentRenameProperties
+    }
+
     func autoEmptyDock() async throws {}
     func startMopDockClean() async throws {}
     func stopMopDockClean() async throws {}
@@ -296,7 +333,7 @@ actor VTMockAPIClient: VTAPIClientProtocol {
 
     func resetMap() async throws {}
 
-    func getMapResetProperties() async throws -> [String: VTAnyCodable] {
+    func getMapResetProperties() async throws -> VTMapResetProperties {
         [:]
     }
 
@@ -304,7 +341,7 @@ actor VTMockAPIClient: VTAPIClientProtocol {
 
     func startMappingPass() async throws {}
 
-    func getMappingPassProperties() async throws -> [String: VTAnyCodable] {
+    func getMappingPassProperties() async throws -> VTMappingPassProperties {
         [:]
     }
 

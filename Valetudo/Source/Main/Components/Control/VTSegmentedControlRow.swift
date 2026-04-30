@@ -16,6 +16,9 @@ final class VTSegmentedControlRow<T: VTSegmentedItem>: VTControlRow<UISegmentedC
         didSet { refresh() }
     }
 
+    /// Disallow changing the value if the control is disabled.
+    /// This prevents an ugly UI bug, where the state of the segmented control changes back again, because we got a state attribute update
+    /// that is orthogonal to the change we just made.
     private var allowsValueChange: Bool = true
 
     var selectedValue: T? {
@@ -75,6 +78,7 @@ final class VTSegmentedControlRow<T: VTSegmentedItem>: VTControlRow<UISegmentedC
         didSet {
             allowsValueChange = isEnabled
             content.isEnabled = isEnabled
+            //print(self, self.isEnabled)
         }
     }
 

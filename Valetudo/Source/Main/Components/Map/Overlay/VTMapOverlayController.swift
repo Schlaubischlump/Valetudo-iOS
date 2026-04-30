@@ -82,7 +82,9 @@ final class VTMapOverlayController {
 
     /// Updates the currently active overlay interaction, if any.
     func updateInteraction(to point: CGPoint) {
-        activeOverlayInteractionLayer?.updateInteraction(to: point)
+        // Don't allow moving an overlay outside the map bounds
+        let boundedPoint = point.clamped(to: overlayContainerLayer?.bounds)
+        activeOverlayInteractionLayer?.updateInteraction(to: boundedPoint)
     }
 
     /// Ends the active overlay interaction and clears the temporary interaction session.
@@ -131,5 +133,16 @@ final class VTMapOverlayController {
             .compactMap { $0 as? VTMapOverlayLayer }
             .reversed()
             .first(where: { $0.containsInteractivePoint(point) })
+    }
+}
+
+private extension CGPoint {
+    func clamped(to bounds: CGRect?) -> CGPoint {
+        guard let bounds else { return self }
+
+        return CGPoint(
+            x: min(max(x, bounds.minX), bounds.maxX),
+            y: min(max(y, bounds.minY), bounds.maxY)
+        )
     }
 }

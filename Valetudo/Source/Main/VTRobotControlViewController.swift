@@ -77,28 +77,29 @@ struct VTRepeatItem: VTSegmentedItem {
     }
 }
 
+@MainActor
 class VTRobotControlViewController: VTViewController {
     enum CleaningConfiguration {
-        case none
+        case full
         case segments(ids: [String], customOrder: Bool, iterations: Int)
 
         fileprivate var canChangeIterations: Bool {
             switch self {
-            case .none: false
+            case .full: false
             case .segments(ids: _, customOrder: _, iterations: _): true
             }
         }
 
         fileprivate var iterations: Int {
             switch self {
-            case .none: 1
+            case .full: 1
             case .segments(ids: _, customOrder: _, iterations: let iter): iter
             }
         }
 
         func appending(segmentId: String) -> CleaningConfiguration {
             switch self {
-            case .none:
+            case .full:
                 .segments(ids: [segmentId], customOrder: false, iterations: 1)
             case let .segments(ids: ids, customOrder: order, iterations: iters):
                 .segments(ids: ids + [segmentId], customOrder: order, iterations: iters)
@@ -107,8 +108,8 @@ class VTRobotControlViewController: VTViewController {
 
         fileprivate func updated(iterations: Int) -> CleaningConfiguration {
             switch self {
-            case .none:
-                .none
+            case .full:
+                .full
             case .segments(ids: let ids, customOrder: let order, iterations: _):
                 .segments(ids: ids, customOrder: order, iterations: iterations)
             }
@@ -116,13 +117,13 @@ class VTRobotControlViewController: VTViewController {
 
         func removing(segmentId: String) -> CleaningConfiguration {
             switch self {
-            case .none:
-                return .none
+            case .full:
+                return .full
             case .segments(ids: var ids, customOrder: let order, iterations: let iters):
                 let idx = ids.firstIndex(of: segmentId)!
                 ids.remove(at: idx)
                 if ids.isEmpty {
-                    return .none
+                    return .full
                 } else {
                     return .segments(ids: ids, customOrder: order, iterations: iters)
                 }
@@ -132,12 +133,15 @@ class VTRobotControlViewController: VTViewController {
 
     /// Cleaning configuration to use when the start button is clicked.
     private var supportsSegmentation: Bool = false
-    private var mapSegmentationProperties: VTMapSegmentationProperties?
-    private var _currentConfiguration: CleaningConfiguration = .none
+    private var _currentConfiguration: CleaningConfiguration = .full
     var currentConfiguration: CleaningConfiguration {
         get { _currentConfiguration }
         set {
-            _currentConfiguration = supportsSegmentation ? sanitizedConfiguration(newValue) : .none
+            if supportsSegmentation {
+                _currentConfiguration = newValue
+            } else {
+                _currentConfiguration = .full
+            }
             updateIterations()
         }
     }
@@ -320,19 +324,24 @@ class VTRobotControlViewController: VTViewController {
             await run {
                 let capibilities = await Set((try? client.getCapabilities()) ?? [])
                 self.supportsSegmentation = capibilities.contains(.mapSegmentation)
-                self.mapSegmentationProperties = if self.supportsSegmentation {
+                if !self.supportsSegmentation {
+                    self.currentConfiguration = .full
+                }
+                
+                let mapSegmentationProperties: VTMapSegmentationProperties? = if self.supportsSegmentation {
                     try? await self.client.getMapSegmentationProperties()
                 } else {
                     nil
                 }
-                print(self.supportsSegmentation, mapSegmentationProperties ?? "No config")
                 
-                self.iterationsRow.values = self.iterationItems
-                updateIterations()
-                
-                if !self.supportsSegmentation {
-                    self.currentConfiguration = .none
+                let iterationRange = if let iterationCount = mapSegmentationProperties?.iterationCount {
+                    iterationCount.min ... iterationCount.max
+                } else {
+                    1 ... 1
                 }
+                self.iterationsRow.values = VTRepeatItem.items(in: iterationRange)
+                self.updateIterations()
+
                 self.startPauseStopControl.isHidden = !capibilities.contains(.basicControl)
                 self.statisticsControls.isHidden = !capibilities.contains(.currentStatistics)
                 self.iterationsRow.isHidden = !capibilities.contains(.mapSegmentation)
@@ -380,29 +389,6 @@ class VTRobotControlViewController: VTViewController {
         iterationsRow.subtitle = "x \(config.iterations)"
         iterationsRow.selectedValue = VTRepeatItem(iterations: config.iterations)
         iterationsRow.isEnabled = config.canChangeIterations
-    }
-
-    private var iterationRange: ClosedRange<Int> {
-        if let iterationCount = mapSegmentationProperties?.iterationCount {
-            iterationCount.min ... iterationCount.max
-        } else {
-            1 ... 1
-        }
-    }
-
-    private var iterationItems: [VTRepeatItem] {
-        VTRepeatItem.items(in: iterationRange)
-    }
-
-    private func sanitizedConfiguration(_ configuration: CleaningConfiguration) -> CleaningConfiguration {
-        switch configuration {
-        case .none:
-            return .none
-        case let .segments(ids, customOrder, iterations):
-            let clampedIterations = min(max(iterations, iterationRange.lowerBound), iterationRange.upperBound)
-            let customOrderSupported = mapSegmentationProperties?.customOrderSupport ?? false
-            return .segments(ids: ids, customOrder: customOrderSupported ? customOrder : false, iterations: clampedIterations)
-        }
     }
 
     @MainActor
@@ -487,7 +473,7 @@ class VTRobotControlViewController: VTViewController {
                 try await client.pause()
             } else {
                 switch currentConfiguration {
-                case .none:
+                case .full:
                     try await client.start()
                 case let .segments(ids: ids, customOrder: order, iterations: iters):
                     try await client.clean(segmentIDs: ids, customOrder: order, iterations: iters)
@@ -624,7 +610,7 @@ class VTRobotControlViewController: VTViewController {
             Task { await self?.changeOperationMode(old: old?.presetValue, new: new.presetValue) }
         }
         iterationsRow.onValueChanged = { [weak self] _, new in
-            let config = self?.currentConfiguration ?? .none
+            let config = self?.currentConfiguration ?? .full
             self?.currentConfiguration = config.updated(iterations: new.iterations)
         }
 

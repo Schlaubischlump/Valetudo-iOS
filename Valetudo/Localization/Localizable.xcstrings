@@ -122,6 +122,17 @@
         }
       }
     },
+    "CANCEL" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancel"
+          }
+        }
+      }
+    },
     "CHARGER" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -140,28 +151,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Checking For Updates..."
-          }
-        }
-      }
-    },
-    "CANCEL" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Cancel"
-          }
-        }
-      }
-    },
-    "CUTTING_LINE" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Cutting Line"
           }
         }
       }
@@ -331,6 +320,17 @@
         }
       }
     },
+    "CUTTING_LINE" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cutting Line"
+          }
+        }
+      }
+    },
     "DELETE" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -364,6 +364,17 @@
         }
       }
     },
+    "DISCARD_CHANGES" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Discard Changes"
+          }
+        }
+      }
+    },
     "DISMISS" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -393,17 +404,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Docked"
-          }
-        }
-      }
-    },
-    "DISCARD_CHANGES" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Discard Changes"
           }
         }
       }
@@ -771,17 +771,6 @@
         }
       }
     },
-    "KEEP_EDITING" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Keep Editing"
-          }
-        }
-      }
-    },
     "ITERATIONS" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -793,13 +782,13 @@
         }
       }
     },
-    "JOIN" : {
+    "KEEP_EDITING" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Join"
+            "value" : "Keep Editing"
           }
         }
       }
@@ -925,6 +914,28 @@
         }
       }
     },
+    "MAP_EDITING_DISCARD_ALERT_MESSAGE" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Going back now will discard the changes you just made."
+          }
+        }
+      }
+    },
+    "MAP_EDITING_DISCARD_ALERT_TITLE" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Discard Changes?"
+          }
+        }
+      }
+    },
     "MAP_OPTIONS_FOOTER_DESCRIPTION" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -969,17 +980,6 @@
         }
       }
     },
-    "MAP_OPTIONS_RESET_SUBTITLE" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Delete the current map"
-          }
-        }
-      }
-    },
     "MAP_OPTIONS_RESET_CONFIRMATION_ACTION" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1009,6 +1009,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Reset Map?"
+          }
+        }
+      }
+    },
+    "MAP_OPTIONS_RESET_SUBTITLE" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete the current map"
           }
         }
       }
@@ -1046,6 +1057,39 @@
         }
       }
     },
+    "MAP_OPTIONS_SEGMENT_MATERIAL_FAILED_MESSAGE" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Failed to set segment material."
+          }
+        }
+      }
+    },
+    "MAP_OPTIONS_SEGMENT_MATERIAL_FAILED_MESSAGE_WITH_REASON" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Failed to set segment material.\n%@"
+          }
+        }
+      }
+    },
+    "MAP_OPTIONS_SEGMENT_SPLIT_FAILED_MESSAGE" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Failed to split segment.\n%@"
+          }
+        }
+      }
+    },
     "MAP_OPTIONS_SUBTITLE" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1075,28 +1119,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Virtual Restriction Managment"
-          }
-        }
-      }
-    },
-    "MAP_EDITING_DISCARD_ALERT_MESSAGE" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Going back now will discard the changes you just made."
-          }
-        }
-      }
-    },
-    "MAP_EDITING_DISCARD_ALERT_TITLE" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Discard Changes?"
           }
         }
       }

@@ -117,9 +117,17 @@ class VTMapView: UIView, UIGestureRecognizerDelegate {
         overlayController.overlay(withID: id)
     }
 
-    /// Converts an overlay-space point into the raw map coordinate system used by `VTMapData`.
-    func mapCoordinate(fromOverlayPoint point: CGPoint) -> CGPoint {
+    /// Converts an overlay-space point into the map pixel coordinate system used by layer data.
+    func mapPixelCoordinate(fromOverlayPoint point: CGPoint) -> CGPoint {
         CGPoint(x: point.x + data.boundingRect.minX, y: point.y + data.boundingRect.minY)
+    }
+
+    /// Converts an overlay-space point into Valetudo's cm-space used by segment edit actions.
+    func cmCoordinate(fromOverlayPoint point: CGPoint) -> CGPoint {
+        mapPixelCoordinate(fromOverlayPoint: point).scaleBy(
+            x: CGFloat(data.pixelSize),
+            y: CGFloat(data.pixelSize)
+        )
     }
 
     /// Converts a raw `VTMapData` coordinate into the overlay-space coordinate system.

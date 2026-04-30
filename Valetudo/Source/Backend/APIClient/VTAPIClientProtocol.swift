@@ -5,6 +5,7 @@
 //  Created by David Klopp on 16.05.25.
 //
 
+import CoreGraphics
 import CoreImage
 import Foundation
 
@@ -61,6 +62,11 @@ public protocol VTAPIClientProtocol: Actor {
     func clean(segmentIDs: [String], customOrder: Bool, iterations: Int) async throws
     func getMapSegmentationProperties() async throws -> VTMapSegmentationProperties
     func getMapSegments() async throws -> [VTMapSegment]
+    func joinMapSegments(segmentAID: String, segmentBID: String) async throws
+    func splitMapSegment(segmentID: String, pointA: CGPoint, pointB: CGPoint) async throws
+    func getMapSegmentEditProperties() async throws -> VTMapSegmentEditProperties
+    func renameMapSegment(segmentID: String, name: String) async throws
+    func getMapSegmentRenameProperties() async throws -> VTMapSegmentRenameProperties
 
     // MARK: - 1.2.4 AutoEmptyDockManualTriggerCapability
 
@@ -115,12 +121,12 @@ public protocol VTAPIClientProtocol: Actor {
     // MARK: - 1.2.12 MapResetCapability
 
     func resetMap() async throws
-    func getMapResetProperties() async throws -> [String: VTAnyCodable]
+    func getMapResetProperties() async throws -> VTMapResetProperties
 
     // MARK: - 1.2.13 MappingPassCapability
 
     func startMappingPass() async throws
-    func getMappingPassProperties() async throws -> [String: VTAnyCodable]
+    func getMappingPassProperties() async throws -> VTMappingPassProperties
 
     // MARK: - 1.2.14 MapSegmentMaterialControlCapability
 

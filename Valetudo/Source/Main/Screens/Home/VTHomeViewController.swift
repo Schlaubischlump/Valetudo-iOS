@@ -28,7 +28,15 @@ class VTHomeViewController: VTViewController {
     private var observerToken: VTListenerToken?
     private var eventObservationTask: Task<Void, Never>?
 
-    private lazy var robotControlViewController: VTRobotControlViewController? = VTRobotControlViewController(client: self.client)
+    private var robotControlViewController: VTRobotControlViewController?
+
+    private var activeRobotControlViewController: VTRobotControlViewController? {
+        if isCompact {
+            robotControlViewController
+        } else {
+            (splitViewController as? VTSplitViewController)?.inspector as? VTRobotControlViewController
+        }
+    }
 
     private var legendViewBottomAnchor: NSLayoutConstraint!
     private var mapScrollViewBottomAnchor: NSLayoutConstraint!
@@ -316,14 +324,14 @@ class VTHomeViewController: VTViewController {
     private func mapShouldChangeSelection(forLayer layer: VTLayer, isSelected _: Bool) async -> Bool {
         guard supportsSegmentation,
               mapInteractionEnabled, //! self.refreshMap,
-              robotControlViewController?.currentConfiguration != nil,
+              activeRobotControlViewController?.currentConfiguration != nil,
               segmentLayer.contains(layer) else { return false }
         return true
     }
 
     private func mapDidChangeSelection(forLayer layer: VTLayer, isSelected: Bool) async {
         guard let index = segmentLayer.firstIndex(of: layer),
-              var config = robotControlViewController?.currentConfiguration else { return }
+              var config = activeRobotControlViewController?.currentConfiguration else { return }
 
         if isSelected {
             await legendView.select(at: index)
@@ -332,20 +340,20 @@ class VTHomeViewController: VTViewController {
             await legendView.deselect(at: index)
             config = config.removing(segmentId: layer.segmentId!)
         }
-        robotControlViewController?.currentConfiguration = config
+        activeRobotControlViewController?.currentConfiguration = config
     }
 
     private func legendShouldChangedSelection(atIndex index: Int, isSelected _: Bool) async -> Bool {
         guard supportsSegmentation,
               mapInteractionEnabled, //! self.refreshMap
-              robotControlViewController?.currentConfiguration != nil,
+              activeRobotControlViewController?.currentConfiguration != nil,
               segmentLayer.indices.contains(index) else { return false }
         return true
     }
 
     private func legendDidChangeSelection(atIndex index: Int, isSelected: Bool) async {
         guard segmentLayer.indices.contains(index),
-              var config = robotControlViewController?.currentConfiguration else { return }
+              var config = activeRobotControlViewController?.currentConfiguration else { return }
         let layer = segmentLayer[index]
 
         if isSelected {
@@ -355,7 +363,7 @@ class VTHomeViewController: VTViewController {
             await mapView?.deselect(layer: layer)
             config = config.removing(segmentId: layer.segmentId!)
         }
-        robotControlViewController?.currentConfiguration = config
+        activeRobotControlViewController?.currentConfiguration = config
     }
 
     @MainActor
@@ -416,7 +424,7 @@ extension VTHomeViewController: UISheetPresentationControllerDelegate {
             updateLegendPosition(basedOn: height + view.safeAreaInsets.bottom, animate: true)
         }
     }
-
+    
     fileprivate func updateRobotControlViewPresentation(animated: Bool = false) {
         let splitVC = splitViewController
 
@@ -431,7 +439,14 @@ extension VTHomeViewController: UISheetPresentationControllerDelegate {
 
     private func presentControlSheet(animated: Bool) {
         guard isCompact else { return }
-        guard let sheetVC = robotControlViewController else { return } // , presentedViewController != sheetVC
+        let sheetVC: VTRobotControlViewController
+        if let robotControlViewController {
+            sheetVC = robotControlViewController
+        } else {
+            let newController = VTRobotControlViewController(client: client)
+            robotControlViewController = newController
+            sheetVC = newController
+        }
 
         sheetVC.modalPresentationStyle = .pageSheet
 
