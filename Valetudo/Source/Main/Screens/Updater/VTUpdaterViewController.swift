@@ -7,8 +7,6 @@
 import MarkdownKit
 import UIKit
 
-// TODO: Test: After successfull install the check for update spins forever
-
 private let unknownString = "UNKNOWN".localized()
 
 private let kUpdate = "UPDATE_CHANNEL"
@@ -67,6 +65,7 @@ class VTUpdaterViewController: VTCollectionViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
 
+        needsVersionCheck = true
         Task {
             await reloadData(animated: false)
         }
@@ -92,6 +91,7 @@ class VTUpdaterViewController: VTCollectionViewController {
     }
 
     @objc private func didPullToRefresh() {
+        needsVersionCheck = true
         Task {
             await self.reloadData(animated: true)
         }
@@ -378,10 +378,23 @@ class VTUpdaterViewController: VTCollectionViewController {
         }
     }
 
+    @MainActor
     private func checkForUpdateIfNeeded(_ state: (any VTUpdaterState)?) async {
-        guard needsVersionCheck, let state, let _ = state as? VTUpdaterIdleState else { return }
+        guard needsVersionCheck, let state else { return }
+        guard state is VTUpdaterIdleState || state is VTUpdaterNoUpdateRequiredState || state is VTUpdaterErrorState else { return }
+
         let client = client
         do {
+            await refreshUpdateCell(
+                VTUpdaterIdleState(
+                    className: "ValetudoUpdaterIdleState",
+                    timestamp: Date(),
+                    busy: true,
+                    metaData: [:],
+                    currentVersion: ""
+                ),
+                animated: true
+            )
             try await client.checkForUpdate()
             needsVersionCheck = false
             await scheduleRefresh(continuous: true)
@@ -402,7 +415,6 @@ class VTUpdaterViewController: VTCollectionViewController {
         guard let state, let _ = state as? VTUpdaterApplyPendingState else { return }
         do {
             try await client.applyUpdate()
-            needsVersionCheck = true
             await scheduleRefresh(continuous: true)
         } catch { /* nothing, handeled by state change */ }
     }
@@ -419,7 +431,6 @@ class VTUpdaterViewController: VTCollectionViewController {
         var i = 0
         while isBusy, i < retries {
             state = try? await client.getUpdaterState()
-            // after a successfull install, we need to check for new updates
             await checkForUpdateIfNeeded(state)
 
             if let state, continuous {
@@ -434,7 +445,7 @@ class VTUpdaterViewController: VTCollectionViewController {
 
             try? await Task.sleep(nanoseconds: 1_000_000_000) // wait 1 second
         }
-        guard let state, !continuous else { return }
+        guard let state else { return }
         await refreshUpdateCell(state, animated: true)
     }
 
@@ -483,7 +494,6 @@ class VTUpdaterViewController: VTCollectionViewController {
             refreshControl.endRefreshing()
         }
 
-        needsVersionCheck = true
         await checkForUpdateIfNeeded(updaterState)
     }
 
