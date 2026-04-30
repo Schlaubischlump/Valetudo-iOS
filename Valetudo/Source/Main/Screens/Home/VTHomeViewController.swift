@@ -424,7 +424,7 @@ extension VTHomeViewController: UISheetPresentationControllerDelegate {
             updateLegendPosition(basedOn: height + view.safeAreaInsets.bottom, animate: true)
         }
     }
-    
+
     fileprivate func updateRobotControlViewPresentation(animated: Bool = false) {
         let splitVC = splitViewController
 

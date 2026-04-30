@@ -327,13 +327,13 @@ class VTRobotControlViewController: VTViewController {
                 if !self.supportsSegmentation {
                     self.currentConfiguration = .full
                 }
-                
+
                 let mapSegmentationProperties: VTMapSegmentationProperties? = if self.supportsSegmentation {
                     try? await self.client.getMapSegmentationProperties()
                 } else {
                     nil
                 }
-                
+
                 let iterationRange = if let iterationCount = mapSegmentationProperties?.iterationCount {
                     iterationCount.min ... iterationCount.max
                 } else {
