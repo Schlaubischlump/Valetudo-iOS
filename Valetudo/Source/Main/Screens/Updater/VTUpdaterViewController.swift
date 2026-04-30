@@ -99,7 +99,10 @@ class VTUpdaterViewController: VTCollectionViewController {
 
     @MainActor
     override func reconnectAndRefresh() async {
-        Task { await self.reloadData(animated: false) }
+        Task {
+            self.needsVersionCheck = true
+            await self.reloadData(animated: false)
+        }
     }
 
     override func viewDesignDidChange(to _: VTViewDesign) {

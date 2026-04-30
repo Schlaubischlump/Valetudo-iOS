@@ -43,19 +43,28 @@ extension UIViewController {
         }
 
         if let navigationController = self as? UINavigationController,
-           let visibleViewController = navigationController.visibleViewController
-        {
+           let visibleViewController = navigationController.visibleViewController {
             return visibleViewController.activeRefreshHandler()
         }
 
         if let tabBarController = self as? UITabBarController,
-           let selectedViewController = tabBarController.selectedViewController
-        {
+           let selectedViewController = tabBarController.selectedViewController {
             return selectedViewController.activeRefreshHandler()
         }
 
         if let splitViewController = self as? UISplitViewController {
-            for viewController in splitViewController.viewControllers.reversed() {
+            // Prefer detail content over the inspector so keyboard refresh targets
+            // the active screen instead of shared robot controls in regular mode.
+            let preferredColumns: [UISplitViewController.Column] = [
+                .secondary,
+                .supplementary,
+                .primary,
+                .compact,
+                .inspector,
+            ]
+
+            for column in preferredColumns {
+                guard let viewController = splitViewController.viewController(for: column) else { continue }
                 if let handler = viewController.activeRefreshHandler() {
                     return handler
                 }
