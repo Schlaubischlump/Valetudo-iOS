@@ -155,8 +155,8 @@ final class VTSegmentManagementViewController: VTMapEditingViewController {
                 if let material = try await showMaterialSelectionPopup(),
                    let segmentID = selectedSegments.first?.segmentId
                 {
-                    _ = try await performAndWaitForMapUpdate {
-                        try await self.client.setMapSegmentMaterial(segmentID: segmentID, material: material)
+                    try await performAndWaitForMapUpdate { [weak self] in
+                        try await self?.client.setMapSegmentMaterial(segmentID: segmentID, material: material)
                     }
                 } else {
                     log(message: "MapSegmentMaterialControlCapability properties failed: Could not get material", forSubsystem: .mapOptions, level: .error)

@@ -22,7 +22,7 @@ public extension UIImage {
     static let nosign = UIImage(systemName: "nosign")
     static let pencil = UIImage(systemName: "pencil")
     static let scissors = UIImage(systemName: "scissors")
-    static let split = UIImage(systemName: "point.3.connected.trianglepath.dotted")
+    static let split = UIImage(systemName: "square.split.bottomrightquarter.fill")
     static let union = UIImage.unionImage()
 
     static let chartLineTextClipboardFill = UIImage(systemName: "chart.line.text.clipboard.fill")
