@@ -173,11 +173,25 @@ public actor VTAPIClient: VTAPIClientProtocol {
 
     // MARK: - 1.2.3 MapSegmentationCapability
 
+    public func getMapSegments() async throws -> [VTMapSegment] {
+        let url = capabilitiesURL.appendingPathComponent("MapSegmentationCapability")
+        let request = VTRequest<[VTMapSegment]>(method: .GET, url: url)
+        return try await send(request)
+    }
+    
     public func clean(segmentIDs: [String], customOrder: Bool, iterations: Int) async throws {
         let url = capabilitiesURL.appendingPathComponent("MapSegmentationCapability")
         let data = VTMapSegmentationAction(segmentIDs: segmentIDs, iterations: iterations, customOrder: customOrder)
         let request = VTRequest<Void>(method: .PUT, url: url, query: nil, body: data)
         try await send(request)
+    }
+    
+    public func getMapSegmentationProperties() async throws -> VTMapSegmentationProperties {
+        let url = capabilitiesURL
+            .appendingPathComponent("MapSegmentationCapability")
+            .appendingPathComponent("properties")
+        let request = VTRequest<VTMapSegmentationProperties>(method: .GET, url: url)
+        return try await send(request)
     }
 
     // MARK: - 1.2.4 AutoEmptyDockManualTriggerCapability

@@ -31,6 +31,7 @@ final class VTTimerDetailViewController: VTCollectionViewController {
     private var dataSource: DataSource!
 
     private var timer: VTTimer
+    private var mapSegmentationProperties: VTMapSegmentationProperties?
     private var supportedActions: [VTTimer.Action.ActionType] = [.fullCleanup]
     private var supportedPreActions: [VTTimer.PreAction.PreActionType] = []
 
@@ -326,7 +327,8 @@ final class VTTimerDetailViewController: VTCollectionViewController {
                 fatalError("Unsupported segment item: \(wrappedItem.base)")
             }
 
-            let customOrder = self?.timer.action.params.customOrder ?? true
+            let customOrderSupported = self?.mapSegmentationProperties?.customOrderSupport ?? true
+            let customOrder = customOrderSupported && (self?.timer.action.params.customOrder ?? false)
 
             cell.contentConfiguration = VTListSelectionCellContentConfiguration(
                 id: item.id,
@@ -490,28 +492,39 @@ final class VTTimerDetailViewController: VTCollectionViewController {
                 .dropDown(kAction, active: .fullCleanup, options: allActions),
             ], toSection: .action)
         } else {
-            let params = timer.action.params
-
-            let maxIter = 4
-            let minIter = 1
+            let iterationCount = mapSegmentationProperties?.iterationCount
+            let minIter = iterationCount?.min ?? 1
+            let maxIter = iterationCount?.max ?? 1
             let allIters = Array(minIter ... maxIter)
-            let currentIter = max(min(params.iterations ?? minIter, maxIter), minIter)
+            let currentIter = max(min(timer.action.params.iterations ?? minIter, maxIter), minIter)
+            let customOrderSupported = mapSegmentationProperties?.customOrderSupport ?? false
+            let customOrder = customOrderSupported && (timer.action.params.customOrder ?? false)
 
-            let customOrder = params.customOrder ?? false
+            let normalizedParams = timer.action.params
+                .copy(iterations: currentIter)
+                .copy(customOrder: customOrder)
+            if normalizedParams != timer.action.params {
+                timer = timer.copy(action: .init(type: .segmentCleanup, params: normalizedParams))
+            }
 
             // Add base actions
-            snapshot.appendItems([
+            var actionItems: [VTAnyItem] = [
                 .dropDown(kAction, active: timer.action.type, options: allActions),
-                .dropDown(kIterations, active: currentIter, options: allIters),
-                .checkbox(kCustomOrder, title: "USE_CUSTOM_ORDER".localized(), enabled: customOrder),
-            ], toSection: .action)
+            ]
+            if minIter != maxIter {
+                actionItems.append(.dropDown(kIterations, active: currentIter, options: allIters))
+            }
+            if customOrderSupported {
+                actionItems.append(.checkbox(kCustomOrder, title: "USE_CUSTOM_ORDER".localized(), enabled: customOrder))
+            }
+            snapshot.appendItems(actionItems, toSection: .action)
 
             // Add segments actions to their own separate group
             let allSegments = await (try? client.getMap().segmentLayer) ?? []
             let segmentsMap = Dictionary(uniqueKeysWithValues: allSegments.compactMap { seg in
                 seg.segmentId.map { ($0, seg) }
             })
-            let activeSegments = params.segmentIds?.compactMap { segmentsMap[$0] } ?? []
+            let activeSegments = timer.action.params.segmentIds?.compactMap { segmentsMap[$0] } ?? []
 
             let segmentActions: [VTAnyItem] = [
                 .listSelection(kSegments, active: activeSegments, options: allSegments),
@@ -532,6 +545,11 @@ final class VTTimerDetailViewController: VTCollectionViewController {
         let timerProperties = try? await client.getTimerProperties()
         supportedPreActions = timerProperties?.supportedPreActions ?? []
         supportedActions = timerProperties?.supportedActions ?? [.fullCleanup]
+        mapSegmentationProperties = if supportedActions.contains(.segmentCleanup) {
+            try? await client.getMapSegmentationProperties()
+        } else {
+            nil
+        }
         if supportedActions.isEmpty {
             supportedActions = [.fullCleanup]
         }

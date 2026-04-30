@@ -59,6 +59,8 @@ public protocol VTAPIClientProtocol: Actor {
     // MARK: - 1.2.3 MapSegmentationCapability
 
     func clean(segmentIDs: [String], customOrder: Bool, iterations: Int) async throws
+    func getMapSegmentationProperties() async throws -> VTMapSegmentationProperties
+    func getMapSegments() async throws -> [VTMapSegment]
 
     // MARK: - 1.2.4 AutoEmptyDockManualTriggerCapability
 

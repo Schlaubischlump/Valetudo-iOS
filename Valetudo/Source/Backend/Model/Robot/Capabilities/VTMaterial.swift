@@ -7,7 +7,7 @@
 
 import Foundation
 
-public enum VTMaterial: String, CaseIterable, Codable, Sendable, Hashable {
+public enum VTMaterial: String, Codable, Sendable, Hashable {
     case generic
     case tile
     case wood

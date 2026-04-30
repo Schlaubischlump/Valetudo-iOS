@@ -16,7 +16,13 @@ extension VTStateAttributeList {
 
 actor VTMockAPIClient: VTAPIClientProtocol {
     func getSupportedMapSegmentMaterials() async throws -> [VTMaterial] {
-        VTMaterial.allCases
+        [
+            .generic,
+            .tile,
+            .wood,
+            .woodVertical,
+            .woodVertical
+        ]
     }
 
     static let shared: VTMockAPIClient? = VTMockAPIClient()
@@ -156,6 +162,25 @@ actor VTMockAPIClient: VTAPIClientProtocol {
     func stop() async throws {}
     func home() async throws {}
     func clean(segmentIDs _: [String], customOrder _: Bool, iterations _: Int) async throws {}
+    func getMapSegmentationProperties() async throws -> VTMapSegmentationProperties {
+        VTMapSegmentationProperties(
+            iterationCount: VTMapSegmentationIterationCount(min: 1, max: 3),
+            customOrderSupport: true
+        )
+    }
+    func getMapSegments() async throws -> [VTMapSegment] {
+        mapData.segmentLayer.compactMap { layer in
+            guard let id = layer.segmentId else { return nil }
+
+            return VTMapSegment(
+                __class: "ValetudoMapSegment",
+                metaData: [:],
+                id: id,
+                name: layer.name ?? id,
+                material: layer.material
+            )
+        }
+    }
     func autoEmptyDock() async throws {}
     func startMopDockClean() async throws {}
     func stopMopDockClean() async throws {}

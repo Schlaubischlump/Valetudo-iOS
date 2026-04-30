@@ -62,14 +62,7 @@ struct VTOperationModeItem: VTSegmentedItem {
     }
 }
 
-struct VTRepeatItem: CaseIterable, VTSegmentedItem {
-    static let allCases: [VTRepeatItem] = [
-        VTRepeatItem(iterations: 1),
-        VTRepeatItem(iterations: 2),
-        VTRepeatItem(iterations: 3),
-        VTRepeatItem(iterations: 5),
-    ]
-
+struct VTRepeatItem: VTSegmentedItem {
     let iterations: Int
     var title: String {
         "× \(iterations)"
@@ -77,6 +70,10 @@ struct VTRepeatItem: CaseIterable, VTSegmentedItem {
 
     var icon: UIImage? {
         .repeatCount(iterations)
+    }
+
+    static func items(in iterationRange: ClosedRange<Int>) -> [VTRepeatItem] {
+        Array(iterationRange).map(VTRepeatItem.init)
     }
 }
 
@@ -135,11 +132,12 @@ class VTRobotControlViewController: VTViewController {
 
     /// Cleaning configuration to use when the start button is clicked.
     private var supportsSegmentation: Bool = false
+    private var mapSegmentationProperties: VTMapSegmentationProperties?
     private var _currentConfiguration: CleaningConfiguration = .none
     var currentConfiguration: CleaningConfiguration {
         get { _currentConfiguration }
         set {
-            _currentConfiguration = supportsSegmentation ? newValue : .none
+            _currentConfiguration = supportsSegmentation ? sanitizedConfiguration(newValue) : .none
             updateIterations()
         }
     }
@@ -318,12 +316,20 @@ class VTRobotControlViewController: VTViewController {
     func loadInitialData() async throws {
         try await collecting { [weak self] run in
             guard let self else { return }
-            iterationsRow.values = VTRepeatItem.allCases
-            updateIterations()
 
             await run {
                 let capibilities = await Set((try? client.getCapabilities()) ?? [])
                 self.supportsSegmentation = capibilities.contains(.mapSegmentation)
+                self.mapSegmentationProperties = if self.supportsSegmentation {
+                    try? await self.client.getMapSegmentationProperties()
+                } else {
+                    nil
+                }
+                print(self.supportsSegmentation, mapSegmentationProperties ?? "No config")
+                
+                self.iterationsRow.values = self.iterationItems
+                updateIterations()
+                
                 if !self.supportsSegmentation {
                     self.currentConfiguration = .none
                 }
@@ -374,6 +380,29 @@ class VTRobotControlViewController: VTViewController {
         iterationsRow.subtitle = "x \(config.iterations)"
         iterationsRow.selectedValue = VTRepeatItem(iterations: config.iterations)
         iterationsRow.isEnabled = config.canChangeIterations
+    }
+
+    private var iterationRange: ClosedRange<Int> {
+        if let iterationCount = mapSegmentationProperties?.iterationCount {
+            iterationCount.min ... iterationCount.max
+        } else {
+            1 ... 1
+        }
+    }
+
+    private var iterationItems: [VTRepeatItem] {
+        VTRepeatItem.items(in: iterationRange)
+    }
+
+    private func sanitizedConfiguration(_ configuration: CleaningConfiguration) -> CleaningConfiguration {
+        switch configuration {
+        case .none:
+            return .none
+        case let .segments(ids, customOrder, iterations):
+            let clampedIterations = min(max(iterations, iterationRange.lowerBound), iterationRange.upperBound)
+            let customOrderSupported = mapSegmentationProperties?.customOrderSupport ?? false
+            return .segments(ids: ids, customOrder: customOrderSupported ? customOrder : false, iterations: clampedIterations)
+        }
     }
 
     @MainActor

@@ -171,7 +171,7 @@ enum VTPatternFactory {
 
     // MARK: - Parquet
 
-    static func makeParquetPattern(withPoints pts: [CGPoint], blockSize: Int = 8, plankGap: Int = 2) -> CGPath {
+    /*static func makeParquetPattern(withPoints pts: [CGPoint], blockSize: Int = 8, plankGap: Int = 2) -> CGPath {
         let path = CGMutablePath()
 
         guard let bounds = getBounds(from: pts) else { return path }
@@ -217,5 +217,5 @@ enum VTPatternFactory {
             }
         }
         return path
-    }
+    }*/
 }
