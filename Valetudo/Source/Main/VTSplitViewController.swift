@@ -72,10 +72,10 @@ class VTSplitViewController: UISplitViewController, UISplitViewControllerDelegat
         guard viewController(for: .inspector) !== targetInspector else { return }
 
         setViewController(targetInspector, for: .inspector)
-        if (isPresented) {
-            self.show(.inspector)
+        if isPresented {
+            show(.inspector)
         } else {
-            self.hide(.inspector)
+            hide(.inspector)
         }
     }
 
@@ -144,7 +144,7 @@ class VTSplitViewController: UISplitViewController, UISplitViewControllerDelegat
         rightItems.removeAll { $0.tag == kInspectorTag }
 
         if !isCompact {
-            rightItems.append(makeInspectorToggleBarButtonItem())
+            rightItems.insert(makeInspectorToggleBarButtonItem(), at: 0)
         }
 
         viewController.navigationItem.rightBarButtonItems = rightItems.isEmpty ? nil : rightItems

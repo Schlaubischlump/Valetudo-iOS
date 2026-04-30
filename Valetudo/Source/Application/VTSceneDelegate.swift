@@ -39,9 +39,9 @@ class VTSceneDelegate: UIResponder, UIWindowSceneDelegate {
         }
 
         #if targetEnvironment(macCatalyst)
-        windowScene.sizeRestrictions?.minimumSize = Self.minimumWindowSize
+            windowScene.sizeRestrictions?.minimumSize = Self.minimumWindowSize
         #endif
-        
+
         let window = UIWindow(windowScene: windowScene)
         self.window = window
 
