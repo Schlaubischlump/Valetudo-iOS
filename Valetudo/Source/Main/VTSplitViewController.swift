@@ -8,29 +8,24 @@ import UIKit
 
 private let kInspectorTag = 101
 
+/// Hosts the app's primary split layout and owns the shared robot control controller.
+///
+/// The robot control controller is reused across regular and compact layouts. In regular
+/// layouts it lives in the split view's inspector column; in compact layouts it is
+/// temporarily detached so Home can present that same instance as a sheet.
 class VTSplitViewController: UISplitViewController, UISplitViewControllerDelegate, UINavigationControllerDelegate {
     let client: VTAPIClientProtocol
+    /// Single source of truth for robot-control UI and state across layout changes.
+    let robotControlViewController: VTRobotControlViewController
+    private var selectedSidebarItem: VTSidebarItem = .home
 
     lazy var sidebar: VTSidebarViewController = .init(client: client)
     private lazy var sidebarNavigationController = UINavigationController(rootViewController: sidebar)
-    private lazy var inspectorToggleBarButtonItem: UIBarButtonItem = {
-        let item = UIBarButtonItem(
-            image: .sidebarRight,
-            style: .plain,
-            target: self,
-            action: #selector(didTapInspectorToggle)
-        )
-        item.title = "CONTROL".localized()
-        item.tag = kInspectorTag
-        return item
-    }()
-
     let detail: UINavigationController = .init(rootViewController: UIViewController())
-    let inspector: UIViewController
 
     init(client: VTAPIClientProtocol, style: UISplitViewController.Style) {
         self.client = client
-        inspector = VTRobotControlViewController(client: client)
+        robotControlViewController = VTRobotControlViewController(client: client)
         super.init(style: style)
     }
 
@@ -60,20 +55,43 @@ class VTSplitViewController: UISplitViewController, UISplitViewControllerDelegat
 
         setViewController(sidebarNavigationController, for: .primary)
         setViewController(detail, for: .secondary)
-        setViewController(inspector, for: .inspector)
+        setViewController(robotControlViewController, for: .inspector)
 
         updateDetail(for: .home, animated: false) // Select default
         updateNavigationChrome()
+        sidebar.setSelectedItem(selectedSidebarItem)
+    }
+
+    /// Attaches or detaches the shared robot control controller from the inspector column.
+    ///
+    /// UIKit does not allow presenting a controller modally while it is still parented by
+    /// the split view. Compact layouts therefore replace the inspector with a placeholder
+    /// before Home presents the shared controller as a sheet.
+    func setRobotControlViewControllerPresentedInInspector(_ isPresented: Bool) {
+        let targetInspector = isPresented ? robotControlViewController : UIViewController()
+        guard viewController(for: .inspector) !== targetInspector else { return }
+
+        setViewController(targetInspector, for: .inspector)
+        if (isPresented) {
+            self.show(.inspector)
+        } else {
+            self.hide(.inspector)
+        }
     }
 
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         updateNavigationChrome()
+        sidebar.setSelectedItem(selectedSidebarItem)
     }
 
+    /// Rebuilds the secondary column for the selected sidebar item.
     func updateDetail(for item: VTSidebarItem, animated: Bool) {
+        selectedSidebarItem = item
+        sidebar.setSelectedItem(item)
+
         let vc: UIViewController = switch item {
-        case .home: VTHomeViewController(client: client)
+        case .home: VTHomeViewController(client: client, robotControlViewController: robotControlViewController)
         case .consumables: VTConsumablesViewController(client: client)
         case .systemInformation: VTSystemInformationViewController(client: client)
         case .manualControl: VTManualControlViewController(client: client)
@@ -115,6 +133,7 @@ class VTSplitViewController: UISplitViewController, UISplitViewControllerDelegat
         }
     }
 
+    /// Ensures the inspector toggle only appears where the split layout can actually show it.
     private func updateDetailNavigationButtons(for viewController: UIViewController) {
         var rightItems = viewController.navigationItem.rightBarButtonItems ?? []
 
@@ -122,12 +141,24 @@ class VTSplitViewController: UISplitViewController, UISplitViewControllerDelegat
             rightItems = [rightItem]
         }
 
-        rightItems.removeAll { $0.tag == inspectorToggleBarButtonItem.tag }
+        rightItems.removeAll { $0.tag == kInspectorTag }
 
         if !isCompact {
-            rightItems.append(inspectorToggleBarButtonItem)
+            rightItems.append(makeInspectorToggleBarButtonItem())
         }
 
         viewController.navigationItem.rightBarButtonItems = rightItems.isEmpty ? nil : rightItems
+    }
+
+    private func makeInspectorToggleBarButtonItem() -> UIBarButtonItem {
+        let item = UIBarButtonItem(
+            image: .sidebarRight,
+            style: .plain,
+            target: self,
+            action: #selector(didTapInspectorToggle)
+        )
+        item.title = "CONTROL".localized()
+        item.tag = kInspectorTag
+        return item
     }
 }

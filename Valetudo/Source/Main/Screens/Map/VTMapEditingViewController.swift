@@ -77,6 +77,7 @@ class VTMapEditingViewController: VTViewController {
 
         view.backgroundColor = .systemBackground
         navigationItem.hidesBackButton = false
+        navigationItem.rightBarButtonItem = VTValetudoEventBarButtonItem(client: client, parentViewController: self)
 
         configureViewHierarchy()
         configureLegend()

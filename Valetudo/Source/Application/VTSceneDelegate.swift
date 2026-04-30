@@ -38,8 +38,10 @@ class VTSceneDelegate: UIResponder, UIWindowSceneDelegate {
             fatalError("Expected scene of type UIWindowScene but got an unexpected type")
         }
 
+        #if targetEnvironment(macCatalyst)
         windowScene.sizeRestrictions?.minimumSize = Self.minimumWindowSize
-
+        #endif
+        
         let window = UIWindow(windowScene: windowScene)
         self.window = window
 
@@ -195,24 +197,6 @@ class VTSceneDelegate: UIResponder, UIWindowSceneDelegate {
         self.selectedRobot = VTSelectedRobot(id: robot.id, lastURL: robotURL)
         return .mainInterface(robotURL)
     }
-
-    /* private func configureToolbarIfNeeded(for windowScene: UIWindowScene) {
-         #if targetEnvironment(macCatalyst)
-             let toolbar = NSToolbar(identifier: NSToolbar.Identifier("VTSceneDelegate.Toolbar"))
-             toolbar.delegate = self
-             toolbar.displayMode = .iconOnly
-             toolbar.allowsUserCustomization = false
-
-             windowScene.titlebar?.toolbar = toolbar
-             windowScene.titlebar?.toolbarStyle = .unified
-         #endif
-     }
-
-     private func clearToolbarIfNeeded(for windowScene: UIWindowScene) {
-         #if targetEnvironment(macCatalyst)
-             windowScene.titlebar?.toolbar = nil
-         #endif
-     } */
 
     func sceneDidEnterBackground(_: UIScene) {
         didEnterBackground = true

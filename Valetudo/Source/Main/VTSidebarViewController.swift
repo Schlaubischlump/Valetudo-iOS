@@ -85,6 +85,7 @@ class VTSidebarViewController: VTCollectionViewController {
     ]
 
     var didSelectItem: ((VTSidebarItem) -> Void)?
+    private var selectedItem: VTSidebarItem?
 
     private var client: VTAPIClientProtocol
     private lazy var valetudoEventBarButtonItem = VTValetudoEventBarButtonItem(client: client, parentViewController: self)
@@ -95,7 +96,7 @@ class VTSidebarViewController: VTCollectionViewController {
         listConfig.headerMode = .supplementary
         let layout = UICollectionViewCompositionalLayout.list(using: listConfig)
         super.init(collectionViewLayout: layout)
-        clearsSelectionOnViewWillAppear = true
+        clearsSelectionOnViewWillAppear = false
 
         navigationItem.leftBarButtonItem = VTRobotBarButtonItem(parentViewController: self)
     }
@@ -127,6 +128,11 @@ class VTSidebarViewController: VTCollectionViewController {
     private func selectFirstItemIfNeeded() {
         guard viewIfLoaded != nil, let isCompact = splitViewController?.isCompact else { return }
         guard !isCompact else { return }
+
+        if applySelectedItemIfPossible() {
+            return
+        }
+
         guard collectionView.indexPathsForSelectedItems?.isEmpty ?? true else { return }
 
         let snapshot = dataSource.snapshot()
@@ -134,6 +140,7 @@ class VTSidebarViewController: VTCollectionViewController {
               let firstItem = snapshot.itemIdentifiers(inSection: firstSection).first,
               let indexPath = dataSource.indexPath(for: firstItem) else { return }
 
+        selectedItem = firstItem
         collectionView.selectItem(at: indexPath, animated: false, scrollPosition: .top)
     }
 
@@ -148,6 +155,11 @@ class VTSidebarViewController: VTCollectionViewController {
 
     func setShowsEventButton(_ showsEventButton: Bool) {
         navigationItem.rightBarButtonItem = showsEventButton ? valetudoEventBarButtonItem : nil
+    }
+
+    func setSelectedItem(_ item: VTSidebarItem?) {
+        selectedItem = item
+        _ = applySelectedItemIfPossible()
     }
 
     @MainActor
@@ -173,6 +185,7 @@ class VTSidebarViewController: VTCollectionViewController {
             snapshot.appendItems(items, toSection: section)
         }
         await dataSource.apply(snapshot, animatingDifferences: false)
+        applySelectedItemIfPossible()
     }
 
     private func configureDataSource() {
@@ -181,9 +194,7 @@ class VTSidebarViewController: VTCollectionViewController {
                 var content = UIListContentConfiguration.cell().updated(for: state)
                 content.text = item.title
                 content.image = item.icon
-                content.imageProperties.tintColorTransformer = UIConfigurationColorTransformer { _ in
-                    state.isSelected ? .white : .label
-                }
+                content.imageProperties.tintColor = content.textProperties.color
                 cell.contentConfiguration = content
             }
 
@@ -210,6 +221,18 @@ class VTSidebarViewController: VTCollectionViewController {
 
     override func collectionView(_: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         guard let identifier = dataSource.itemIdentifier(for: indexPath) else { return }
+        selectedItem = identifier
         didSelectItem?(identifier)
+    }
+
+    @discardableResult
+    private func applySelectedItemIfPossible() -> Bool {
+        guard viewIfLoaded != nil, let selectedItem, let indexPath = dataSource?.indexPath(for: selectedItem) else {
+            return false
+        }
+
+        guard collectionView.indexPathsForSelectedItems != [indexPath] else { return true }
+        collectionView.selectItem(at: indexPath, animated: false, scrollPosition: [])
+        return true
     }
 }

@@ -12,10 +12,15 @@ private let bottomPad: CGFloat = 20
 private let legendHeight: CGFloat = 45.0
 private let sheetCornerRadius: CGFloat = 39.0
 
+/// Displays the live map and coordinates it with the shared robot control controller.
+///
+/// Segment selection on the map and legend mutates `robotControlViewController.currentConfiguration`.
+/// In compact layouts the shared controller is presented as a sheet; in regular layouts it is
+/// shown by the split view's inspector column.
 class VTHomeViewController: VTViewController {
     private let client: VTAPIClientProtocol
-
-    var mapInteractionEnabled: Bool = true
+    /// Shared controller instance owned by the split view and reused across size classes.
+    private let robotControlViewController: VTRobotControlViewController
 
     private let mapScrollView = VTZoomableScrollView()
     private let activityIndicator = UIActivityIndicatorView(style: .large)
@@ -28,18 +33,9 @@ class VTHomeViewController: VTViewController {
     private var observerToken: VTListenerToken?
     private var eventObservationTask: Task<Void, Never>?
 
-    private var robotControlViewController: VTRobotControlViewController?
-
-    private var activeRobotControlViewController: VTRobotControlViewController? {
-        if isCompact {
-            robotControlViewController
-        } else {
-            (splitViewController as? VTSplitViewController)?.inspector as? VTRobotControlViewController
-        }
-    }
-
     private var legendViewBottomAnchor: NSLayoutConstraint!
     private var mapScrollViewBottomAnchor: NSLayoutConstraint!
+    /// Leaves vertical room for the control sheet only when the shared controller is presented modally.
     private var mapBottomInset: CGFloat {
         if isCompact {
             -bottomPad
@@ -68,8 +64,9 @@ class VTHomeViewController: VTViewController {
         mapView?.data.segmentLayer ?? []
     }
 
-    init(client: VTAPIClientProtocol) {
+    init(client: VTAPIClientProtocol, robotControlViewController: VTRobotControlViewController) {
         self.client = client
+        self.robotControlViewController = robotControlViewController
 
         super.init(nibName: nil, bundle: nil)
         title = "MAP".localized()
@@ -140,15 +137,13 @@ class VTHomeViewController: VTViewController {
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
 
-        registerForTraitChanges(
-            [UITraitHorizontalSizeClass.self],
-            handler: { (self: Self, _: UITraitCollection) in
-                self.updateRobotControlViewPresentation(animated: false)
-
-                self.mapScrollViewBottomAnchor.constant = self.mapBottomInset
-                self.legendViewBottomAnchor.constant = self.legendBottomInset
-            }
-        )
+        // Rehome the shared robot control controller when the layout switches
+        // between compact sheet presentation and split-view inspector presentation.
+        registerForTraitChanges([UITraitHorizontalSizeClass.self]) { (self: Self, _) in
+            self.updateRobotControlViewPresentation(animated: false)
+            self.mapScrollViewBottomAnchor.constant = self.mapBottomInset
+            self.legendViewBottomAnchor.constant = self.legendBottomInset
+        }
 
         updateRobotControlViewPresentation(animated: true)
     }
@@ -219,6 +214,7 @@ class VTHomeViewController: VTViewController {
         vc.dismiss(animated: true)
     }
 
+    /// Entity callouts should appear above the sheet when compact presentation is active.
     private var calloutPresenter: UIViewController {
         (presentedViewController as? VTRobotControlViewController) ?? self
     }
@@ -241,12 +237,7 @@ class VTHomeViewController: VTViewController {
         }
     }
 
-    private func showEntityPopup(
-        entity: VTEntity,
-        at point: CGPoint
-    ) async -> Bool {
-        guard mapInteractionEnabled else { return false }
-
+    private func showEntityPopup(entity: VTEntity, at point: CGPoint) async -> Bool {
         var title = ""
         var subtitle = ""
         var image: UIImage?
@@ -322,16 +313,15 @@ class VTHomeViewController: VTViewController {
     }
 
     private func mapShouldChangeSelection(forLayer layer: VTLayer, isSelected _: Bool) async -> Bool {
-        guard supportsSegmentation,
-              mapInteractionEnabled, //! self.refreshMap,
-              activeRobotControlViewController?.currentConfiguration != nil,
-              segmentLayer.contains(layer) else { return false }
+        guard supportsSegmentation, segmentLayer.contains(layer) else { return false }
         return true
     }
 
     private func mapDidChangeSelection(forLayer layer: VTLayer, isSelected: Bool) async {
-        guard let index = segmentLayer.firstIndex(of: layer),
-              var config = activeRobotControlViewController?.currentConfiguration else { return }
+        guard let index = segmentLayer.firstIndex(of: layer) else { return }
+
+        // Keep map-driven selection in sync with the shared control sheet / inspector state.
+        var config = robotControlViewController.currentConfiguration
 
         if isSelected {
             await legendView.select(at: index)
@@ -340,20 +330,20 @@ class VTHomeViewController: VTViewController {
             await legendView.deselect(at: index)
             config = config.removing(segmentId: layer.segmentId!)
         }
-        activeRobotControlViewController?.currentConfiguration = config
+        robotControlViewController.currentConfiguration = config
     }
 
     private func legendShouldChangedSelection(atIndex index: Int, isSelected _: Bool) async -> Bool {
         guard supportsSegmentation,
-              mapInteractionEnabled, //! self.refreshMap
-              activeRobotControlViewController?.currentConfiguration != nil,
               segmentLayer.indices.contains(index) else { return false }
         return true
     }
 
     private func legendDidChangeSelection(atIndex index: Int, isSelected: Bool) async {
-        guard segmentLayer.indices.contains(index),
-              var config = activeRobotControlViewController?.currentConfiguration else { return }
+        guard segmentLayer.indices.contains(index) else { return }
+
+        // Legend selection mirrors map selection and updates the shared control state directly.
+        var config = robotControlViewController.currentConfiguration
         let layer = segmentLayer[index]
 
         if isSelected {
@@ -363,7 +353,7 @@ class VTHomeViewController: VTViewController {
             await mapView?.deselect(layer: layer)
             config = config.removing(segmentId: layer.segmentId!)
         }
-        activeRobotControlViewController?.currentConfiguration = config
+        robotControlViewController.currentConfiguration = config
     }
 
     @MainActor
@@ -408,6 +398,7 @@ extension VTHomeViewController: UIPopoverPresentationControllerDelegate {
 }
 
 extension VTHomeViewController: UISheetPresentationControllerDelegate {
+    /// Maps the custom detent identifiers to the sheet heights used for legend positioning.
     private func proposedHeight(for detentIdentifier: UISheetPresentationController.Detent.Identifier) -> CGFloat? {
         switch detentIdentifier {
         case .bottom: UISheetPresentationController.Detent.bottomHeight
@@ -417,7 +408,7 @@ extension VTHomeViewController: UISheetPresentationControllerDelegate {
     }
 
     func sheetPresentationControllerDidChangeSelectedDetentIdentifier(_ sheetPresentationController: UISheetPresentationController) {
-        // animate when grabber is lifted
+        // Animate when the user drags the sheet to a different detent.
         if let identifier = sheetPresentationController.selectedDetentIdentifier,
            let height = proposedHeight(for: identifier)
         {
@@ -425,28 +416,23 @@ extension VTHomeViewController: UISheetPresentationControllerDelegate {
         }
     }
 
+    /// Moves the shared robot control controller between inspector and sheet presentation.
     fileprivate func updateRobotControlViewPresentation(animated: Bool = false) {
-        let splitVC = splitViewController
+        let splitVC = splitViewController as? VTSplitViewController
 
         if isCompact {
-            splitVC?.hide(.inspector)
+            splitVC?.setRobotControlViewControllerPresentedInInspector(false)
             presentControlSheet(animated: animated)
         } else {
-            dismissControlSheet(animated: animated)
-            splitVC?.show(.inspector)
+            dismissControlSheet(animated: animated) { [weak splitVC] in
+                splitVC?.setRobotControlViewControllerPresentedInInspector(true)
+            }
         }
     }
 
     private func presentControlSheet(animated: Bool) {
         guard isCompact else { return }
-        let sheetVC: VTRobotControlViewController
-        if let robotControlViewController {
-            sheetVC = robotControlViewController
-        } else {
-            let newController = VTRobotControlViewController(client: client)
-            robotControlViewController = newController
-            sheetVC = newController
-        }
+        let sheetVC = robotControlViewController
 
         sheetVC.modalPresentationStyle = .pageSheet
 
@@ -471,7 +457,7 @@ extension VTHomeViewController: UISheetPresentationControllerDelegate {
             return
         }
 
-        // animate the legend to be at the right position when the view appears
+        // Pre-position the legend so the first sheet animation does not jump.
         let bottomHeight = UISheetPresentationController.Detent.bottomHeight
         updateLegendPosition(basedOn: bottomHeight, animate: animated)
 
@@ -482,8 +468,14 @@ extension VTHomeViewController: UISheetPresentationControllerDelegate {
         }
     }
 
-    private func dismissControlSheet(animated: Bool) {
-        presentedViewController?.dismiss(animated: animated, completion: nil)
+    private func dismissControlSheet(animated: Bool, completion: (() -> Void)? = nil) {
+        guard presentedViewController === robotControlViewController else {
+            completion?()
+            return
+        }
+
+        // Reattaching to the inspector must wait until UIKit has fully dismissed the sheet.
+        presentedViewController?.dismiss(animated: animated, completion: completion)
     }
 
     override func observeValue(forKeyPath keyPath: String?,
@@ -505,6 +497,9 @@ extension VTHomeViewController: UISheetPresentationControllerDelegate {
     private func updateLegendPosition(basedOn sheetHeight: CGFloat, animate: Bool) {
         let bottomInset = view.safeAreaInsets.bottom
         let midHeight = UISheetPresentationController.Detent.middleHeight
+
+        // Keep the legend visible above the compact sheet until the sheet reaches the
+        // middle detent, after which the legend stops moving further upward.
         legendViewBottomAnchor.constant = max(
             -bottomPad - sheetHeight + bottomInset,
             -bottomPad - midHeight
