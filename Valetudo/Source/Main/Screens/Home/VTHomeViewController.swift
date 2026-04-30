@@ -32,6 +32,7 @@ class VTHomeViewController: VTViewController {
     private var robotStatusView: VTRobotStatusView!
     private var observerToken: VTListenerToken?
     private var eventObservationTask: Task<Void, Never>?
+    private var hasConnectedMapStream = false
 
     private var legendViewBottomAnchor: NSLayoutConstraint!
     private var mapScrollViewBottomAnchor: NSLayoutConstraint!
@@ -176,12 +177,22 @@ class VTHomeViewController: VTViewController {
         eventObservationTask = Task {
             do {
                 try await loadInitialData()
+                hasConnectedMapStream = false
 
                 let (token, stream) = await client.registerEventObserver(for: .map)
                 observerToken = token
 
                 for await event in stream {
                     switch event {
+                    case .didConnect:
+                        if hasConnectedMapStream {
+                            if let mapData = try? await client.getMap() {
+                                await self.mapView?.updateData(data: mapData)
+                                await self.updateLegend(data: mapData)
+                            }
+                        } else {
+                            hasConnectedMapStream = true
+                        }
                     case let .didReceiveData(mapData):
                         await self.mapView?.updateData(data: mapData)
                         await self.updateLegend(data: mapData)
@@ -201,6 +212,7 @@ class VTHomeViewController: VTViewController {
     private func stopSSEObservation() {
         eventObservationTask?.cancel()
         eventObservationTask = nil
+        hasConnectedMapStream = false
 
         if let token = observerToken {
             let client = client

@@ -37,6 +37,7 @@ class VTMapEditingViewController: VTViewController {
     private var observerToken: VTListenerToken?
     private var eventObservationTask: Task<Void, Never>?
     private var pendingMapUpdates: [UUID: PendingMapUpdate] = [:]
+    private var hasConnectedMapStream = false
 
     var mapView: VTMapView? {
         mapScrollView.zoomableView as? VTMapView
@@ -270,12 +271,22 @@ class VTMapEditingViewController: VTViewController {
 
             do {
                 try await loadInitialMapData()
+                hasConnectedMapStream = false
 
                 let (token, stream) = await client.registerEventObserver(for: .map)
                 observerToken = token
 
                 for await event in stream {
                     switch event {
+                    case .didConnect:
+                        if hasConnectedMapStream {
+                            if let mapData = try? await client.getMap() {
+                                await applyMapData(mapData)
+                                resumePendingMapUpdatesIfNeeded(with: currentMapData)
+                            }
+                        } else {
+                            hasConnectedMapStream = true
+                        }
                     case let .didReceiveData(mapData):
                         // Always render the freshest server state first, then resolve any callers
                         // waiting for a changed snapshot from a previous mutation request.
@@ -297,6 +308,7 @@ class VTMapEditingViewController: VTViewController {
     private func stopSSEObservation() {
         eventObservationTask?.cancel()
         eventObservationTask = nil
+        hasConnectedMapStream = false
 
         // Any pending mutation should fail once observation stops, otherwise callers would wait
         // forever for an event that can no longer arrive.

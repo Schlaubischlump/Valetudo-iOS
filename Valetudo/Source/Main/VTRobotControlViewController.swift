@@ -149,6 +149,7 @@ class VTRobotControlViewController: VTViewController {
     private let client: VTAPIClientProtocol
     private var observerToken: VTListenerToken?
     private var sseTask: Task<Void, Never>?
+    private var hasConnectedStateAttributesStream = false
 
     /// Make sure that we process manual UI updates and SSE based UI updates in the right order
     private let serialTaskQueue: SerialTaskQueue = .init()
@@ -278,12 +279,25 @@ class VTRobotControlViewController: VTViewController {
         sseTask = Task {
             do {
                 try await loadInitialData()
+                hasConnectedStateAttributesStream = false
 
                 let (token, stream) = await client.registerEventObserver(for: .stateAttributes)
                 observerToken = token
 
                 for await event in stream {
                     switch event {
+                    case .didConnect:
+                        if hasConnectedStateAttributesStream {
+                            await serialTaskQueue.enqueue { [weak self] in
+                                guard let self else { return }
+                                guard let attrs = try? await client.getStateAttributes() else { return }
+                                await updateButtonStates(attrs)
+                                await updateAttachments(attrs)
+                                try? await updateStatistics()
+                            }
+                        } else {
+                            hasConnectedStateAttributesStream = true
+                        }
                     case let .didReceiveData(attrs):
                         await serialTaskQueue.enqueue { [weak self] in
                             guard let self else { return }
@@ -308,6 +322,7 @@ class VTRobotControlViewController: VTViewController {
     private func stopSSEObservation() {
         sseTask?.cancel()
         sseTask = nil
+        hasConnectedStateAttributesStream = false
 
         if let token = observerToken {
             let client = client

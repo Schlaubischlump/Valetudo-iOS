@@ -87,6 +87,11 @@ class VTSplitViewController: UISplitViewController, UISplitViewControllerDelegat
 
     /// Rebuilds the secondary column for the selected sidebar item.
     func updateDetail(for item: VTSidebarItem, animated: Bool) {
+        // Clear configuration so iteration row gets disabled when the sidebar item changes.
+        if selectedSidebarItem == .home, item != .home {
+            robotControlViewController.currentConfiguration = .full
+        }
+
         selectedSidebarItem = item
         sidebar.setSelectedItem(item)
 

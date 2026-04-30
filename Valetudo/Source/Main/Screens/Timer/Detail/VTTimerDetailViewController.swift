@@ -245,80 +245,91 @@ final class VTTimerDetailViewController: VTCollectionViewController {
             }
         }
 
-        let dropdownCell = VTCellRegistration { [weak self] cell, _, wrappedItem in
-            switch wrappedItem.base {
-            case let item as VTDropDownItem<VTTimer.Action.ActionType>:
-                cell.contentConfiguration = VTDropDownCellContentConfiguration(
-                    id: item.id,
-                    title: item.id.localized(),
-                    options: item.options,
-                    selection: item.active,
-                    disableSelectionAfterAction: false
-                ) { [weak self] newActionType in
-                    guard let self else { return }
+        let actionDropdownCell = VTCellRegistration { [weak self] cell, _, wrappedItem in
+            guard let item = wrappedItem.base as? VTDropDownItem<VTTimer.Action.ActionType> else {
+                fatalError("Unsupported action dropdown item: \(wrappedItem.base)")
+            }
 
-                    switch item.id {
-                    case kAction:
-                        timer = timer.copy(action: .init(type: newActionType, params: .empty))
-                        Task {
-                            await applySnapshotAfterAnimationDelay()
-                        }
-                    default:
-                        fatalError("Unexpected id: \(item.id)")
-                    }
-                }
-            case let item as VTDropDownItem<Int>:
-                cell.contentConfiguration = VTDropDownCellContentConfiguration(
-                    id: item.id,
-                    title: item.id.localized(),
-                    options: item.options,
-                    selection: item.active,
-                    disableSelectionAfterAction: false
-                ) { [weak self] new in
-                    guard let self else { return }
+            cell.contentConfiguration = VTDropDownCellContentConfiguration(
+                id: item.id,
+                title: item.id.localized(),
+                options: item.options,
+                selection: item.active,
+                disableSelectionAfterAction: false
+            ) { [weak self] newActionType in
+                guard let self else { return }
 
-                    switch item.id {
-                    case kIterations:
-                        if timer.action.type == .segmentCleanup {
-                            let params = timer.action.params
-                            timer = timer.copy(action: .init(type: .segmentCleanup, params: params.copy(iterations: new)))
-                        }
-                    default:
-                        fatalError("Unexpected id: \(item.id)")
+                switch item.id {
+                case kAction:
+                    timer = timer.copy(action: .init(type: newActionType, params: .empty))
+                    Task {
+                        await applySnapshotAfterAnimationDelay()
                     }
+                default:
+                    fatalError("Unexpected id: \(item.id)")
                 }
-            case let item as VTDropDownItem<VTPresetValue>:
-                cell.contentConfiguration = VTDropDownCellContentConfiguration(
-                    id: item.id,
-                    title: item.id.localized(),
-                    options: item.options,
-                    selection: item.active,
-                    disableSelectionAfterAction: false
-                ) { [weak self] newValue in
-                    guard let self else { return }
+            }
+        }
 
-                    switch item.id {
-                    case kSetFan:
-                        let filtered = timer.preActions.filter { $0.type != .fanSpeedControl }
-                        timer = timer.copy(preActions: filtered + [
-                            .init(type: .fanSpeedControl, params: .init(value: newValue)),
-                        ])
-                    case kSetWater:
-                        let filtered = timer.preActions.filter { $0.type != .waterUsageControl }
-                        timer = timer.copy(preActions: filtered + [
-                            .init(type: .waterUsageControl, params: .init(value: newValue)),
-                        ])
-                    case kSetMode:
-                        let filtered = timer.preActions.filter { $0.type != .operationModeControl }
-                        timer = timer.copy(preActions: filtered + [
-                            .init(type: .operationModeControl, params: .init(value: newValue)),
-                        ])
-                    default:
-                        fatalError("Unexpected id: \(item.id)")
+        let iterationDropdownCell = VTCellRegistration { [weak self] cell, _, wrappedItem in
+            guard let item = wrappedItem.base as? VTDropDownItem<Int> else {
+                fatalError("Unsupported iteration dropdown item: \(wrappedItem.base)")
+            }
+
+            cell.contentConfiguration = VTDropDownCellContentConfiguration(
+                id: item.id,
+                title: item.id.localized(),
+                options: item.options,
+                selection: item.active,
+                disableSelectionAfterAction: false
+            ) { [weak self] new in
+                guard let self else { return }
+
+                switch item.id {
+                case kIterations:
+                    if timer.action.type == .segmentCleanup {
+                        let params = timer.action.params
+                        timer = timer.copy(action: .init(type: .segmentCleanup, params: params.copy(iterations: new)))
                     }
+                default:
+                    fatalError("Unexpected id: \(item.id)")
                 }
-            default:
-                fatalError("Unsupported item: \(wrappedItem.base)")
+            }
+        }
+
+        let presetDropdownCell = VTCellRegistration { [weak self] cell, _, wrappedItem in
+            guard let item = wrappedItem.base as? VTDropDownItem<VTPresetValue> else {
+                fatalError("Unsupported preset dropdown item: \(wrappedItem.base)")
+            }
+
+            cell.contentConfiguration = VTDropDownCellContentConfiguration(
+                id: item.id,
+                title: item.id.localized(),
+                options: item.options,
+                selection: item.active,
+                disableSelectionAfterAction: false
+            ) { [weak self] newValue in
+                guard let self else { return }
+
+                switch item.id {
+                case kSetFan:
+                    let filtered = timer.preActions.filter { $0.type != .fanSpeedControl }
+                    timer = timer.copy(preActions: filtered + [
+                        .init(type: .fanSpeedControl, params: .init(value: newValue)),
+                    ])
+                case kSetWater:
+                    let filtered = timer.preActions.filter { $0.type != .waterUsageControl }
+                    timer = timer.copy(preActions: filtered + [
+                        .init(type: .waterUsageControl, params: .init(value: newValue)),
+                    ])
+                case kSetMode:
+                    let filtered = timer.preActions.filter { $0.type != .operationModeControl }
+                    timer = timer.copy(preActions: filtered + [
+                        .init(type: .operationModeControl, params: .init(value: newValue)),
+                    ])
+                default:
+                    fatalError("Unexpected id: \(item.id)")
+                }
             }
         }
 
@@ -360,9 +371,9 @@ final class VTTimerDetailViewController: VTCollectionViewController {
             case _ as VTTextFieldItem: textFieldCell
             case _ as VTSegmentItem<VTWeekday>: segmentCell
             case _ as VTTimePickerItem: timePickerCell
-            case _ as VTDropDownItem<VTPresetValue>,
-                 _ as VTDropDownItem<VTTimer.Action.ActionType>,
-                 _ as VTDropDownItem<Int>: dropdownCell
+            case _ as VTDropDownItem<VTPresetValue>: presetDropdownCell
+            case _ as VTDropDownItem<VTTimer.Action.ActionType>: actionDropdownCell
+            case _ as VTDropDownItem<Int>: iterationDropdownCell
             case _ as VTListSelectionItem<VTLayer>: layerListCell
             default: fatalError("Unsupported item type: \(type(of: wrappedItem.base))")
             }

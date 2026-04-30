@@ -180,15 +180,14 @@ final actor VTSSESocket<E: Decodable & Equatable & Sendable, O: Sendable>: VTEve
                 }
             }
 
-            for c in continuations.values {
-                c.yield(.didConnect)
-            }
-
             var buffer = Data() // accumulate partial SSE data
 
             repeat {
                 do {
                     let (bytes, _) = try await URLSession.shared.bytes(from: url)
+                    for c in continuations.values {
+                        c.yield(.didConnect)
+                    }
                     for try await byte in bytes {
                         buffer.append(UInt8(byte))
 

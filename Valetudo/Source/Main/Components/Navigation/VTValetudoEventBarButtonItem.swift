@@ -11,6 +11,7 @@ class VTValetudoEventBarButtonItem: UIBarButtonItem {
     private let client: any VTAPIClientProtocol
     private var observerToken: VTListenerToken?
     private weak var parentViewController: UIViewController?
+    private var hasConnectedEventStream = false
 
     init(client: any VTAPIClientProtocol, parentViewController: UIViewController) {
         self.client = client
@@ -67,11 +68,24 @@ class VTValetudoEventBarButtonItem: UIBarButtonItem {
 
         let (token, stream) = await client.registerEventObserver(for: .valetudoEvent)
         observerToken = token
+        hasConnectedEventStream = false
 
         for await event in stream {
             guard !Task.isCancelled else { break }
 
             switch event {
+            case .didConnect:
+                if hasConnectedEventStream {
+                    do {
+                        let eventCount = try await client.getValetudoEvents().count
+                        updateBadge(eventCount: eventCount)
+                    } catch {
+                        updateBadge(eventCount: 0)
+                        log(message: error.localizedDescription, forSubsystem: .valetudoEvent, level: .error)
+                    }
+                } else {
+                    hasConnectedEventStream = true
+                }
             case let .didReceiveData(events):
                 updateBadge(eventCount: events.count)
             case let .didReceiveError(message):

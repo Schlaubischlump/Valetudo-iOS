@@ -15,6 +15,7 @@ final class VTValetudoEventsViewController: VTCollectionViewController {
     private var events: [any VTValetudoEvent] = []
     private var eventObservationTask: Task<Void, Never>?
     private var observerToken: VTListenerToken?
+    private var hasConnectedEventStream = false
 
     init(client: any VTAPIClientProtocol) {
         self.client = client
@@ -153,11 +154,18 @@ final class VTValetudoEventsViewController: VTCollectionViewController {
 
             let (token, stream) = await client.registerEventObserver(for: .valetudoEvent)
             observerToken = token
+            hasConnectedEventStream = false
 
             for await event in stream {
                 guard !Task.isCancelled else { break }
 
                 switch event {
+                case .didConnect:
+                    if hasConnectedEventStream {
+                        await reloadData(animated: true)
+                    } else {
+                        hasConnectedEventStream = true
+                    }
                 case let .didReceiveData(events):
                     await updateEvents(events, animated: true)
                 case let .didReceiveError(message):
@@ -172,6 +180,7 @@ final class VTValetudoEventsViewController: VTCollectionViewController {
     private func stopEventObservation() {
         eventObservationTask?.cancel()
         eventObservationTask = nil
+        hasConnectedEventStream = false
 
         if let observerToken {
             let client = client
