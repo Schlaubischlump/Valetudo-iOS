@@ -53,6 +53,10 @@ public extension UIImage {
     static let chartBarFill = UIImage(systemName: "chart.bar.fill")
     static let sidebarRight = UIImage(systemName: "sidebar.right")
     static let appLogo = UIImage(named: "Logo")
+    static let noMop = UIImage.dropFill?
+        .slashed(fillColor: .black, lineWidth: 1.25, cutoutLineWidth: 3.0)
+    static let noGo = UIImage(systemName: "wrongwaysign.fill")
+    static let wall = UIImage.wallImage()
 
     static let operationModeVacuumAndMop = UIImage.combine(left: .dropFill, right: .fanFill)
     static let operationModeVacuumThenMop = UIImage.combine(left: .fanFill, right: .dropFill, op: "→")
@@ -161,7 +165,7 @@ public extension UIImage {
             slashPath.stroke()
         }
 
-        return image.withRenderingMode(.alwaysTemplate)
+        return image.withRenderingMode(.alwaysOriginal)
     }
 
     private static func unionImage() -> UIImage {
@@ -191,6 +195,38 @@ public extension UIImage {
 
             context.cgContext.setBlendMode(.clear)
             overlapCutout.stroke()
+        }
+
+        return image.withRenderingMode(.alwaysTemplate)
+    }
+
+    private static func wallImage() -> UIImage {
+        let size = CGSize(width: 20, height: 15)
+        let renderer = UIGraphicsImageRenderer(size: size, format: .default())
+        let image = renderer.image { _ in
+            UIColor.black.setFill()
+
+            let brickSize = CGSize(width: 5, height: 3)
+            let cornerRadius: CGFloat = 0.75
+            let rows: [[CGFloat]] = [
+                [2.5, 8.5, 14.5],
+                [5.5, 11.5],
+                [2.5, 8.5, 14.5],
+            ]
+            let rowOriginsY: [CGFloat] = [4.0, 8, 12]
+
+            for (rowIndex, originsX) in rows.enumerated() {
+                let originY = rowOriginsY[rowIndex]
+                for originX in originsX {
+                    let rect = CGRect(
+                        x: originX,
+                        y: originY,
+                        width: brickSize.width,
+                        height: brickSize.height
+                    )
+                    UIBezierPath(roundedRect: rect, cornerRadius: cornerRadius).fill()
+                }
+            }
         }
 
         return image.withRenderingMode(.alwaysTemplate)

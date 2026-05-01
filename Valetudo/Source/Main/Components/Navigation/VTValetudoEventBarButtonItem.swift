@@ -59,10 +59,10 @@ class VTValetudoEventBarButtonItem: UIBarButtonItem {
     @MainActor
     private func startEventObservation() async {
         do {
-            let eventCount = try await client.getValetudoEvents().count
-            updateBadge(eventCount: eventCount)
+            let events = try await client.getValetudoEvents()
+            updateBadge(events: events)
         } catch {
-            updateBadge(eventCount: 0)
+            updateBadge(events: [])
             log(message: error.localizedDescription, forSubsystem: .valetudoEvent, level: .error)
         }
 
@@ -77,17 +77,17 @@ class VTValetudoEventBarButtonItem: UIBarButtonItem {
             case .didConnect:
                 if hasConnectedEventStream {
                     do {
-                        let eventCount = try await client.getValetudoEvents().count
-                        updateBadge(eventCount: eventCount)
+                        let events = try await client.getValetudoEvents()
+                        updateBadge(events: events)
                     } catch {
-                        updateBadge(eventCount: 0)
+                        updateBadge(events: [])
                         log(message: error.localizedDescription, forSubsystem: .valetudoEvent, level: .error)
                     }
                 } else {
                     hasConnectedEventStream = true
                 }
             case let .didReceiveData(events):
-                updateBadge(eventCount: events.count)
+                updateBadge(events: events)
             case let .didReceiveError(message):
                 log(message: message, forSubsystem: .valetudoEvent, level: .error)
             default:
@@ -96,7 +96,8 @@ class VTValetudoEventBarButtonItem: UIBarButtonItem {
         }
     }
 
-    private func updateBadge(eventCount: Int) {
+    private func updateBadge(events: [any VTValetudoEvent]) {
+        let eventCount = events.count(where: { $0.processed == false })
         badge = eventCount > 0 ? .count(eventCount) : nil
     }
 }

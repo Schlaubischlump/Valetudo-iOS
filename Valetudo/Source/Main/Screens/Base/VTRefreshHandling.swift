@@ -43,12 +43,14 @@ extension UIViewController {
         }
 
         if let navigationController = self as? UINavigationController,
-           let visibleViewController = navigationController.visibleViewController {
+           let visibleViewController = navigationController.visibleViewController
+        {
             return visibleViewController.activeRefreshHandler()
         }
 
         if let tabBarController = self as? UITabBarController,
-           let selectedViewController = tabBarController.selectedViewController {
+           let selectedViewController = tabBarController.selectedViewController
+        {
             return selectedViewController.activeRefreshHandler()
         }
 
