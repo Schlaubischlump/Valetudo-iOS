@@ -1,18 +1,18 @@
 //
-//  VTVirtualRestrictionsPayload.swift
+//  VTVirtualRestrictions.swift
 //  Valetudo
 //
-//  Created by Codex on 09.10.25.
+//  Created by David Klopp on 09.10.25.
 //
 
 import Foundation
 
-public enum VTVirtualRestrictedZoneType: String, Encodable, Hashable, Sendable {
+public enum VTVirtualRestrictedZoneType: String, Codable, Hashable, Sendable {
     case regular
     case mop
 }
 
-public struct VTVirtualWallPoints: Encodable, Hashable, Sendable {
+public struct VTVirtualWallPoints: Codable, Hashable, Sendable {
     public let pA: VTMapCoordinate
     public let pB: VTMapCoordinate
 
@@ -22,7 +22,7 @@ public struct VTVirtualWallPoints: Encodable, Hashable, Sendable {
     }
 }
 
-public struct VTVirtualWallPayload: Encodable, Hashable, Sendable {
+public struct VTVirtualWallPayload: Codable, Hashable, Sendable {
     public let points: VTVirtualWallPoints
 
     public init(points: VTVirtualWallPoints) {
@@ -30,7 +30,7 @@ public struct VTVirtualWallPayload: Encodable, Hashable, Sendable {
     }
 }
 
-public struct VTRectangularRestrictedZonePoints: Encodable, Hashable, Sendable {
+public struct VTRectangularRestrictedZonePoints: Codable, Hashable, Sendable {
     public let pA: VTMapCoordinate
     public let pB: VTMapCoordinate
     public let pC: VTMapCoordinate
@@ -44,7 +44,7 @@ public struct VTRectangularRestrictedZonePoints: Encodable, Hashable, Sendable {
     }
 }
 
-public struct VTRestrictedZonePayload: Encodable, Hashable, Sendable {
+public struct VTRestrictedZonePayload: Codable, Hashable, Sendable {
     public let type: VTVirtualRestrictedZoneType
     public let points: VTRectangularRestrictedZonePoints
 
@@ -54,7 +54,7 @@ public struct VTRestrictedZonePayload: Encodable, Hashable, Sendable {
     }
 }
 
-public struct VTVirtualRestrictions: Encodable, Hashable, Sendable {
+public struct VTVirtualRestrictions: Codable, Hashable, Sendable {
     public let virtualWalls: [VTVirtualWallPayload]
     public let restrictedZones: [VTRestrictedZonePayload]
 
