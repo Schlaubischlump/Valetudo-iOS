@@ -9,6 +9,7 @@ import UIKit
 
 private let legendHeight: CGFloat = 45.0
 
+/// Provides shared map loading, selection, toolbar, and SSE synchronization behavior for map editors.
 @MainActor
 class VTMapEditingViewController: VTViewController {
     /// Tracks callers waiting for the next server-pushed map snapshot after a mutating action.
@@ -17,6 +18,7 @@ class VTMapEditingViewController: VTViewController {
         let continuation: CheckedContinuation<VTMapData, any Error>
     }
 
+    /// Describes a toolbar item whose visibility depends on the current selection state.
     struct ToolbarActionDefinition {
         let title: String
         let image: UIImage?
@@ -49,6 +51,7 @@ class VTMapEditingViewController: VTViewController {
 
     // MARK: - Init
 
+    /// Creates a map editor bound to the provided API client.
     init(client: VTAPIClientProtocol) {
         self.client = client
         super.init(nibName: nil, bundle: nil)
@@ -62,12 +65,14 @@ class VTMapEditingViewController: VTViewController {
         fatalError("init(coder:) has not been implemented")
     }
 
+    /// Allows keyboard commands to move selected overlays while the controller is visible.
     override var canBecomeFirstResponder: Bool {
         true
     }
 
     // MARK: - View life cycle
 
+    /// Configures the shared map editor UI and toolbar when the view loads.
     override func viewDidLoad() {
         super.viewDidLoad()
 
@@ -80,17 +85,20 @@ class VTMapEditingViewController: VTViewController {
         configureToolbar()
     }
 
+    /// Shows the editing toolbar and starts observing live map updates.
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         navigationController?.setToolbarHidden(false, animated: animated)
         startSSEObservation()
     }
 
+    /// Becomes first responder so keyboard movement shortcuts are available.
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         becomeFirstResponder()
     }
 
+    /// Stops map observation and hides the toolbar when leaving the editor stack.
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         stopSSEObservation()
@@ -101,6 +109,7 @@ class VTMapEditingViewController: VTViewController {
 
     // MARK: - Subclass hooks
 
+    /// Returns the toolbar actions the subclass wants to expose for its current editing mode.
     var toolbarActionDefinitions: [ToolbarActionDefinition] {
         []
     }
@@ -110,11 +119,9 @@ class VTMapEditingViewController: VTViewController {
         true
     }
 
-    override func reconnectAndRefresh() async {
-        stopSSEObservation()
-        startSSEObservation()
-    }
+    // MARK: - View Configuration
 
+    /// Builds the shared view hierarchy and activates the editor layout constraints.
     private func configureViewHierarchy() {
         mapScrollView.translatesAutoresizingMaskIntoConstraints = false
         legendView.translatesAutoresizingMaskIntoConstraints = false
@@ -142,10 +149,12 @@ class VTMapEditingViewController: VTViewController {
 
     // MARK: - Toolbar
 
+    /// Initializes the toolbar with no selection-dependent actions visible.
     private func configureToolbar() {
         updateToolbarItems(forSelectedSegmentIDs: [])
     }
 
+    /// Rebuilds the toolbar from the current action definitions and selected segment identifiers.
     func updateToolbarItems(forSelectedSegmentIDs: Set<String>) {
         let visibleDefinitions = toolbarActionDefinitions.filter {
             $0.isVisible(forSelectedSegmentIDs)
@@ -192,6 +201,7 @@ class VTMapEditingViewController: VTViewController {
         return await canChangeSelection(forLayer: layer, isSelected: isSelected)
     }
 
+    /// Connects legend selection callbacks back into the shared editor selection flow.
     private func configureLegend() {
         legendView.backgroundColor = .clear
         legendView.shouldChangeSelection = { [weak self] index, isSelected in
@@ -279,6 +289,8 @@ class VTMapEditingViewController: VTViewController {
             mapView.didChangeOverlaySelection = { [weak self] _ in self?.becomeFirstResponder() }
             await mapView.updateData(data: filteredMapData)
         } else {
+            // The initial view size is capped so very large maps do not create an oversized
+            // drawing surface before zooming behavior is established.
             let mapView = VTMapView(frame: mapRect, data: filteredMapData)
             mapView.hideNoGoAreas = false
             mapView.shouldChangeLayerSelection = mapShouldChangedSelection
@@ -362,6 +374,12 @@ class VTMapEditingViewController: VTViewController {
 
     // MARK: - SSE observing
 
+    /// Restarts the map observation pipeline after a reconnect request.
+    override func reconnectAndRefresh() async {
+        stopSSEObservation()
+        startSSEObservation()
+    }
+
     /// Starts observing `.map` SSE events so the editor stays live and pending edit actions can
     /// complete when the backend publishes an updated snapshot.
     private func startSSEObservation() {
@@ -437,6 +455,7 @@ class VTMapEditingViewController: VTViewController {
 
     // MARK: - Key events
 
+    /// Handles arrow-key presses by nudging the currently selected overlay.
     override func didReceiveKeyEvent(_ key: UIKey) -> Bool {
         switch key.keyCode {
         case .keyboardUpArrow:
@@ -454,6 +473,7 @@ class VTMapEditingViewController: VTViewController {
         return true
     }
 
+    /// Moves the selected overlay by a fixed number of points in overlay space.
     private func moveSelectedOverlay(by delta: CGPoint) {
         mapView?.moveSelectedOverlay(by: delta)
     }

@@ -7,8 +7,10 @@
 
 import UIKit
 
+/// Manages map segment editing actions such as rename, join, split, and material assignment.
 @MainActor
 final class VTSegmentManagementViewController: VTMapEditingViewController {
+    /// Describes the currently active editing mode for the segment toolbar.
     private enum Mode {
         case standard
         case split
@@ -32,6 +34,7 @@ final class VTSegmentManagementViewController: VTMapEditingViewController {
         )
     }
 
+    /// Creates the segment management editor for a robot and its advertised capabilities.
     init(client: VTAPIClientProtocol, capabilities: Set<VTCapability>) {
         self.capabilities = capabilities
         super.init(client: client)
@@ -45,6 +48,7 @@ final class VTSegmentManagementViewController: VTMapEditingViewController {
 
     // MARK: - Toolbar setup
 
+    /// Returns the toolbar actions appropriate for the current segment editing mode.
     override var toolbarActionDefinitions: [ToolbarActionDefinition] {
         switch mode {
         case .split:
@@ -113,6 +117,7 @@ final class VTSegmentManagementViewController: VTMapEditingViewController {
         }
     }
 
+    /// Recomputes toolbar visibility from the current segment selection.
     private func refreshToolbarItems() {
         let selectedSegmentIDs = Set(selectedSegments.compactMap(\.segmentId))
         updateToolbarItems(forSelectedSegmentIDs: selectedSegmentIDs)
@@ -120,10 +125,12 @@ final class VTSegmentManagementViewController: VTMapEditingViewController {
 
     // MARK: - Map handling
 
+    /// Disables segment selection changes while the user is positioning a split line.
     override func canChangeSelection(forLayer _: VTLayer, isSelected _: Bool) async -> Bool {
         mode == .standard
     }
 
+    /// Leaves split mode automatically if the live map refresh removes the current selection.
     override func applyMapData(_ data: VTMapData) async {
         await super.applyMapData(data)
 
@@ -135,6 +142,7 @@ final class VTSegmentManagementViewController: VTMapEditingViewController {
 
     // MARK: - Toolbar item Callbacks
 
+    /// Presents the material picker and applies the chosen material to the selected segment.
     private func didTapMaterial() {
         Task { [weak self] in
             guard let self else { return }
@@ -165,6 +173,7 @@ final class VTSegmentManagementViewController: VTMapEditingViewController {
         }
     }
 
+    /// Enters split mode and places an adjustable split overlay near the selected segment center.
     private func didTapCuttingLine() {
         guard let segment = selectedSegments.first,
               let mapView
@@ -179,6 +188,8 @@ final class VTSegmentManagementViewController: VTMapEditingViewController {
             x: CGFloat(segment.dimensions.x.mid),
             y: CGFloat(segment.dimensions.y.mid)
         )
+        // Clamp the initial line length so small rooms still get a usable handle while large rooms
+        // do not start with an oversized line that is hard to position precisely.
         let overlay = VTSplitLineMapOverlay(
             center: mapView.overlayPoint(fromMapCoordinate: segmentCenter),
             length: lineLength,
@@ -189,6 +200,7 @@ final class VTSegmentManagementViewController: VTMapEditingViewController {
         refreshToolbarItems()
     }
 
+    /// Sends the current split line to the backend and waits for the resulting map update.
     private func didTapSplit(segment _: VTLayer) {
         Task { [weak self] in
             guard let self,
@@ -221,6 +233,7 @@ final class VTSegmentManagementViewController: VTMapEditingViewController {
         }
     }
 
+    /// Exits split mode and removes the transient split overlay from the map.
     private func didTapCancelSplitMode() {
         mode = .standard
         splitOverlayID = nil
@@ -228,6 +241,7 @@ final class VTSegmentManagementViewController: VTMapEditingViewController {
         refreshToolbarItems()
     }
 
+    /// Prompts for a new segment name and submits the rename if it changed.
     private func didTapRename() {
         Task { [weak self] in
             guard let self,
@@ -251,6 +265,7 @@ final class VTSegmentManagementViewController: VTMapEditingViewController {
         }
     }
 
+    /// Joins the two selected segments into one backend-defined segment.
     private func didTapJoin() {
         Task { [weak self] in
             guard let self else { return }
@@ -273,6 +288,7 @@ final class VTSegmentManagementViewController: VTMapEditingViewController {
 
     // MARK: - Alerts
 
+    /// Presents a rename alert for the provided segment and returns the entered name.
     private func showRenameAlert(for segment: VTLayer) async throws -> String? {
         try await withCheckedThrowingContinuation { continuation in
             let alert = UIAlertController(
@@ -298,6 +314,7 @@ final class VTSegmentManagementViewController: VTMapEditingViewController {
         }
     }
 
+    /// Presents the material picker for the selected segment and returns the chosen material.
     private func showMaterialSelectionAlert() async throws -> VTMaterial? {
         guard let selectedMaterial = selectedSegments.first?.material else { return nil }
 
@@ -312,6 +329,8 @@ final class VTSegmentManagementViewController: VTMapEditingViewController {
             )
 
             for material in supportedMaterials {
+                // The action sheet uses a leading checkmark instead of a custom accessory view so it
+                // remains compatible with the stock UIKit action sheet presentation.
                 let title = material == selectedMaterial ? "✓ \(material.description)" : material.description
                 alert.addAction(UIAlertAction(title: title, style: .default) { _ in
                     continuation.resume(returning: material)

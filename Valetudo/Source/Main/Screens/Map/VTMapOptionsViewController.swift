@@ -11,6 +11,7 @@ private let kMapReset = "MAP_RESET"
 private let kSegmentManagement = "SEGMENT_MANAGEMENT"
 private let kVirtualRestrictionManagement = "VIRTUAL_RESTRICTION_MANAGEMENT"
 
+/// Displays the available map-related actions supported by the connected robot.
 final class VTMapOptionsViewController: VTCollectionViewController {
     private typealias DataSource = UICollectionViewDiffableDataSource<VTMapOptionsSection, VTAnyItem>
     private typealias Snapshot = NSDiffableDataSourceSnapshot<VTMapOptionsSection, VTAnyItem>
@@ -23,6 +24,7 @@ final class VTMapOptionsViewController: VTCollectionViewController {
         private let refreshControl = UIRefreshControl()
     #endif
 
+    /// Creates the map options screen for a specific API client.
     init(client: VTAPIClientProtocol) {
         self.client = client
 
@@ -40,6 +42,9 @@ final class VTMapOptionsViewController: VTCollectionViewController {
         fatalError("init(coder:) has not been implemented")
     }
 
+    // MARK: - View life cycle
+
+    /// Configures the collection view and its diffable data source.
     override func viewDidLoad() {
         super.viewDidLoad()
 
@@ -47,6 +52,7 @@ final class VTMapOptionsViewController: VTCollectionViewController {
         configureDataSource()
     }
 
+    /// Refreshes the visible options whenever the screen becomes active again.
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
 
@@ -55,6 +61,9 @@ final class VTMapOptionsViewController: VTCollectionViewController {
         }
     }
 
+    // MARK: - Layout
+
+    /// Applies the inset-grouped list layout used by the options menu.
     private func setupAndApplyListLayout() {
         var listConfig = UICollectionLayoutListConfiguration(appearance: .insetGrouped)
         listConfig.showsSeparators = true
@@ -65,6 +74,9 @@ final class VTMapOptionsViewController: VTCollectionViewController {
         collectionView.setCollectionViewLayout(layout, animated: false)
     }
 
+    // MARK: - Collection View Configuration
+
+    /// Registers reusable views and wires up pull-to-refresh support where available.
     private func configureCollectionView() {
         collectionView.delaysContentTouches = false
         collectionView.register(
@@ -77,6 +89,7 @@ final class VTMapOptionsViewController: VTCollectionViewController {
         #endif
     }
 
+    /// Builds the diffable data source used to render the current capability-driven options.
     private func configureDataSource() {
         let linkCellRegistration = VTCellRegistration { cell, _, wrappedItem in
             guard let item = wrappedItem.base as? VTKeyValueItem else {
@@ -124,43 +137,28 @@ final class VTMapOptionsViewController: VTCollectionViewController {
         }
     }
 
+    // MARK: - Refreshing
+
+    /// Reloads the options after a user-initiated pull-to-refresh gesture.
     @objc private func didPullToRefresh() {
         Task {
             await reloadData(animated: true)
         }
     }
 
+    /// Re-fetches map capabilities after the shared reconnect flow completes.
     @MainActor
     override func reconnectAndRefresh() async {
         await reloadData(animated: false)
     }
 
-    override func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        defer { collectionView.deselectItem(at: indexPath, animated: true) }
-        guard let item = dataSource.itemIdentifier(for: indexPath) else { return }
-
-        switch item.id {
-        case kMappingPass:
-            didTapMappingPass()
-        case kMapReset:
-            presentMapResetConfirmation()
-        case kSegmentManagement:
-            let vc = VTSegmentManagementViewController(client: client, capabilities: availableCapabilities)
-            navigationController?.pushViewController(vc, animated: true)
-        case kVirtualRestrictionManagement:
-            let vc = VTVirtualRestrictionManagementViewController(client: client, capabilities: availableCapabilities)
-            navigationController?.pushViewController(vc, animated: true)
-        default:
-            break
-        }
-    }
-
+    /// Rebuilds the collection view snapshot from the robot's currently available map capabilities.
     @MainActor
     private func reloadData(animated: Bool) async {
         availableCapabilities = await Set((try? client.getCapabilities()) ?? [])
 
         var snapshot = Snapshot()
-        snapshot.appendSections([.mapping, .segmentationManagement])
+        snapshot.appendSections([.mapping, .management])
         if availableCapabilities.contains(.mappingPass) {
             snapshot.appendItems([
                 .keyValue(
@@ -189,7 +187,7 @@ final class VTMapOptionsViewController: VTCollectionViewController {
                     value: "MAP_OPTIONS_SEGMENT_MANAGEMENT_SUBTITLE".localized(),
                     image: .rectangle3GroupFill
                 ),
-            ], toSection: .segmentationManagement)
+            ], toSection: .management)
         }
         if availableCapabilities.contains(.combinedVirtualRestrictions) {
             snapshot.appendItems([
@@ -199,7 +197,7 @@ final class VTMapOptionsViewController: VTCollectionViewController {
                     value: "MAP_OPTIONS_VIRTUAL_RESTRICTION_MANAGEMENT_SUBTITLE".localized(),
                     image: .nosign
                 ),
-            ], toSection: .segmentationManagement)
+            ], toSection: .management)
         }
         await dataSource.apply(snapshot, animatingDifferences: animated)
 
@@ -210,6 +208,32 @@ final class VTMapOptionsViewController: VTCollectionViewController {
         #endif
     }
 
+    // MARK: - Collection View Delegate
+
+    /// Routes taps on option rows to the corresponding capability action or detail screen.
+    override func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        defer { collectionView.deselectItem(at: indexPath, animated: true) }
+        guard let item = dataSource.itemIdentifier(for: indexPath) else { return }
+
+        switch item.id {
+        case kMappingPass:
+            didTapMappingPass()
+        case kMapReset:
+            presentMapResetConfirmation()
+        case kSegmentManagement:
+            let vc = VTSegmentManagementViewController(client: client, capabilities: availableCapabilities)
+            navigationController?.pushViewController(vc, animated: true)
+        case kVirtualRestrictionManagement:
+            let vc = VTVirtualRestrictionManagementViewController(client: client, capabilities: availableCapabilities)
+            navigationController?.pushViewController(vc, animated: true)
+        default:
+            break
+        }
+    }
+
+    // MARK: - Actions
+
+    /// Starts a mapping pass on robots that expose the corresponding capability.
     private func didTapMappingPass() {
         Task {
             do {
@@ -220,6 +244,7 @@ final class VTMapOptionsViewController: VTCollectionViewController {
         }
     }
 
+    /// Triggers a full map reset on the robot.
     private func didTapMapReset() {
         Task {
             do {
@@ -230,6 +255,9 @@ final class VTMapOptionsViewController: VTCollectionViewController {
         }
     }
 
+    // MARK: - Alerts
+
+    /// Presents a destructive confirmation before resetting the robot's stored map.
     private func presentMapResetConfirmation() {
         let alert = UIAlertController(
             title: "MAP_OPTIONS_RESET_CONFIRMATION_TITLE".localized(),

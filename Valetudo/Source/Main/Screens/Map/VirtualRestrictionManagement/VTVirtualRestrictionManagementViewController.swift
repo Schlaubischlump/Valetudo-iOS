@@ -7,6 +7,7 @@
 
 import UIKit
 
+/// Manages creation, editing, and persistence of virtual walls and restricted zones on the map.
 @MainActor
 final class VTVirtualRestrictionManagementViewController: VTMapEditingViewController {
     private let capabilities: Set<VTCapability>
@@ -21,6 +22,7 @@ final class VTVirtualRestrictionManagementViewController: VTMapEditingViewContro
         mapView?.selectedOverlayID
     }
 
+    /// Creates the virtual restriction editor for a robot and its advertised capabilities.
     init(client: VTAPIClientProtocol, capabilities: Set<VTCapability>) {
         self.capabilities = capabilities
         super.init(client: client)
@@ -32,6 +34,7 @@ final class VTVirtualRestrictionManagementViewController: VTMapEditingViewContro
         fatalError("init(coder:) has not been implemented")
     }
 
+    /// Loads restriction metadata once the base editor UI is ready.
     override func viewDidLoad() {
         super.viewDidLoad()
 
@@ -43,6 +46,7 @@ final class VTVirtualRestrictionManagementViewController: VTMapEditingViewContro
 
     // MARK: - Toolbar setup
 
+    /// Returns the toolbar actions used for editing virtual restriction overlays.
     override var toolbarActionDefinitions: [ToolbarActionDefinition] {
         [
             ToolbarActionDefinition(
@@ -99,16 +103,19 @@ final class VTVirtualRestrictionManagementViewController: VTMapEditingViewContro
         ]
     }
 
+    /// Recomputes toolbar visibility from the current overlay state.
     private func refreshToolbarItems() {
         updateToolbarItems(forSelectedSegmentIDs: [])
     }
 
     // MARK: - Map handling
 
+    /// Disables segment selection because this editor only works with overlay-based restrictions.
     override func canChangeSelection(forLayer _: VTLayer, isSelected _: Bool) async -> Bool {
         false
     }
 
+    /// Applies incoming map data and restores the editable restriction overlays when appropriate.
     override func applyMapData(_ data: VTMapData) async {
         await super.applyMapData(data)
 
@@ -129,6 +136,9 @@ final class VTVirtualRestrictionManagementViewController: VTMapEditingViewContro
         refreshToolbarItems()
     }
 
+    // MARK: - Overlay Loading
+
+    /// Converts embedded map entities into editable overlay objects.
     private func overlays(from data: VTMapData) -> [VTMapOverlay] {
         data.entities.compactMap { entity in
             switch entity.type {
@@ -144,12 +154,15 @@ final class VTVirtualRestrictionManagementViewController: VTMapEditingViewContro
         }
     }
 
+    /// Builds a rectangular restriction overlay from a map entity if its geometry is valid.
     private func rectangleOverlay(for entity: VTEntity, type: VTEntityType) -> VTMapOverlay? {
         guard entity.points.count >= 8,
               let mapView
         else { return nil }
 
         let pixelSize = Double(mapView.data.pixelSize)
+        // Restriction entities arrive as centimeter-space corner coordinates. They are normalized
+        // into overlay points so the editable rectangles line up with the rendered map image.
         let corners = stride(from: 0, to: 8, by: 2).map { index in
             mapView.overlayPoint(
                 fromMapCoordinate: CGPoint(
@@ -175,6 +188,7 @@ final class VTVirtualRestrictionManagementViewController: VTMapEditingViewContro
         }
     }
 
+    /// Builds a virtual wall overlay from a map entity if its endpoints are present.
     private func wallOverlay(for entity: VTEntity) -> VTMapOverlay? {
         guard entity.points.count >= 4,
               let mapView
@@ -196,36 +210,7 @@ final class VTVirtualRestrictionManagementViewController: VTMapEditingViewContro
         return VTVirtualWallMapOverlay(startPoint: start, endPoint: end)
     }
 
-    private func loadVirtualRestrictionProperties() async {
-        do {
-            let properties = try await client.getVirtualRestrictionsProperties()
-            supportedRestrictedZoneTypes = Set(properties.supportedRestrictedZoneTypes)
-        } catch {
-            log(
-                message: "CombinedVirtualRestrictionsCapability properties failed: \(error.localizedDescription)",
-                forSubsystem: .mapOptions,
-                level: .error
-            )
-            supportedRestrictedZoneTypes = [.regular, .mop]
-        }
-
-        refreshToolbarItems()
-    }
-
-    private func loadRestrictionOverlays(fallbackMapData: VTMapData) async -> [VTMapOverlay] {
-        do {
-            let restrictions = try await client.getVirtualRestrictions()
-            return overlays(from: restrictions)
-        } catch {
-            log(
-                message: "CombinedVirtualRestrictionsCapability fetch failed: \(error.localizedDescription)",
-                forSubsystem: .mapOptions,
-                level: .error
-            )
-            return overlays(from: fallbackMapData)
-        }
-    }
-
+    /// Converts the backend restriction payload into editable overlays.
     private func overlays(from restrictions: VTVirtualRestrictions) -> [VTMapOverlay] {
         let wallOverlays = restrictions.virtualWalls.map { wall in
             VTVirtualWallMapOverlay(
@@ -253,6 +238,39 @@ final class VTVirtualRestrictionManagementViewController: VTMapEditingViewContro
         return wallOverlays + zoneOverlays
     }
 
+    /// Fetches restriction capability metadata such as the supported restricted zone types.
+    private func loadVirtualRestrictionProperties() async {
+        do {
+            let properties = try await client.getVirtualRestrictionsProperties()
+            supportedRestrictedZoneTypes = Set(properties.supportedRestrictedZoneTypes)
+        } catch {
+            log(
+                message: "CombinedVirtualRestrictionsCapability properties failed: \(error.localizedDescription)",
+                forSubsystem: .mapOptions,
+                level: .error
+            )
+            supportedRestrictedZoneTypes = []
+        }
+
+        refreshToolbarItems()
+    }
+
+    /// Loads the latest restrictions from the backend, falling back to map-embedded entities if needed.
+    private func loadRestrictionOverlays(fallbackMapData: VTMapData) async -> [VTMapOverlay] {
+        do {
+            let restrictions = try await client.getVirtualRestrictions()
+            return overlays(from: restrictions)
+        } catch {
+            log(
+                message: "CombinedVirtualRestrictionsCapability fetch failed: \(error.localizedDescription)",
+                forSubsystem: .mapOptions,
+                level: .error
+            )
+            return overlays(from: fallbackMapData)
+        }
+    }
+
+    /// Converts a backend map coordinate into the overlay coordinate space used by the editor.
     private func overlayPoint(from coordinate: VTMapCoordinate) -> CGPoint {
         guard let mapView else { return .zero }
 
@@ -267,18 +285,21 @@ final class VTVirtualRestrictionManagementViewController: VTMapEditingViewContro
 
     // MARK: - Toolbar item Callbacks
 
+    /// Inserts a new no-go overlay for the user to position on the map.
     private func didTapAddNoGo() {
         hasLocalChanges = true
         mapView?.addOverlay(VTNoGoAreaMapOverlay(rect: .zero))
         refreshToolbarItems()
     }
 
+    /// Inserts a new no-mop overlay for the user to position on the map.
     private func didTapAddNoMop() {
         hasLocalChanges = true
         mapView?.addOverlay(VTNoMopAreaMapOverlay(rect: .zero))
         refreshToolbarItems()
     }
 
+    /// Inserts a new virtual wall overlay with a short default length.
     private func didTapAddWall() {
         hasLocalChanges = true
         mapView?.addOverlay(
@@ -290,6 +311,7 @@ final class VTVirtualRestrictionManagementViewController: VTMapEditingViewContro
         refreshToolbarItems()
     }
 
+    /// Removes the currently selected restriction overlay from the editor.
     private func didTapRemove() {
         guard let selectedRestrictionOverlayID else { return }
         hasLocalChanges = true
@@ -297,6 +319,7 @@ final class VTVirtualRestrictionManagementViewController: VTMapEditingViewContro
         refreshToolbarItems()
     }
 
+    /// Persists the current editable overlays back to the backend restriction endpoint.
     private func didTapSave() {
         Task { [weak self] in
             guard let self else { return }
@@ -319,6 +342,7 @@ final class VTVirtualRestrictionManagementViewController: VTMapEditingViewContro
         }
     }
 
+    /// Serializes the current editable overlays into the backend virtual restriction payload.
     private func currentVirtualRestrictions() -> VTVirtualRestrictions? {
         guard let mapView else { return nil }
 
@@ -355,10 +379,8 @@ final class VTVirtualRestrictionManagementViewController: VTMapEditingViewContro
         return VTVirtualRestrictions(virtualWalls: virtualWalls, restrictedZones: restrictedZones)
     }
 
+    /// Converts an overlay-space point back into the integer map coordinate format expected by the API.
     private func coordinate(from point: CGPoint) -> VTMapCoordinate {
-        VTMapCoordinate(
-            x: Int(point.x.rounded()),
-            y: Int(point.y.rounded())
-        )
+        VTMapCoordinate(x: Int(point.x.rounded()), y: Int(point.y.rounded()))
     }
 }
