@@ -144,29 +144,31 @@ public actor VTAPIClient: VTAPIClientProtocol {
 
     // MARK: - 1.2.2 BasicControlCapability
 
+    private let basicControlCapabilityPath: String = "BasicControlCapability"
+    
     public func start() async throws {
-        let url = capabilitiesURL.appendingPathComponent("BasicControlCapability")
+        let url = capabilitiesURL.appendingPathComponent(basicControlCapabilityPath)
         let data = VTBasicControlAction(action: .start)
         let request = VTRequest<Void>(method: .PUT, url: url, query: nil, body: data)
         try await send(request)
     }
 
     public func pause() async throws {
-        let url = capabilitiesURL.appendingPathComponent("BasicControlCapability")
+        let url = capabilitiesURL.appendingPathComponent(basicControlCapabilityPath)
         let data = VTBasicControlAction(action: .pause)
         let request = VTRequest<Void>(method: .PUT, url: url, query: nil, body: data)
         try await send(request)
     }
 
     public func stop() async throws {
-        let url = capabilitiesURL.appendingPathComponent("BasicControlCapability")
+        let url = capabilitiesURL.appendingPathComponent(basicControlCapabilityPath)
         let data = VTBasicControlAction(action: .stop)
         let request = VTRequest<Void>(method: .PUT, url: url, query: nil, body: data)
         try await send(request)
     }
 
     public func home() async throws {
-        let url = capabilitiesURL.appendingPathComponent("BasicControlCapability")
+        let url = capabilitiesURL.appendingPathComponent(basicControlCapabilityPath)
         let data = VTBasicControlAction(action: .home)
         let request = VTRequest<Void>(method: .PUT, url: url, query: nil, body: data)
         try await send(request)
@@ -174,14 +176,16 @@ public actor VTAPIClient: VTAPIClientProtocol {
 
     // MARK: - 1.2.3 MapSegmentationCapability
 
+    private let mapSegmentationCapabilityPath: String = "MapSegmentationCapability"
+    
     public func getMapSegments() async throws -> [VTMapSegment] {
-        let url = capabilitiesURL.appendingPathComponent("MapSegmentationCapability")
+        let url = capabilitiesURL.appendingPathComponent(mapSegmentationCapabilityPath)
         let request = VTRequest<[VTMapSegment]>(method: .GET, url: url)
         return try await send(request)
     }
 
     public func clean(segmentIDs: [String], customOrder: Bool, iterations: Int) async throws {
-        let url = capabilitiesURL.appendingPathComponent("MapSegmentationCapability")
+        let url = capabilitiesURL.appendingPathComponent(mapSegmentationCapabilityPath)
         let data = VTMapSegmentationAction(segmentIDs: segmentIDs, iterations: iterations, customOrder: customOrder)
         let request = VTRequest<Void>(method: .PUT, url: url, query: nil, body: data)
         try await send(request)
@@ -189,7 +193,7 @@ public actor VTAPIClient: VTAPIClientProtocol {
 
     public func getMapSegmentationProperties() async throws -> VTMapSegmentationProperties {
         let url = capabilitiesURL
-            .appendingPathComponent("MapSegmentationCapability")
+            .appendingPathComponent(mapSegmentationCapabilityPath)
             .appendingPathComponent("properties")
         let request = VTRequest<VTMapSegmentationProperties>(method: .GET, url: url)
         return try await send(request)
@@ -205,28 +209,32 @@ public actor VTAPIClient: VTAPIClientProtocol {
 
     // MARK: - 1.2.5 MopDockCleanManualTriggerCapability
 
+    private let mopDockCleanCapabilityPath: String = "MopDockCleanManualTriggerCapability"
+    
     public func startMopDockClean() async throws {
-        let url = capabilitiesURL.appendingPathComponent("MopDockCleanManualTriggerCapability")
+        let url = capabilitiesURL.appendingPathComponent(mopDockCleanCapabilityPath)
         let request = VTRequest<Void>(method: .PUT, url: url, query: nil, body: VTToggleStartStopAction(action: .start))
         try await send(request)
     }
 
     public func stopMopDockClean() async throws {
-        let url = capabilitiesURL.appendingPathComponent("MopDockCleanManualTriggerCapability")
+        let url = capabilitiesURL.appendingPathComponent(mopDockCleanCapabilityPath)
         let request = VTRequest<Void>(method: .PUT, url: url, query: nil, body: VTToggleStartStopAction(action: .stop))
         try await send(request)
     }
 
     // MARK: - 1.2.6 MopDockDryManualTriggerCapability
+    
+    private let mopDockDryCapabilityPath: String = "MopDockDryManualTriggerCapability"
 
     public func startMopDockDry() async throws {
-        let url = capabilitiesURL.appendingPathComponent("MopDockDryManualTriggerCapability")
+        let url = capabilitiesURL.appendingPathComponent(mopDockDryCapabilityPath)
         let request = VTRequest<Void>(method: .PUT, url: url, query: nil, body: VTToggleStartStopAction(action: .start))
         try await send(request)
     }
 
     public func stopMopDockDry() async throws {
-        let url = capabilitiesURL.appendingPathComponent("MopDockDryManualTriggerCapability")
+        let url = capabilitiesURL.appendingPathComponent(mopDockDryCapabilityPath)
         let request = VTRequest<Void>(method: .PUT, url: url, query: nil, body: VTToggleStartStopAction(action: .stop))
         try await send(request)
     }
@@ -373,30 +381,32 @@ public actor VTAPIClient: VTAPIClientProtocol {
 
     // MARK: - 1.2.11 ObstacleImagesCapability
 
+    private let obstacleImagesCapabilityPath: String = "ObstacleImagesCapability"
+    
     public func getObstacleImagesCapabilityIsEnabled() async throws -> Bool {
         let url = capabilitiesURL
-            .appendingPathComponent("ObstacleImagesCapability")
+            .appendingPathComponent(obstacleImagesCapabilityPath)
         let request = VTRequest<VTObstacleImagesState>(method: .GET, url: url)
         return try await send(request).enabled
     }
 
     public func enableObstacleImagesCapability() async throws {
         let url = capabilitiesURL
-            .appendingPathComponent("ObstacleImagesCapability")
+            .appendingPathComponent(obstacleImagesCapabilityPath)
         let request = VTRequest<Void>(method: .PUT, url: url, body: VTObstacleImagesAction(action: .enabled))
         return try await send(request)
     }
 
     public func disableObstacleImagesCapability() async throws {
         let url = capabilitiesURL
-            .appendingPathComponent("ObstacleImagesCapability")
+            .appendingPathComponent(obstacleImagesCapabilityPath)
         let request = VTRequest<Void>(method: .PUT, url: url, body: VTObstacleImagesAction(action: .disable))
         return try await send(request)
     }
 
     public func getObstacleImage(id: String) async throws -> CIImage {
         let url = capabilitiesURL
-            .appendingPathComponent("ObstacleImagesCapability")
+            .appendingPathComponent(obstacleImagesCapabilityPath)
             .appendingPathComponent("img")
             .appendingPathComponent(id)
         let request = VTRequest<Data>(method: .GET, url: url, accept: .jpeg)
@@ -409,7 +419,7 @@ public actor VTAPIClient: VTAPIClientProtocol {
 
     public func getObstacleImagesCapabilityProperties() async throws -> VTObstacleImagesProperties {
         let url = capabilitiesURL
-            .appendingPathComponent("ObstacleImagesCapability")
+            .appendingPathComponent(obstacleImagesCapabilityPath)
             .appendingPathComponent("properties")
         let request = VTRequest<VTObstacleImagesProperties>(method: .GET, url: url)
         return try await send(request)
@@ -417,9 +427,11 @@ public actor VTAPIClient: VTAPIClientProtocol {
 
     // MARK: - 1.2.12 MapResetCapability
 
+    private let mapResetCapabilityPath: String = "MapResetCapability"
+    
     public func resetMap() async throws {
         let url = capabilitiesURL
-            .appendingPathComponent("MapResetCapability")
+            .appendingPathComponent(mapResetCapabilityPath)
         let request = VTRequest<Void>(method: .PUT, url: url, body: VTResetAction())
         return try await send(request)
     }
@@ -427,7 +439,7 @@ public actor VTAPIClient: VTAPIClientProtocol {
     /// Seems to be currently unused
     public func getMapResetProperties() async throws -> VTMapResetProperties {
         let url = capabilitiesURL
-            .appendingPathComponent("MapResetCapability")
+            .appendingPathComponent(mapResetCapabilityPath)
             .appendingPathComponent("properties")
         let request = VTRequest<VTAnyCodable>(method: .GET, url: url)
         guard let dictValue = try await send(request).dictionaryValue else {
@@ -437,10 +449,12 @@ public actor VTAPIClient: VTAPIClientProtocol {
     }
 
     // MARK: - 1.2.13 MappingPassCapability
+    
+    private let mappingPassCapabilityPath: String = "MappingPassCapability"
 
     public func startMappingPass() async throws {
         let url = capabilitiesURL
-            .appendingPathComponent("MappingPassCapability")
+            .appendingPathComponent(mappingPassCapabilityPath)
         let request = VTRequest<Void>(method: .PUT, url: url, body: VTMappingPassAction())
         return try await send(request)
     }
@@ -448,7 +462,7 @@ public actor VTAPIClient: VTAPIClientProtocol {
     /// Seems to be currently unused
     public func getMappingPassProperties() async throws -> VTMappingPassProperties {
         let url = capabilitiesURL
-            .appendingPathComponent("MappingPassCapability")
+            .appendingPathComponent(mappingPassCapabilityPath)
             .appendingPathComponent("properties")
         let request = VTRequest<VTAnyCodable>(method: .GET, url: url)
         guard let dictValue = try await send(request).dictionaryValue else {
@@ -458,10 +472,12 @@ public actor VTAPIClient: VTAPIClientProtocol {
     }
 
     // MARK: - 1.2.14 MapSegmentMaterialControlCapability
+    
+    private let mapSegmentMaterialControlCapabilityPath: String = "MapSegmentMaterialControlCapability"
 
     public func setMapSegmentMaterial(segmentID: String, material: VTMaterial) async throws {
         let url = capabilitiesURL
-            .appendingPathComponent("MapSegmentMaterialControlCapability")
+            .appendingPathComponent(mapSegmentMaterialControlCapabilityPath)
         let action = VTMapMaterialAction(action: .setMaterial, segmentID: segmentID, material: material)
         let request = VTRequest<Void>(method: .PUT, url: url, body: action)
         return try await send(request)
@@ -469,7 +485,7 @@ public actor VTAPIClient: VTAPIClientProtocol {
 
     public func getSupportedMapSegmentMaterials() async throws -> [VTMaterial] {
         let url = capabilitiesURL
-            .appendingPathComponent("MapSegmentMaterialControlCapability")
+            .appendingPathComponent(mapSegmentMaterialControlCapabilityPath)
             .appendingPathComponent("properties")
         let request = VTRequest<VTMapMaterialProperties>(method: .GET, url: url)
         return try await send(request).supportedMaterials
@@ -477,15 +493,17 @@ public actor VTAPIClient: VTAPIClientProtocol {
 
     // MARK: - 1.2.15 MapSegmentEditCapability
 
+    private let mapSegmentEditCapabilityPath: String = "MapSegmentEditCapability"
+    
     public func joinMapSegments(segmentAID: String, segmentBID: String) async throws {
-        let url = capabilitiesURL.appendingPathComponent("MapSegmentEditCapability")
+        let url = capabilitiesURL.appendingPathComponent(mapSegmentEditCapabilityPath)
         let data = VTMapSegmentJoinAction(segmentAID: segmentAID, segmentBID: segmentBID)
         let request = VTRequest<Void>(method: .PUT, url: url, body: data)
         try await send(request)
     }
 
     public func splitMapSegment(segmentID: String, pointA: CGPoint, pointB: CGPoint) async throws {
-        let url = capabilitiesURL.appendingPathComponent("MapSegmentEditCapability")
+        let url = capabilitiesURL.appendingPathComponent(mapSegmentEditCapabilityPath)
         let mapPointA = VTMapCoordinate(x: Int(pointA.x.rounded()), y: Int(pointA.y.rounded()))
         let mapPointB = VTMapCoordinate(x: Int(pointB.x.rounded()), y: Int(pointB.y.rounded()))
         let data = VTMapSegmentSplitAction(segmentID: segmentID, pointA: mapPointA, pointB: mapPointB)
@@ -496,7 +514,7 @@ public actor VTAPIClient: VTAPIClientProtocol {
     /// Seems to be currently unused
     public func getMapSegmentEditProperties() async throws -> VTMapSegmentEditProperties {
         let url = capabilitiesURL
-            .appendingPathComponent("MapSegmentEditCapability")
+            .appendingPathComponent(mapSegmentEditCapabilityPath)
             .appendingPathComponent("properties")
         let request = VTRequest<VTAnyCodable>(method: .GET, url: url)
         guard let dictValue = try await send(request).dictionaryValue else {
@@ -506,9 +524,11 @@ public actor VTAPIClient: VTAPIClientProtocol {
     }
 
     // MARK: - 1.2.15 MapSegmentRenameCapability
+    
+    private let mapSegmentRenameCapabilityPath: String = "MapSegmentRenameCapability"
 
     public func renameMapSegment(segmentID: String, name: String) async throws {
-        let url = capabilitiesURL.appendingPathComponent("MapSegmentRenameCapability")
+        let url = capabilitiesURL.appendingPathComponent(mapSegmentRenameCapabilityPath)
         let data = VTMapSegmentRenameAction(segmentID: segmentID, name: name)
         let request = VTRequest<Void>(method: .PUT, url: url, body: data)
         try await send(request)
@@ -517,7 +537,7 @@ public actor VTAPIClient: VTAPIClientProtocol {
     /// Seems to be currently unused
     public func getMapSegmentRenameProperties() async throws -> VTMapSegmentRenameProperties {
         let url = capabilitiesURL
-            .appendingPathComponent("MapSegmentRenameCapability")
+            .appendingPathComponent(mapSegmentRenameCapabilityPath)
             .appendingPathComponent("properties")
         let request = VTRequest<VTAnyCodable>(method: .GET, url: url)
         guard let dictValue = try await send(request).dictionaryValue else {
