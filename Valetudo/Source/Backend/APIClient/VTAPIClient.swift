@@ -546,6 +546,30 @@ public actor VTAPIClient: VTAPIClientProtocol {
         return dictValue
     }
 
+    // MARK: - 1.2.16 CombinedVirtualRestrictionsCapability
+
+    private let combinedVirtualRestrictionsCapabilityPath: String = "CombinedVirtualRestrictionsCapability"
+    
+    public func getVirtualRestrictions() async throws -> VTVirtualRestrictions {
+        let url = capabilitiesURL.appendingPathComponent(combinedVirtualRestrictionsCapabilityPath)
+        let request = VTRequest<VTVirtualRestrictions>(method: .GET, url: url)
+        return try await send(request)
+    }
+    
+    public func setVirtualRestrictions(_ data: VTVirtualRestrictions) async throws {
+        let url = capabilitiesURL.appendingPathComponent(combinedVirtualRestrictionsCapabilityPath)
+        let request = VTRequest<Void>(method: .PUT, url: url, body: data)
+        try await send(request)
+    }
+    
+    public func getVirtualRestrictionsProperties() async throws -> VTVirtualRestrictionsProperties {
+        let url = capabilitiesURL
+            .appendingPathComponent(combinedVirtualRestrictionsCapabilityPath)
+            .appendingPathComponent("properties")
+        let request = VTRequest<VTVirtualRestrictionsProperties>(method: .GET, url: url)
+        return try await send(request)
+    }
+    
     // MARK: - 1.3 Properties
 
     public func getRobotProperties() async throws -> VTRobotProperties {
