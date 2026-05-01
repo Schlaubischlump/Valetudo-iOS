@@ -13,9 +13,14 @@ enum VTMapSegmentEditActionType: String, Encodable, Hashable {
     case splitSegment = "split_segment"
 }
 
-struct VTMapCoordinate: Encodable, Hashable {
+public struct VTMapCoordinate: Codable, Hashable, Sendable {
     let x: Int
     let y: Int
+
+    init(x: Int, y: Int) {
+        self.x = x
+        self.y = y
+    }
 }
 
 struct VTMapSegmentJoinAction: Encodable, Hashable {
