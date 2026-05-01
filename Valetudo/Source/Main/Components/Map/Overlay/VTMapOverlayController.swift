@@ -20,6 +20,16 @@ final class VTMapOverlayController {
     private var overlayLayers: [UUID: VTMapOverlayLayer] = [:]
     private var selectedOverlayID: UUID?
     private weak var activeOverlayInteractionLayer: VTMapOverlayLayer?
+    var onSelectionChanged: ((UUID?) -> Void)?
+    var onOverlaysDidChange: (() -> Void)?
+
+    var allOverlays: [VTMapOverlay] {
+        overlays.values.sorted { $0.id.uuidString < $1.id.uuidString }
+    }
+
+    var currentSelectedOverlayID: UUID? {
+        selectedOverlayID
+    }
 
     /// Attaches the controller to the current overlay container layer.
     ///
@@ -44,24 +54,35 @@ final class VTMapOverlayController {
             updateSelectedOverlay(id: overlay.id)
         }
         syncLayers()
+        onOverlaysDidChange?()
     }
 
     /// Removes all overlays and clears any active interaction state.
     func clear() {
         overlays.removeAll()
-        overlayLayers.values.forEach { $0.removeFromSuperlayer() }
+        for value in overlayLayers.values {
+            value.prepareForRemoval()
+            value.removeFromSuperlayer()
+        }
         overlayLayers.removeAll()
         selectedOverlayID = nil
         activeOverlayInteractionLayer = nil
+        onSelectionChanged?(nil)
     }
 
-    /// Selects the topmost overlay under the given point.
+    /// Handles a tap on the topmost overlay under the given point.
     @discardableResult
-    func selectOverlay(at point: CGPoint) -> Bool {
+    func handleTap(at point: CGPoint) -> Bool {
         guard let hitLayer = overlay(at: point) else { return false }
-        updateSelectedOverlay(id: hitLayer.overlayID)
-        syncLayers()
-        return true
+
+        switch hitLayer.tapAction(at: point) {
+        case .none:
+            return false
+        case .select:
+            updateSelectedOverlay(id: hitLayer.overlayID)
+            syncLayers()
+            return true
+        }
     }
 
     /// Returns whether any overlay can begin interaction at the given point.
@@ -85,6 +106,7 @@ final class VTMapOverlayController {
         // Don't allow moving an overlay outside the map bounds
         let boundedPoint = point.clamped(to: overlayContainerLayer?.bounds)
         activeOverlayInteractionLayer?.updateInteraction(to: boundedPoint)
+        onOverlaysDidChange?()
     }
 
     /// Ends the active overlay interaction and clears the temporary interaction session.
@@ -93,9 +115,46 @@ final class VTMapOverlayController {
         activeOverlayInteractionLayer = nil
     }
 
+    /// Moves the selected overlay by a fixed delta and keeps it inside the map bounds.
+    @discardableResult
+    func moveSelectedOverlay(by delta: CGPoint) -> Bool {
+        guard let selectedOverlayID,
+              let selectedLayer = overlayLayers[selectedOverlayID]
+        else { return false }
+
+        let didMove = selectedLayer.translate(by: delta, within: overlayContainerLayer?.bounds)
+        if didMove {
+            onOverlaysDidChange?()
+        }
+        return didMove
+    }
+
     /// Returns the current overlay model for the given identifier.
     func overlay(withID id: UUID) -> VTMapOverlay? {
         overlays[id]
+    }
+
+    /// Clears the currently selected overlay, if any.
+    func clearSelection() {
+        guard let selectedOverlayID,
+              let selectedOverlay = overlays[selectedOverlayID],
+              selectedOverlay.allowsDeselection
+        else { return }
+        updateSelectedOverlay(id: nil)
+        syncLayers()
+    }
+
+    /// Removes a single overlay from the managed collection.
+    func removeOverlay(withID id: UUID) {
+        overlays[id] = nil
+        overlayLayers[id]?.prepareForRemoval()
+        overlayLayers[id]?.removeFromSuperlayer()
+        overlayLayers[id] = nil
+        if selectedOverlayID == id {
+            updateSelectedOverlay(id: nil)
+        }
+        syncLayers()
+        onOverlaysDidChange?()
     }
 
     /// Rebuilds or reattaches backing layers after model changes or container replacement.
@@ -103,19 +162,29 @@ final class VTMapOverlayController {
         let overlayIDs = Set(overlays.keys)
 
         for staleID in overlayLayers.keys where !overlayIDs.contains(staleID) {
+            overlayLayers[staleID]?.prepareForRemoval()
             overlayLayers[staleID]?.removeFromSuperlayer()
             overlayLayers.removeValue(forKey: staleID)
         }
 
-        for overlay in overlays.values {
+        let orderedOverlays = overlays.values.sorted { lhs, rhs in
+            switch (lhs.id == selectedOverlayID, rhs.id == selectedOverlayID) {
+            case (true, false):
+                false
+            case (false, true):
+                true
+            default:
+                lhs.id.uuidString < rhs.id.uuidString
+            }
+        }
+
+        for overlay in orderedOverlays {
             let layer = overlayLayers[overlay.id] ?? overlay.makeLayer()
             overlayLayers[overlay.id] = layer
             layer.contentsScale = overlayContainerLayer?.contentsScale ?? 1.0
+            layer.removeFromSuperlayer()
+            overlayContainerLayer?.addSublayer(layer)
             overlay.configure(layer: layer)
-            if layer.superlayer !== overlayContainerLayer {
-                layer.removeFromSuperlayer()
-                overlayContainerLayer?.addSublayer(layer)
-            }
         }
     }
 
@@ -125,24 +194,22 @@ final class VTMapOverlayController {
         for overlay in overlays.values {
             overlay.isSelected = overlay.id == id
         }
+        onSelectionChanged?(id)
     }
 
-    /// Returns the topmost overlay layer hit by the given map-space point.
+    /// Returns the selected overlay first when it is interactive at the touch point, otherwise
+    /// falls back to the topmost overlay under that point.
     private func overlay(at point: CGPoint) -> VTMapOverlayLayer? {
-        overlayContainerLayer?.sublayers?
+        if let selectedOverlayID,
+           let selectedLayer = overlayLayers[selectedOverlayID],
+           selectedLayer.containsInteractivePoint(point)
+        {
+            return selectedLayer
+        }
+
+        return overlayContainerLayer?.sublayers?
             .compactMap { $0 as? VTMapOverlayLayer }
             .reversed()
             .first(where: { $0.containsInteractivePoint(point) })
-    }
-}
-
-private extension CGPoint {
-    func clamped(to bounds: CGRect?) -> CGPoint {
-        guard let bounds else { return self }
-
-        return CGPoint(
-            x: min(max(x, bounds.minX), bounds.maxX),
-            y: min(max(y, bounds.minY), bounds.maxY)
-        )
     }
 }

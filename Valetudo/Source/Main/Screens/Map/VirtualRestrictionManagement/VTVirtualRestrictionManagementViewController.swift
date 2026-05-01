@@ -11,6 +11,7 @@ import UIKit
 final class VTVirtualRestrictionManagementViewController: VTMapEditingViewController {
     private let capabilities: Set<VTCapability>
     private var hasLocalChanges = false
+    private var supportedRestrictedZoneTypes: Set<VTVirtualRestrictionsZoneTypes> = []
 
     private var restrictionOverlays: [VTMapOverlay] {
         mapView?.transientOverlays ?? []
@@ -19,6 +20,28 @@ final class VTVirtualRestrictionManagementViewController: VTMapEditingViewContro
     private var selectedRestrictionOverlayID: UUID? {
         mapView?.selectedOverlayID
     }
+
+    init(client: VTAPIClientProtocol, capabilities: Set<VTCapability>) {
+        self.capabilities = capabilities
+        super.init(client: client)
+        title = "MAP_OPTIONS_VIRTUAL_RESTRICTION_MANAGEMENT_TITLE".localized()
+    }
+
+    @available(*, unavailable)
+    required init?(coder _: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+
+        guard capabilities.contains(.combinedVirtualRestrictions) else { return }
+        Task { [weak self] in
+            await self?.loadVirtualRestrictionProperties()
+        }
+    }
+
+    // MARK: - Toolbar setup
 
     override var toolbarActionDefinitions: [ToolbarActionDefinition] {
         [
@@ -39,8 +62,9 @@ final class VTVirtualRestrictionManagementViewController: VTMapEditingViewContro
                 handler: { [weak self] in
                     self?.didTapAddNoMop()
                 },
-                isVisible: { [capabilities] _ in
-                    capabilities.contains(.combinedVirtualRestrictions)
+                isVisible: { [weak self, capabilities] _ in
+                    guard let self, capabilities.contains(.combinedVirtualRestrictions) else { return false }
+                    return supportedRestrictedZoneTypes.contains(.mop)
                 }
             ),
             ToolbarActionDefinition(
@@ -49,8 +73,9 @@ final class VTVirtualRestrictionManagementViewController: VTMapEditingViewContro
                 handler: { [weak self] in
                     self?.didTapAddNoGo()
                 },
-                isVisible: { [capabilities] _ in
-                    capabilities.contains(.combinedVirtualRestrictions)
+                isVisible: { [weak self, capabilities] _ in
+                    guard let self, capabilities.contains(.combinedVirtualRestrictions) else { return false }
+                    return supportedRestrictedZoneTypes.contains(.regular)
                 }
             ),
             ToolbarActionDefinition(
@@ -65,7 +90,7 @@ final class VTVirtualRestrictionManagementViewController: VTMapEditingViewContro
             ),
             ToolbarActionDefinition(
                 title: "Save",
-                image: .squareAndArrowDown,
+                image: .save,
                 handler: { [weak self] in
                     self?.didTapSave()
                 },
@@ -74,103 +99,34 @@ final class VTVirtualRestrictionManagementViewController: VTMapEditingViewContro
         ]
     }
 
-    init(client: VTAPIClientProtocol, capabilities: Set<VTCapability>) {
-        self.capabilities = capabilities
-        super.init(client: client)
-        title = "MAP_OPTIONS_VIRTUAL_RESTRICTION_MANAGEMENT_TITLE".localized()
+    private func refreshToolbarItems() {
+        updateToolbarItems(forSelectedSegmentIDs: [])
     }
 
-    @available(*, unavailable)
-    required init?(coder _: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
+    // MARK: - Map handling
 
     override func canChangeSelection(forLayer _: VTLayer, isSelected _: Bool) async -> Bool {
         false
     }
 
-    override func filterMapData(from mapData: VTMapData) -> VTMapData {
-        let filteredEntities = mapData.entities.filter {
-            switch $0.type {
-            case .no_go_area, .no_mop_area, .virtual_wall: false
-            default: true
-            }
-        }
-
-        return VTMapData(
-            size: mapData.size,
-            pixelSize: mapData.pixelSize,
-            layers: mapData.layers,
-            entities: filteredEntities,
-            metaData: mapData.metaData
-        )
-    }
-
     override func applyMapData(_ data: VTMapData) async {
         await super.applyMapData(data)
 
-        mapView?.didChangeOverlaySelection = { [weak self] _ in
+        mapView?.didChangeOverlaySelection = { [weak self] selectedOverlayID in
+            self?.refreshToolbarItems()
+            guard selectedOverlayID != nil else { return }
+            self?.becomeFirstResponder()
+        }
+        mapView?.didMutateOverlays = { [weak self] in
+            self?.hasLocalChanges = true
             self?.refreshToolbarItems()
         }
 
         if !hasLocalChanges {
-            mapView?.setTransientOverlays(overlays(from: data))
+            await mapView?.setTransientOverlays(loadRestrictionOverlays(fallbackMapData: data))
         }
 
         refreshToolbarItems()
-    }
-
-    private func didTapAddNoGo() {
-        hasLocalChanges = true
-        mapView?.addOverlay(VTNoGoAreaMapOverlay(rect: .zero))
-        refreshToolbarItems()
-    }
-
-    private func didTapAddNoMop() {
-        hasLocalChanges = true
-        mapView?.addOverlay(VTNoMopAreaMapOverlay(rect: .zero))
-        refreshToolbarItems()
-    }
-
-    private func didTapAddWall() {
-        hasLocalChanges = true
-        mapView?.addOverlay(
-            VTVirtualWallMapOverlay(
-                startPoint: .zero,
-                endPoint: CGPoint(x: 40, y: 0)
-            )
-        )
-        refreshToolbarItems()
-    }
-
-    private func didTapRemove() {
-        guard let selectedRestrictionOverlayID else { return }
-        hasLocalChanges = true
-        mapView?.removeOverlay(withID: selectedRestrictionOverlayID)
-        refreshToolbarItems()
-    }
-
-    private func didTapSave() {
-        Task { [weak self] in
-            guard let self else { return }
-            guard let payload = currentVirtualRestrictionsPayload() else { return }
-
-            do {
-                try await client.setVirtualRestrictions(payload)
-                hasLocalChanges = false
-                await loadMap()
-            } catch {
-                log(message: "CombinedVirtualRestrictionsCapability save failed: \(error.localizedDescription)", forSubsystem: .mapOptions, level: .error)
-                showError(
-                    title: "ERROR".localized(),
-                    message: "\(error.localizedDescription)\n\n\(payload.prettyPrintedJSON ?? "")"
-                )
-            }
-        }
-    }
-
-    private func refreshToolbarItems() {
-        updateToolbarItems(forSelectedSegmentIDs: [])
     }
 
     private func overlays(from data: VTMapData) -> [VTMapOverlay] {
@@ -240,7 +196,130 @@ final class VTVirtualRestrictionManagementViewController: VTMapEditingViewContro
         return VTVirtualWallMapOverlay(startPoint: start, endPoint: end)
     }
 
-    private func currentVirtualRestrictionsPayload() -> VTVirtualRestrictionsPayload? {
+    private func loadVirtualRestrictionProperties() async {
+        do {
+            let properties = try await client.getVirtualRestrictionsProperties()
+            supportedRestrictedZoneTypes = Set(properties.supportedRestrictedZoneTypes)
+        } catch {
+            log(
+                message: "CombinedVirtualRestrictionsCapability properties failed: \(error.localizedDescription)",
+                forSubsystem: .mapOptions,
+                level: .error
+            )
+            supportedRestrictedZoneTypes = [.regular, .mop]
+        }
+
+        refreshToolbarItems()
+    }
+
+    private func loadRestrictionOverlays(fallbackMapData: VTMapData) async -> [VTMapOverlay] {
+        do {
+            let restrictions = try await client.getVirtualRestrictions()
+            return overlays(from: restrictions)
+        } catch {
+            log(
+                message: "CombinedVirtualRestrictionsCapability fetch failed: \(error.localizedDescription)",
+                forSubsystem: .mapOptions,
+                level: .error
+            )
+            return overlays(from: fallbackMapData)
+        }
+    }
+
+    private func overlays(from restrictions: VTVirtualRestrictions) -> [VTMapOverlay] {
+        let wallOverlays = restrictions.virtualWalls.map { wall in
+            VTVirtualWallMapOverlay(
+                startPoint: overlayPoint(from: wall.points.pA),
+                endPoint: overlayPoint(from: wall.points.pB)
+            )
+        }
+
+        let zoneOverlays = restrictions.restrictedZones.compactMap { zone -> VTMapOverlay? in
+            let points = [zone.points.pA, zone.points.pB, zone.points.pC, zone.points.pD].map(overlayPoint(from:))
+            let minX = points.map(\.x).min() ?? 0
+            let minY = points.map(\.y).min() ?? 0
+            let maxX = points.map(\.x).max() ?? 0
+            let maxY = points.map(\.y).max() ?? 0
+            let rect = CGRect(x: minX, y: minY, width: maxX - minX, height: maxY - minY)
+
+            switch zone.type {
+            case .regular:
+                return VTNoGoAreaMapOverlay(rect: rect)
+            case .mop:
+                return VTNoMopAreaMapOverlay(rect: rect)
+            }
+        }
+
+        return wallOverlays + zoneOverlays
+    }
+
+    private func overlayPoint(from coordinate: VTMapCoordinate) -> CGPoint {
+        guard let mapView else { return .zero }
+
+        let pixelSize = Double(mapView.data.pixelSize)
+        return mapView.overlayPoint(
+            fromMapCoordinate: CGPoint(
+                x: Double(coordinate.x) / pixelSize,
+                y: Double(coordinate.y) / pixelSize
+            )
+        )
+    }
+
+    // MARK: - Toolbar item Callbacks
+
+    private func didTapAddNoGo() {
+        hasLocalChanges = true
+        mapView?.addOverlay(VTNoGoAreaMapOverlay(rect: .zero))
+        refreshToolbarItems()
+    }
+
+    private func didTapAddNoMop() {
+        hasLocalChanges = true
+        mapView?.addOverlay(VTNoMopAreaMapOverlay(rect: .zero))
+        refreshToolbarItems()
+    }
+
+    private func didTapAddWall() {
+        hasLocalChanges = true
+        mapView?.addOverlay(
+            VTVirtualWallMapOverlay(
+                startPoint: .zero,
+                endPoint: CGPoint(x: 40, y: 0)
+            )
+        )
+        refreshToolbarItems()
+    }
+
+    private func didTapRemove() {
+        guard let selectedRestrictionOverlayID else { return }
+        hasLocalChanges = true
+        mapView?.removeOverlay(withID: selectedRestrictionOverlayID)
+        refreshToolbarItems()
+    }
+
+    private func didTapSave() {
+        Task { [weak self] in
+            guard let self else { return }
+            guard let payload = currentVirtualRestrictions() else { return }
+
+            do {
+                try await client.setVirtualRestrictions(payload)
+                // Keep local overlays authoritative until the refresh completes. The backend can
+                // briefly return the pre-save restriction set, which would otherwise make removed
+                // areas flicker back into view while the loading spinner is still visible.
+                try? await loadMap()
+                hasLocalChanges = false
+            } catch {
+                log(message: "CombinedVirtualRestrictionsCapability save failed: \(error.localizedDescription)", forSubsystem: .mapOptions, level: .error)
+                showError(
+                    title: "ERROR".localized(),
+                    message: error.localizedDescription
+                )
+            }
+        }
+    }
+
+    private func currentVirtualRestrictions() -> VTVirtualRestrictions? {
         guard let mapView else { return nil }
 
         let virtualWalls = restrictionOverlays.compactMap { overlay -> VTVirtualWallPayload? in
@@ -273,10 +352,7 @@ final class VTVirtualRestrictionManagementViewController: VTMapEditingViewContro
             )
         }
 
-        return VTVirtualRestrictionsPayload(
-            virtualWalls: virtualWalls,
-            restrictedZones: restrictedZones
-        )
+        return VTVirtualRestrictions(virtualWalls: virtualWalls, restrictedZones: restrictedZones)
     }
 
     private func coordinate(from point: CGPoint) -> VTMapCoordinate {
@@ -284,14 +360,5 @@ final class VTVirtualRestrictionManagementViewController: VTMapEditingViewContro
             x: Int(point.x.rounded()),
             y: Int(point.y.rounded())
         )
-    }
-}
-
-private extension VTVirtualRestrictionsPayload {
-    var prettyPrintedJSON: String? {
-        let encoder = JSONEncoder()
-        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
-        guard let data = try? encoder.encode(self) else { return nil }
-        return String(data: data, encoding: .utf8)
     }
 }

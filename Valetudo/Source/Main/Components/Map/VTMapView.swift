@@ -11,26 +11,16 @@ private let pad = 10.0
 /// Displays a rendered robot map, supports segment selection, and hosts transient editing overlays.
 @MainActor
 class VTMapView: UIView, UIGestureRecognizerDelegate {
-    /// The currently displayed map snapshot.
-    private(set) var data: VTMapData
-
-    /// Root Core Animation layer containing the rendered map content.
-    private var mapLayer: CALayer
-
-    /// Segment layers currently highlighted as selected.
-    private(set) var selectedLayers: Set<VTLayer> = []
-
-    /// Dedicated layer that hosts transient editing overlays above the map content.
-    private let overlayLayer = CALayer()
-
-    /// Coordinates transient overlay models, selection, and interactions for `overlayLayer`.
-    private let overlayController = VTMapOverlayController()
-
-    private lazy var tapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(handleTap(_:)))
-    private lazy var overlayPanGestureRecognizer = UIPanGestureRecognizer(target: self, action: #selector(handleOverlayPan(_:)))
+    // MARK: - Layer / Entity handling
 
     /// Whether no-go areas should be omitted from the rendered map.
     var hideNoGoAreas: Bool = true
+
+    /// The currently displayed map snapshot.
+    private(set) var data: VTMapData
+
+    /// Segment layers currently highlighted as selected.
+    private(set) var selectedLayers: Set<VTLayer> = []
 
     /// Asks the host whether a segment selection change should be allowed.
     var shouldChangeLayerSelection: ((VTLayer, Bool) async -> Bool)?
@@ -43,6 +33,40 @@ class VTMapView: UIView, UIGestureRecognizerDelegate {
     /// Return `true` when the tap was fully handled so the map view stops hit-testing lower layers
     /// or falling through to segment selection for the same gesture.
     var onEntityClicked: ((VTEntity, CGPoint) async -> Bool)?
+
+    /// Root Core Animation layer containing the rendered map content.
+    private var mapLayer: CALayer
+
+    // MARK: - Overlay
+
+    /// Dedicated layer that hosts transient editing overlays above the map content.
+    private let overlayLayer = CALayer()
+
+    /// Coordinates transient overlay models, selection, and interactions for `overlayLayer`.
+    private let overlayController = VTMapOverlayController()
+
+    /// Original map-space touch-down point for an overlay pan gesture.
+    ///
+    /// Thin overlays such as walls or split lines can be exited before `UIPanGestureRecognizer`
+    /// transitions to `.began`. We keep the initial hit-tested point so the recognizer can still
+    /// be allowed to begin, and so interaction starts from the location that actually hit the
+    /// overlay instead of the later threshold-crossing location.
+    private var overlayInteractionStartPoint: CGPoint?
+
+    /// Informs the host after a transient overlay selection changed.
+    var didChangeOverlaySelection: ((UUID?) -> Void)?
+
+    /// Informs the host after a transient overlay was inserted, moved, resized, or removed.
+    var didMutateOverlays: (() -> Void)?
+
+    // MARK: - Touch handling
+
+    private lazy var tapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(handleTap(_:)))
+    private lazy var overlayPanGestureRecognizer = UIPanGestureRecognizer(target: self, action: #selector(handleOverlayPan(_:)))
+
+    private weak var hostingScrollView: UIScrollView?
+
+    // MARK: - Init
 
     /// Creates a map view sized to fit the provided map data within the given frame.
     init(frame: CGRect, data: VTMapData) {
@@ -62,6 +86,7 @@ class VTMapView: UIView, UIGestureRecognizerDelegate {
         attachOverlayLayer()
 
         configureGestures()
+        bindOverlayController()
     }
 
     @available(*, unavailable)
@@ -69,11 +94,9 @@ class VTMapView: UIView, UIGestureRecognizerDelegate {
         fatalError("init(coder:) has not been implemented")
     }
 
-    /// Clears the current segment selection without triggering external callbacks.
-    func clearSelection() async {
-        for layer in selectedLayers {
-            await toggleLayerSelection(for: layer, in: shapeLayerForVTLayer(vtLayer: layer)!, triggerCallback: false)
-        }
+    override func didMoveToSuperview() {
+        super.didMoveToSuperview()
+        configureGesturePriorityIfNeeded()
     }
 
     /// Rebuilds the rendered map from a fresh snapshot while preserving the current view transform.
@@ -112,9 +135,63 @@ class VTMapView: UIView, UIGestureRecognizerDelegate {
         overlayController.clear()
     }
 
+    var transientOverlays: [VTMapOverlay] {
+        overlayController.allOverlays
+    }
+
+    var selectedOverlayID: UUID? {
+        overlayController.currentSelectedOverlayID
+    }
+
+    func removeOverlay(withID id: UUID) {
+        overlayController.removeOverlay(withID: id)
+    }
+
+    @discardableResult
+    func moveSelectedOverlay(by delta: CGPoint) -> Bool {
+        overlayController.moveSelectedOverlay(by: delta)
+    }
+
+    func clearOverlaySelection() {
+        overlayController.clearSelection()
+    }
+
     /// Returns the current overlay model for the given identifier.
     func overlay(withID id: UUID) -> VTMapOverlay? {
         overlayController.overlay(withID: id)
+    }
+
+    /// Installs the generic overlay container above the map content so transient editing geometry
+    /// shares the same scale and pan behavior as the persisted map.
+    private func attachOverlayLayer() {
+        overlayLayer.removeFromSuperlayer()
+        overlayLayer.frame = mapLayer.bounds
+        overlayLayer.anchorPoint = .zero
+        overlayLayer.position = .zero
+        overlayLayer.contentsScale = mapLayer.contentsScale
+        mapLayer.addSublayer(overlayLayer)
+        overlayController.attach(to: overlayLayer)
+    }
+
+    private func bindOverlayController() {
+        overlayController.onSelectionChanged = { [weak self] selectedOverlayID in
+            self?.didChangeOverlaySelection?(selectedOverlayID)
+        }
+        overlayController.onOverlaysDidChange = { [weak self] in
+            self?.didMutateOverlays?()
+        }
+    }
+
+    // MARK: - Coordinate conversion
+
+    /// Converts a raw `VTMapData` coordinate into the overlay-space coordinate system.
+    func overlayPoint(fromMapCoordinate point: CGPoint) -> CGPoint {
+        CGPoint(x: point.x - data.boundingRect.minX, y: point.y - data.boundingRect.minY)
+    }
+
+    /// Center point used when inserting new overlays without a caller-provided position.
+    private var overlayCenterPoint: CGPoint {
+        CGPoint(x: data.boundingRect.width / 2, y: data.boundingRect.height / 2)
     }
 
     /// Converts an overlay-space point into the map pixel coordinate system used by layer data.
@@ -130,29 +207,14 @@ class VTMapView: UIView, UIGestureRecognizerDelegate {
         )
     }
 
-    /// Converts a raw `VTMapData` coordinate into the overlay-space coordinate system.
-    func overlayPoint(fromMapCoordinate point: CGPoint) -> CGPoint {
-        CGPoint(x: point.x - data.boundingRect.minX, y: point.y - data.boundingRect.minY)
-    }
-
-    /// Center point used when inserting new overlays without a caller-provided position.
-    private var overlayCenterPoint: CGPoint {
-        CGPoint(x: data.boundingRect.width / 2, y: data.boundingRect.height / 2)
-    }
-
-    /// Installs the generic overlay container above the map content so transient editing geometry
-    /// shares the same scale and pan behavior as the persisted map.
-    private func attachOverlayLayer() {
-        overlayLayer.removeFromSuperlayer()
-        overlayLayer.frame = mapLayer.bounds
-        overlayLayer.anchorPoint = .zero
-        overlayLayer.position = .zero
-        overlayLayer.contentsScale = mapLayer.contentsScale
-        mapLayer.addSublayer(overlayLayer)
-        overlayController.attach(to: overlayLayer)
-    }
-
     // MARK: - Layer selection
+
+    /// Clears the current segment selection without triggering external callbacks.
+    func clearSelection() async {
+        for layer in selectedLayers {
+            await toggleLayerSelection(for: layer, in: shapeLayerForVTLayer(vtLayer: layer)!, triggerCallback: false)
+        }
+    }
 
     /// Selects a segment layer programmatically.
     func select(layer: VTLayer) async {
@@ -215,6 +277,15 @@ class VTMapView: UIView, UIGestureRecognizerDelegate {
         addGestureRecognizer(overlayPanGestureRecognizer)
     }
 
+    private func configureGesturePriorityIfNeeded() {
+        guard let scrollView = superview as? UIScrollView,
+              hostingScrollView !== scrollView
+        else { return }
+
+        hostingScrollView = scrollView
+        scrollView.panGestureRecognizer.require(toFail: overlayPanGestureRecognizer)
+    }
+
     @objc private func handleTap(_ gesture: UITapGestureRecognizer) {
         let point = gesture.location(in: self)
         Task { [weak self] in
@@ -226,9 +297,11 @@ class VTMapView: UIView, UIGestureRecognizerDelegate {
     private func handleTap(atLocation point: CGPoint) async {
         let mapPoint = layer.convert(point, to: mapLayer)
 
-        if overlayController.selectOverlay(at: mapPoint) {
+        if overlayController.handleTap(at: mapPoint) {
             return
         }
+
+        overlayController.clearSelection()
 
         guard let shapeLayers = mapLayer.sublayers?
             .compactMap({ $0 as? (any VTShapeLayerProtocol) })
@@ -262,23 +335,47 @@ class VTMapView: UIView, UIGestureRecognizerDelegate {
 
         switch gesture.state {
         case .began:
-            overlayController.beginInteraction(at: mapPoint)
+            overlayController.beginInteraction(at: overlayInteractionStartPoint ?? mapPoint)
         case .changed:
             overlayController.updateInteraction(to: mapPoint)
         case .ended, .cancelled, .failed:
             overlayController.endInteraction()
+            overlayInteractionStartPoint = nil
         default:
             break
         }
     }
 
     /// Limits the overlay pan recognizer to touches that actually start on an interactive overlay.
+    /// Re-validates the overlay pan recognizer using the original touch-down point.
+    ///
+    /// UIKit may ask whether the pan should begin only after the pointer has already drifted away
+    /// from a thin line. Using the stored start point keeps gesture recognition tied to the
+    /// original successful hit test instead of the later moved position.
     override func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
         switch gestureRecognizer {
         case overlayPanGestureRecognizer:
-            let location = gestureRecognizer.location(in: self)
+            guard let startPoint = overlayInteractionStartPoint else { return false }
+            return overlayController.canBeginInteraction(at: startPoint)
+        default:
+            return true
+        }
+    }
+
+    /// Captures the initial overlay hit point before any pan threshold movement occurs.
+    ///
+    /// This delegate callback runs at touch-down time, which makes it the right place to store the
+    /// exact point that hit the overlay. That point is later reused for `gestureRecognizerShouldBegin`
+    /// and `.began` so vertical drags on thin overlays do not fail after the pointer moves outside
+    /// the line before recognition starts.
+    func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
+        switch gestureRecognizer {
+        case overlayPanGestureRecognizer:
+            let location = touch.location(in: self)
             let mapPoint = layer.convert(location, to: mapLayer)
-            return overlayController.canBeginInteraction(at: mapPoint)
+            let canBegin = overlayController.canBeginInteraction(at: mapPoint)
+            overlayInteractionStartPoint = canBegin ? mapPoint : nil
+            return canBegin
         default:
             return true
         }

@@ -18,6 +18,11 @@ class VTMapOverlay {
     /// Whether the overlay is currently selected for interaction.
     var isSelected: Bool
 
+    /// Whether the overlay may be deselected by general map taps or explicit clear-selection flows.
+    var allowsDeselection: Bool {
+        true
+    }
+
     init(id: UUID = UUID(), isSelected: Bool = false) {
         self.id = id
         self.isSelected = isSelected

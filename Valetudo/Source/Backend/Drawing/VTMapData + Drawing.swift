@@ -30,7 +30,7 @@ extension VTMapData {
             for i in stride(from: 0, to: pts.count, by: 2) {
                 let p = CGPoint(x: pts[i], y: pts[i + 1])
                     .downScaledBy(x: pixelScale, y: pixelScale)
-                    .insetBy(dx: x, dy: y)
+                    .offsetBy(dx: -x, dy: -y)
 
                 minX = min(minX, p.x)
                 minY = min(minY, p.y)
@@ -54,7 +54,7 @@ extension VTMapData {
         for layer in layers {
             let path = CGMutablePath()
 
-            let pixels = layer.pixelData().map { $0.insetBy(dx: x, dy: y) }
+            let pixels = layer.pixelData().map { $0.offsetBy(dx: -x, dy: -y) }
 
             for px in pixels {
                 if hideNoGoAreas, isPoint(px, boundedByX: x, y: y, insideNoGoAreas: noGoAreas) {
@@ -106,7 +106,7 @@ extension VTMapData {
             fatalError("Expected a unique center point for entity: \(entity)")
         }
 
-        guard let icon = entity.type.icon(center: centerPoint.insetBy(dx: x, dy: y)) else { return nil }
+        guard let icon = entity.type.icon(center: centerPoint.offsetBy(dx: -x, dy: -y)) else { return nil }
         let angleInRadians = entity.angleInDegree * (.pi / 180)
         shapeLayer.path = icon.rotated(by: angleInRadians)
         shapeLayer.fillColor = entity.type.color
@@ -123,7 +123,7 @@ extension VTMapData {
         for i in stride(from: 0, to: points.count, by: 2) {
             let pt = CGPoint(x: points[i], y: points[i + 1])
                 .downScaledBy(x: scale, y: scale)
-                .insetBy(dx: x, dy: y)
+                .offsetBy(dx: -x, dy: -y)
             if i == 0 {
                 path.move(to: pt)
             } else {
@@ -148,7 +148,7 @@ extension VTMapData {
         let pts = stride(from: 0, to: points.count, by: 2).map { i in
             CGPoint(x: points[i], y: points[i + 1])
                 .downScaledBy(x: scale, y: scale)
-                .insetBy(dx: x, dy: y)
+                .offsetBy(dx: -x, dy: -y)
         }
 
         let lineWidth = entity.type.borderWidth
@@ -166,7 +166,7 @@ extension VTMapData {
     private func drawObstacle(for entity: VTEntity, boundedByX x: CGFloat, y: CGFloat, scale: CGFloat) -> VTEntityShapeLayer? {
         let shapeLayer = VTEntityShapeLayer(data: entity)
 
-        guard let centerPoint = entity.centerPoint?.downScaledBy(x: scale, y: scale).insetBy(dx: x, dy: y) else {
+        guard let centerPoint = entity.centerPoint?.downScaledBy(x: scale, y: scale).offsetBy(dx: -x, dy: -y) else {
             return nil
         }
 

@@ -16,9 +16,9 @@ final class VTSegmentManagementViewController: VTMapEditingViewController {
 
     private let capabilities: Set<VTCapability>
     private var mode: Mode = .standard
-    
+
     private var splitOverlayID: UUID?
-    
+
     /// Returns the current split line geometry in Valetudo's cm-space.
     private var currentSplitLine: (start: CGPoint, end: CGPoint)? {
         guard let splitOverlayID,
@@ -42,9 +42,9 @@ final class VTSegmentManagementViewController: VTMapEditingViewController {
     required init?(coder _: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-    
+
     // MARK: - Toolbar setup
-    
+
     override var toolbarActionDefinitions: [ToolbarActionDefinition] {
         switch mode {
         case .split:
@@ -112,7 +112,7 @@ final class VTSegmentManagementViewController: VTMapEditingViewController {
             ]
         }
     }
-    
+
     private func refreshToolbarItems() {
         let selectedSegmentIDs = Set(selectedSegments.compactMap(\.segmentId))
         updateToolbarItems(forSelectedSegmentIDs: selectedSegmentIDs)
@@ -132,7 +132,7 @@ final class VTSegmentManagementViewController: VTMapEditingViewController {
         splitOverlayID = nil
         refreshToolbarItems()
     }
-    
+
     // MARK: - Toolbar item Callbacks
 
     private func didTapMaterial() {
@@ -183,7 +183,6 @@ final class VTSegmentManagementViewController: VTMapEditingViewController {
             center: mapView.overlayPoint(fromMapCoordinate: segmentCenter),
             length: lineLength,
             thickness: lineThickness,
-            dashPattern: [2, 2],
             strokeWidth: 1.0
         )
         splitOverlayID = mapView.addOverlay(overlay)
