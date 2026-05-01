@@ -91,12 +91,21 @@ class VTMapEditingViewController: VTViewController {
         startSSEObservation()
     }
 
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        becomeFirstResponder()
+    }
+
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         stopSSEObservation()
         if isMovingFromParent || isBeingDismissed {
             navigationController?.setToolbarHidden(true, animated: animated)
         }
+    }
+
+    override var canBecomeFirstResponder: Bool {
+        true
     }
 
     override func reconnectAndRefresh() async {
@@ -251,7 +260,20 @@ class VTMapEditingViewController: VTViewController {
     /// Removes transient runtime entities that are useful on the home screen but unnecessary while
     /// editing the map structure.
     func filterMapData(from mapData: VTMapData) -> VTMapData {
-        mapData
+        let filteredEntities = mapData.entities.filter {
+            switch $0.type {
+            case .charger_location, .obstacle, .carpet: true
+            default: false
+            }
+        }
+
+        return VTMapData(
+            size: mapData.size,
+            pixelSize: mapData.pixelSize,
+            layers: mapData.layers,
+            entities: filteredEntities,
+            metaData: mapData.metaData
+        )
     }
 
     /// Rebuilds the legend items from the current segment layers shown in the editor.
@@ -411,5 +433,26 @@ class VTMapEditingViewController: VTViewController {
         guard segmentLayer.indices.contains(index) else { return false }
         let layer = segmentLayer[index]
         return await canChangeSelection(forLayer: layer, isSelected: isSelected)
+    }
+
+    override func didReceiveKeyEvent(_ key: UIKey) -> Bool {
+        switch key.keyCode {
+        case .keyboardUpArrow:
+            moveSelectedOverlay(by: CGPoint(x: 0, y: -5))
+        case .keyboardDownArrow:
+            moveSelectedOverlay(by: CGPoint(x: 0, y: 5))
+        case .keyboardLeftArrow:
+            moveSelectedOverlay(by: CGPoint(x: -5, y: 0))
+        case .keyboardRightArrow:
+            moveSelectedOverlay(by: CGPoint(x: 5, y: 0))
+        default:
+            return false
+        }
+
+        return true
+    }
+
+    private func moveSelectedOverlay(by delta: CGPoint) {
+        _ = mapView?.moveSelectedOverlay(by: delta)
     }
 }

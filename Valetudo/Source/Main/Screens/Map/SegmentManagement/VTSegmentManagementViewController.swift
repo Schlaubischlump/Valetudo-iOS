@@ -16,8 +16,35 @@ final class VTSegmentManagementViewController: VTMapEditingViewController {
 
     private let capabilities: Set<VTCapability>
     private var mode: Mode = .standard
+    
     private var splitOverlayID: UUID?
+    
+    /// Returns the current split line geometry in Valetudo's cm-space.
+    private var currentSplitLine: (start: CGPoint, end: CGPoint)? {
+        guard let splitOverlayID,
+              let splitLine = mapView?.overlay(withID: splitOverlayID) as? VTSplitLineMapOverlay,
+              let mapView
+        else { return nil }
 
+        return (
+            start: mapView.cmCoordinate(fromOverlayPoint: splitLine.startPoint),
+            end: mapView.cmCoordinate(fromOverlayPoint: splitLine.endPoint)
+        )
+    }
+
+    init(client: VTAPIClientProtocol, capabilities: Set<VTCapability>) {
+        self.capabilities = capabilities
+        super.init(client: client)
+        title = "MAP_OPTIONS_SEGMENT_MANAGEMENT_TITLE".localized()
+    }
+
+    @available(*, unavailable)
+    required init?(coder _: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    // MARK: - Toolbar setup
+    
     override var toolbarActionDefinitions: [ToolbarActionDefinition] {
         switch mode {
         case .split:
@@ -85,39 +112,16 @@ final class VTSegmentManagementViewController: VTMapEditingViewController {
             ]
         }
     }
-
-    init(client: VTAPIClientProtocol, capabilities: Set<VTCapability>) {
-        self.capabilities = capabilities
-        super.init(client: client)
-        title = "MAP_OPTIONS_SEGMENT_MANAGEMENT_TITLE".localized()
-    }
-
-    @available(*, unavailable)
-    required init?(coder _: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
+    
+    private func refreshToolbarItems() {
+        let selectedSegmentIDs = Set(selectedSegments.compactMap(\.segmentId))
+        updateToolbarItems(forSelectedSegmentIDs: selectedSegmentIDs)
     }
 
     // MARK: - Map handling
 
     override func canChangeSelection(forLayer _: VTLayer, isSelected _: Bool) async -> Bool {
         mode == .standard
-    }
-
-    override func filterMapData(from mapData: VTMapData) -> VTMapData {
-        let filteredEntities = mapData.entities.filter {
-            switch $0.type {
-            case .charger_location, .virtual_wall, .obstacle, .carpet: true
-            default: false
-            }
-        }
-
-        return VTMapData(
-            size: mapData.size,
-            pixelSize: mapData.pixelSize,
-            layers: mapData.layers,
-            entities: filteredEntities,
-            metaData: mapData.metaData
-        )
     }
 
     override func applyMapData(_ data: VTMapData) async {
@@ -128,7 +132,7 @@ final class VTSegmentManagementViewController: VTMapEditingViewController {
         splitOverlayID = nil
         refreshToolbarItems()
     }
-
+    
     // MARK: - Toolbar item Callbacks
 
     private func didTapMaterial() {
@@ -223,24 +227,6 @@ final class VTSegmentManagementViewController: VTMapEditingViewController {
         splitOverlayID = nil
         mapView?.clearTransientOverlays()
         refreshToolbarItems()
-    }
-
-    /// Returns the current split line geometry in Valetudo's cm-space.
-    private var currentSplitLine: (start: CGPoint, end: CGPoint)? {
-        guard let splitOverlayID,
-              let splitLine = mapView?.overlay(withID: splitOverlayID) as? VTSplitLineMapOverlay,
-              let mapView
-        else { return nil }
-
-        return (
-            start: mapView.cmCoordinate(fromOverlayPoint: splitLine.startPoint),
-            end: mapView.cmCoordinate(fromOverlayPoint: splitLine.endPoint)
-        )
-    }
-
-    private func refreshToolbarItems() {
-        let selectedSegmentIDs = Set(selectedSegments.compactMap(\.segmentId))
-        updateToolbarItems(forSelectedSegmentIDs: selectedSegmentIDs)
     }
 
     private func didTapRename() {
