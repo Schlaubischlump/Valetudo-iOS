@@ -13,18 +13,13 @@ public extension UIImage {
     static let stopFill = UIImage(systemName: "stop.fill")
     static let houseFill = UIImage(systemName: "house.fill")
     static let mapFill = UIImage(systemName: "map.fill")
-    static let mapSlash: UIImage? = {
-        guard let image = UIImage.mapFill else { return nil }
-        return image.slashed(fillColor: .black, lineWidth: 1.25)
-    }()
-
+    static let mapSlash = UIImage.mapFill?.slashed(fillColor: .black, lineWidth: 1.25)
     static let rectangle3GroupFill = UIImage(systemName: "rectangle.3.group.fill")
     static let nosign = UIImage(systemName: "nosign")
     static let pencil = UIImage(systemName: "pencil")
     static let scissors = UIImage(systemName: "scissors")
     static let split = UIImage(systemName: "square.split.bottomrightquarter.fill")
     static let union = UIImage.unionImage()
-
     static let chartLineTextClipboardFill = UIImage(systemName: "chart.line.text.clipboard.fill")
     static let roboticVacuumFill = UIImage(systemName: "robotic.vacuum.fill")
     static let clockFill = UIImage(systemName: "clock.fill")
@@ -54,8 +49,7 @@ public extension UIImage {
     static let chartBarFill = UIImage(systemName: "chart.bar.fill")
     static let sidebarRight = UIImage(systemName: "sidebar.right")
     static let appLogo = UIImage(named: "Logo")
-    static let noMop = UIImage.dropFill?
-        .slashed(fillColor: .black, lineWidth: 1.25, cutoutLineWidth: 3.0)
+    static let noMop = UIImage.dropFill?.slashed(fillColor: .black, lineWidth: 1.25)
     static let noGo = UIImage(systemName: "wrongwaysign.fill")
     static let wall = UIImage.wallImage()
     static let overlayResize = UIImage(systemName: "arrow.up.left.and.arrow.down.right")
@@ -172,7 +166,7 @@ public extension UIImage {
             slashPath.stroke()
         }
 
-        return image.withRenderingMode(.alwaysOriginal)
+        return image.withRenderingMode(.alwaysTemplate)
     }
 
     /// Draws a custom union icon.
