@@ -11,6 +11,9 @@ class VTCollectionViewController: UICollectionViewController, VTViewControllerPr
     var lastKnownViewWidth: CGFloat = 0
     var lastKnownViewDesign: VTViewDesign?
     private var hasCompletedInitialSelfSizingPass = false
+    private lazy var keyboardEventController = VTKeyboardEventController { [weak self] event in
+        self?.didReceiveKeyEvent(event) ?? false
+    }
 
     @objc
     private func sceneWillEnterForeground(_: Notification) {
@@ -41,12 +44,44 @@ class VTCollectionViewController: UICollectionViewController, VTViewControllerPr
 
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
+        becomeFirstResponder()
 
         guard !hasCompletedInitialSelfSizingPass else { return }
         hasCompletedInitialSelfSizingPass = true
 
         // Fix collection view size on macOS catalyst
         collectionView.collectionViewLayout.invalidateLayout()
+    }
+
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        keyboardEventController.stop()
+        resignFirstResponder()
+    }
+
+    override var canBecomeFirstResponder: Bool {
+        true
+    }
+
+    override func pressesBegan(_ presses: Set<UIPress>, with event: UIPressesEvent?) {
+        let didHandleEvent = keyboardEventController.handlePressesBegan(presses)
+        if !didHandleEvent {
+            super.pressesBegan(presses, with: event)
+        }
+    }
+
+    override func pressesEnded(_ presses: Set<UIPress>, with event: UIPressesEvent?) {
+        let didHandleEvent = keyboardEventController.handlePressesEnded(presses)
+        if !didHandleEvent {
+            super.pressesEnded(presses, with: event)
+        }
+    }
+
+    override func pressesCancelled(_ presses: Set<UIPress>, with event: UIPressesEvent?) {
+        let didHandleEvent = keyboardEventController.handlePressesCancelled(presses)
+        if !didHandleEvent {
+            super.pressesCancelled(presses, with: event)
+        }
     }
 
     @MainActor
@@ -65,5 +100,9 @@ class VTCollectionViewController: UICollectionViewController, VTViewControllerPr
 
     func viewDesignDidChange(to _: VTViewDesign) {
         // Override me
+    }
+
+    func didReceiveKeyEvent(_: UIKey) -> Bool {
+        false
     }
 }

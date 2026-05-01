@@ -7,6 +7,12 @@
 
 import UIKit
 
+/// Semantic layout mode for adaptive screens.
+enum VTViewDesign {
+    case compact
+    case regular
+}
+
 /// Shared API for view-controller based screens that support refresh and adaptive design changes.
 @MainActor
 protocol VTViewControllerProtocol: AnyObject {

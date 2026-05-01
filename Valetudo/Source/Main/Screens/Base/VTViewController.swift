@@ -9,6 +9,9 @@ import UIKit
 class VTViewController: UIViewController, VTViewControllerProtocol {
     var lastKnownViewWidth: CGFloat = 0
     var lastKnownViewDesign: VTViewDesign?
+    private lazy var keyboardEventController = VTKeyboardEventController { [weak self] event in
+        self?.didReceiveKeyEvent(event) ?? false
+    }
 
     @objc
     private func sceneWillEnterForeground(_: Notification) {
@@ -35,6 +38,42 @@ class VTViewController: UIViewController, VTViewControllerProtocol {
         recomputeViewMetricsChange()
     }
 
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        becomeFirstResponder()
+    }
+
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        keyboardEventController.stop()
+        resignFirstResponder()
+    }
+
+    override var canBecomeFirstResponder: Bool {
+        true
+    }
+
+    override func pressesBegan(_ presses: Set<UIPress>, with event: UIPressesEvent?) {
+        let didHandleEvent = keyboardEventController.handlePressesBegan(presses)
+        if !didHandleEvent {
+            super.pressesBegan(presses, with: event)
+        }
+    }
+
+    override func pressesEnded(_ presses: Set<UIPress>, with event: UIPressesEvent?) {
+        let didHandleEvent = keyboardEventController.handlePressesEnded(presses)
+        if !didHandleEvent {
+            super.pressesEnded(presses, with: event)
+        }
+    }
+
+    override func pressesCancelled(_ presses: Set<UIPress>, with event: UIPressesEvent?) {
+        let didHandleEvent = keyboardEventController.handlePressesCancelled(presses)
+        if !didHandleEvent {
+            super.pressesCancelled(presses, with: event)
+        }
+    }
+
     @MainActor
     func reconnectAndRefresh() async {
         // Override me
@@ -51,5 +90,9 @@ class VTViewController: UIViewController, VTViewControllerProtocol {
 
     func viewDesignDidChange(to _: VTViewDesign) {
         // Override me
+    }
+
+    func didReceiveKeyEvent(_: UIKey) -> Bool {
+        false
     }
 }
