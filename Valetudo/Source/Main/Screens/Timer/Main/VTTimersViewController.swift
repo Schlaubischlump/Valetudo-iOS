@@ -141,7 +141,13 @@ final class VTTimersViewController: VTCollectionViewController {
                         try await self?.client.executeTimer(id: timerID)
                     } catch {
                         log(message: error.localizedDescription, forSubsystem: .timer, level: .error)
-                        // TODO: Handle error and display it to the user
+                        self?.showError(
+                            title: "ERROR".localized(),
+                            message: String(
+                                format: "TIMER_EXECUTION_FAILED_MESSAGE".localized(),
+                                error.localizedDescription
+                            )
+                        )
                     }
                     await self?.enableUserInteraction()
                 }
@@ -189,7 +195,13 @@ final class VTTimersViewController: VTCollectionViewController {
                     await self?.reloadData(animated: true)
                 } catch {
                     log(message: error.localizedDescription, forSubsystem: .timer, level: .error)
-                    // TODO: Handle error
+                    self?.showError(
+                        title: "ERROR".localized(),
+                        message: String(
+                            format: "TIMER_ADD_FAILED_MESSAGE".localized(),
+                            error.localizedDescription
+                        )
+                    )
                 }
             }
         }
@@ -230,7 +242,13 @@ final class VTTimersViewController: VTCollectionViewController {
             }
         } catch {
             log(message: error.localizedDescription, forSubsystem: .timer, level: .error)
-            // TODO: show error UI
+            showError(
+                title: "ERROR".localized(),
+                message: String(
+                    format: "TIMER_DELETE_FAILED_MESSAGE".localized(),
+                    error.localizedDescription
+                )
+            )
         }
 
         await enableUserInteraction()
@@ -271,7 +289,13 @@ final class VTTimersViewController: VTCollectionViewController {
                     await self?.reloadData(animated: true)
                 } catch {
                     log(message: error.localizedDescription, forSubsystem: .timer, level: .error)
-                    // TODO: Handle error
+                    self?.showError(
+                        title: "ERROR".localized(),
+                        message: String(
+                            format: "TIMER_UPDATE_FAILED_MESSAGE".localized(),
+                            error.localizedDescription
+                        )
+                    )
                 }
             }
         }
@@ -290,7 +314,6 @@ final class VTTimersViewController: VTCollectionViewController {
             timers = try await client.getTimers()
         } catch {
             log(message: error.localizedDescription, forSubsystem: .timer, level: .error)
-            // TODO: Handle error
             timers = [:]
         }
 

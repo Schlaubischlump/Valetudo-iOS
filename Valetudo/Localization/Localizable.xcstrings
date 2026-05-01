@@ -1772,6 +1772,50 @@
         }
       }
     },
+    "TIMER_ADD_FAILED_MESSAGE" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Failed to add timer.\n%@"
+          }
+        }
+      }
+    },
+    "TIMER_DELETE_FAILED_MESSAGE" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Failed to delete timer.\n%@"
+          }
+        }
+      }
+    },
+    "TIMER_EXECUTION_FAILED_MESSAGE" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Failed to run timer.\n%@"
+          }
+        }
+      }
+    },
+    "TIMER_UPDATE_FAILED_MESSAGE" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Failed to update timer.\n%@"
+          }
+        }
+      }
+    },
     "TURBO" : {
       "extractionState" : "manual",
       "localizations" : {
