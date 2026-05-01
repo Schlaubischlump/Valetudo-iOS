@@ -33,6 +33,7 @@ public extension UIImage {
     static let squareAndArrowDownFill = UIImage(systemName: "square.and.arrow.down.fill")
     static let arrowUpAndDownAndArrowLeftAndRight = UIImage(systemName: "arrow.up.and.down.and.arrow.left.and.right")
     static let trash = UIImage(systemName: "trash")
+    static let save = UIImage.saveImage()
     static let wifiSlash = UIImage(systemName: "wifi.slash")
     static let questionmarkCircleFill = UIImage(systemName: "questionmark.circle.fill")
     static let checkmarkCircleFill = UIImage(systemName: "checkmark.circle.fill")
@@ -57,10 +58,14 @@ public extension UIImage {
         .slashed(fillColor: .black, lineWidth: 1.25, cutoutLineWidth: 3.0)
     static let noGo = UIImage(systemName: "wrongwaysign.fill")
     static let wall = UIImage.wallImage()
+    static let overlayResize = UIImage(systemName: "arrow.up.left.and.arrow.down.right")
+    static let overlayRemove = UIImage(systemName: "trash.fill")
 
     static let operationModeVacuumAndMop = UIImage.combine(left: .dropFill, right: .fanFill)
     static let operationModeVacuumThenMop = UIImage.combine(left: .fanFill, right: .dropFill, op: "→")
 
+    /// Creates a 1x1 image filled with the supplied color.
+    /// - Parameter color: The solid fill color to render into the image.
     convenience init?(color: UIColor) {
         let rect = CGRect(origin: .zero, size: .one)
         UIGraphicsBeginImageContextWithOptions(.one, false, 0)
@@ -84,6 +89,8 @@ public extension UIImage {
         .combine(op: text, opFont: font, opColor: color, spacing: 0)
     }
 
+    /// Renders a multiplication-style repeat count badge.
+    /// - Parameter iterations: The number of repeated passes represented by the badge.
     static func repeatCount(_ iterations: Int) -> UIImage {
         .textImage("× \(iterations)")
     }
@@ -168,6 +175,7 @@ public extension UIImage {
         return image.withRenderingMode(.alwaysOriginal)
     }
 
+    /// Draws a custom union icon.
     private static func unionImage() -> UIImage {
         let size = CGSize(width: 24, height: 24)
         let renderer = UIGraphicsImageRenderer(size: size, format: .default())
@@ -200,6 +208,7 @@ public extension UIImage {
         return image.withRenderingMode(.alwaysTemplate)
     }
 
+    /// Draws a brick-wall glyph.
     private static func wallImage() -> UIImage {
         let size = CGSize(width: 20, height: 15)
         let renderer = UIGraphicsImageRenderer(size: size, format: .default())
@@ -227,6 +236,34 @@ public extension UIImage {
                     UIBezierPath(roundedRect: rect, cornerRadius: cornerRadius).fill()
                 }
             }
+        }
+
+        return image.withRenderingMode(.alwaysTemplate)
+    }
+
+    /// Draws a floppy-disk style save icon.
+    private static func saveImage() -> UIImage {
+        let size = CGSize(width: 20, height: 20)
+        let renderer = UIGraphicsImageRenderer(size: size, format: .default())
+        let image = renderer.image { context in
+            UIColor.black.setFill()
+
+            let body = UIBezierPath()
+            body.move(to: CGPoint(x: 3.0, y: 2.0))
+            body.addLine(to: CGPoint(x: 16.5, y: 2.0))
+            body.addLine(to: CGPoint(x: 19.5, y: 5.0))
+            body.addLine(to: CGPoint(x: 19.5, y: 19.0))
+            body.addQuadCurve(to: CGPoint(x: 17.0, y: 21.0), controlPoint: CGPoint(x: 19.5, y: 20.0))
+            body.addLine(to: CGPoint(x: 5.0, y: 21.0))
+            body.addQuadCurve(to: CGPoint(x: 2.5, y: 18.5), controlPoint: CGPoint(x: 2.5, y: 20.0))
+            body.addLine(to: CGPoint(x: 2.5, y: 4.5))
+            body.addQuadCurve(to: CGPoint(x: 3.0, y: 2.0), controlPoint: CGPoint(x: 2.5, y: 2.0))
+            body.close()
+            body.fill()
+
+            context.cgContext.setBlendMode(.clear)
+            UIBezierPath(roundedRect: CGRect(x: 5.0, y: 4.0, width: 8.5, height: 4.0), cornerRadius: 0.8).fill()
+            UIBezierPath(roundedRect: CGRect(x: 7.0, y: 11.0, width: 6.0, height: 6.0), cornerRadius: 3.0).fill()
         }
 
         return image.withRenderingMode(.alwaysTemplate)
