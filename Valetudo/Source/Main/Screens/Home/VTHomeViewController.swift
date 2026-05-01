@@ -424,7 +424,9 @@ extension VTHomeViewController: UISheetPresentationControllerDelegate {
         if let identifier = sheetPresentationController.selectedDetentIdentifier,
            let height = proposedHeight(for: identifier)
         {
-            updateLegendPosition(basedOn: height + view.safeAreaInsets.bottom, animate: true)
+            // `updateLegendPosition` already accounts for the safe-area inset. Passing the
+            // raw detent height keeps detent settling aligned with the live frame observer.
+            updateLegendPosition(basedOn: height, animate: true)
         }
     }
 
@@ -498,10 +500,8 @@ extension VTHomeViewController: UISheetPresentationControllerDelegate {
         guard keyPath == "frame",
               let frame = (change?[.newKey] as? NSValue)?.cgRectValue else { return }
 
-        Task {
-            await MainActor.run {
-                updateLegendPosition(basedOn: frame.height, animate: false)
-            }
+        Task { @MainActor in
+            updateLegendPosition(basedOn: frame.height, animate: false)
         }
     }
 

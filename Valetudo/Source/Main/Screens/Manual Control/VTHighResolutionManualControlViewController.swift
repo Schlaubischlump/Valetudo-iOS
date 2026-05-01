@@ -186,10 +186,8 @@ final class VTHighResolutionManualControlViewController: VTManualControlViewCont
         // only fire events every 250ms
         moveTimer = Timer.scheduledTimer(withTimeInterval: 0.25, repeats: true) { [weak self] _ in
             let capturedSelf = self
-            Task {
-                await MainActor.run {
-                    capturedSelf?.sendMoveCommand()
-                }
+            Task { @MainActor in
+                capturedSelf?.sendMoveCommand()
             }
         }
     }
