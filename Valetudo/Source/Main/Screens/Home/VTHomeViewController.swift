@@ -36,6 +36,7 @@ class VTHomeViewController: VTViewController {
 
     private var legendViewBottomAnchor: NSLayoutConstraint!
     private var mapScrollViewBottomAnchor: NSLayoutConstraint!
+    private weak var observedSheetView: UIView?
     /// Leaves vertical room for the control sheet only when the shared controller is presented modally.
     private var mapBottomInset: CGFloat {
         if isCompact {
@@ -476,9 +477,7 @@ extension VTHomeViewController: UISheetPresentationControllerDelegate {
         updateLegendPosition(basedOn: bottomHeight, animate: animated)
 
         present(sheetVC, animated: animated) { [weak sheetVC] in
-            sheetVC?.view.addObserver(
-                self, forKeyPath: "frame", options: [.new, .initial], context: nil
-            )
+            self.startObservingSheetFrame(for: sheetVC?.view)
         }
     }
 
@@ -488,8 +487,25 @@ extension VTHomeViewController: UISheetPresentationControllerDelegate {
             return
         }
 
+        stopObservingSheetFrame()
+
         // Reattaching to the inspector must wait until UIKit has fully dismissed the sheet.
         presentedViewController?.dismiss(animated: animated, completion: completion)
+    }
+
+    private func startObservingSheetFrame(for view: UIView?) {
+        guard let view else { return }
+        if observedSheetView === view { return }
+
+        stopObservingSheetFrame()
+        view.addObserver(self, forKeyPath: "frame", options: [.new, .initial], context: nil)
+        observedSheetView = view
+    }
+
+    private func stopObservingSheetFrame() {
+        guard let observedSheetView else { return }
+        observedSheetView.removeObserver(self, forKeyPath: "frame")
+        self.observedSheetView = nil
     }
 
     override func observeValue(forKeyPath keyPath: String?,
@@ -501,6 +517,8 @@ extension VTHomeViewController: UISheetPresentationControllerDelegate {
               let frame = (change?[.newKey] as? NSValue)?.cgRectValue else { return }
 
         Task { @MainActor in
+            guard isCompact,
+                  presentedViewController === robotControlViewController else { return }
             updateLegendPosition(basedOn: frame.height, animate: false)
         }
     }
