@@ -132,6 +132,9 @@ public protocol VTAPIClientProtocol: Actor {
 
     func setMapSegmentMaterial(segmentID: String, material: VTMaterial) async throws
     func getSupportedMapSegmentMaterials() async throws -> [VTMaterial]
+    func getVirtualRestrictions() async throws -> VTVirtualRestrictions
+    func setVirtualRestrictions(_ restrictions: VTVirtualRestrictions) async throws
+    func getVirtualRestrictionsProperties() async throws -> VTVirtualRestrictionsProperties
 
     // MARK: - 1.3 Properties
 

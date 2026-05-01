@@ -140,6 +140,7 @@ actor VTMockAPIClient: VTAPIClientProtocol {
             .mapSegmentEdit,
             .mapSegmentRename,
             .mapSegmentMaterialControl,
+            .combinedVirtualRestrictions,
             .fanSpeedControl,
             .waterUsageControl,
             .operationModeControl,
@@ -365,6 +366,97 @@ actor VTMockAPIClient: VTAPIClientProtocol {
             entities: mapData.entities,
             metaData: mapData.metaData
         )
+    }
+
+    func getVirtualRestrictions() async throws -> VTVirtualRestrictions {
+        let virtualWalls = mapData.entities.compactMap { entity -> VTVirtualWallPayload? in
+            guard entity.type == .virtual_wall, entity.points.count >= 4 else { return nil }
+            return VTVirtualWallPayload(
+                points: VTVirtualWallPoints(
+                    pA: VTMapCoordinate(x: entity.points[0], y: entity.points[1]),
+                    pB: VTMapCoordinate(x: entity.points[2], y: entity.points[3])
+                )
+            )
+        }
+
+        let restrictedZones = mapData.entities.compactMap { entity -> VTRestrictedZonePayload? in
+            guard entity.points.count >= 8 else { return nil }
+
+            let type: VTVirtualRestrictedZoneType
+            switch entity.type {
+            case .no_go_area:
+                type = .regular
+            case .no_mop_area:
+                type = .mop
+            default:
+                return nil
+            }
+
+            return VTRestrictedZonePayload(
+                type: type,
+                points: VTRectangularRestrictedZonePoints(
+                    pA: VTMapCoordinate(x: entity.points[0], y: entity.points[1]),
+                    pB: VTMapCoordinate(x: entity.points[2], y: entity.points[3]),
+                    pC: VTMapCoordinate(x: entity.points[4], y: entity.points[5]),
+                    pD: VTMapCoordinate(x: entity.points[6], y: entity.points[7])
+                )
+            )
+        }
+
+        return VTVirtualRestrictions(virtualWalls: virtualWalls, restrictedZones: restrictedZones)
+    }
+
+    func setVirtualRestrictions(_ restrictions: VTVirtualRestrictions) async throws {
+        let retainedEntities = mapData.entities.filter {
+            switch $0.type {
+            case .no_go_area, .no_mop_area, .virtual_wall: false
+            default: true
+            }
+        }
+
+        let virtualWallEntities = restrictions.virtualWalls.map { wall in
+            VTEntity(
+                __class: "LineMapEntity",
+                metaData: [:],
+                type: .virtual_wall,
+                points: [
+                    wall.points.pA.x,
+                    wall.points.pA.y,
+                    wall.points.pB.x,
+                    wall.points.pB.y,
+                ]
+            )
+        }
+
+        let restrictedZoneEntities = restrictions.restrictedZones.map { zone in
+            VTEntity(
+                __class: "PolygonMapEntity",
+                metaData: [:],
+                type: zone.type == .regular ? .no_go_area : .no_mop_area,
+                points: [
+                    zone.points.pA.x,
+                    zone.points.pA.y,
+                    zone.points.pB.x,
+                    zone.points.pB.y,
+                    zone.points.pC.x,
+                    zone.points.pC.y,
+                    zone.points.pD.x,
+                    zone.points.pD.y,
+                ]
+            )
+        }
+
+        mapData = VTMapData(
+            size: mapData.size,
+            pixelSize: mapData.pixelSize,
+            layers: mapData.layers,
+            entities: retainedEntities + virtualWallEntities + restrictedZoneEntities,
+            metaData: mapData.metaData
+        )
+    }
+
+    func getVirtualRestrictionsProperties() async throws -> VTVirtualRestrictionsProperties {
+        VTVirtualRestrictionsProperties(supportedRestrictedZoneTypes: [.regular, .mop])
     }
 
     // MARK: - 1.3 Properties
