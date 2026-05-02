@@ -105,7 +105,7 @@ class VTSplitViewController: UISplitViewController, UISplitViewControllerDelegat
         case .log: VTLogViewController(client: client)
         case .timers: VTTimersViewController(client: client)
         case .map: VTMapOptionsViewController(client: client)
-        case .robot: UIViewController()
+        case .robot: VTRobotOptionsViewController(client: client)
         }
         vc.title = item.title
         detail.setViewControllers([vc], animated: animated)
@@ -157,7 +157,7 @@ class VTSplitViewController: UISplitViewController, UISplitViewControllerDelegat
 
     private func makeInspectorToggleBarButtonItem() -> UIBarButtonItem {
         let item = UIBarButtonItem(
-            image: .sidebarRight,
+            image: .inspectorToggle,
             style: .plain,
             target: self,
             action: #selector(didTapInspectorToggle)

@@ -61,7 +61,7 @@ class VTSystemInformationViewControllerBase: VTCollectionViewController {
                 cell.contentConfiguration = VTKeyValueCellContentConfiguration(
                     id: item.id,
                     title: item.title,
-                    value: nil,
+                    subtitle: nil,
                     usesHorizontalLayout: false
                 )
                 cell.backgroundConfiguration = .adaptiveListCell()
@@ -77,7 +77,7 @@ class VTSystemInformationViewControllerBase: VTCollectionViewController {
                 cell.contentConfiguration = VTKeyValueCellContentConfiguration(
                     id: item.id,
                     title: item.title,
-                    value: item.value,
+                    subtitle: item.value,
                     usesHorizontalLayout: self.currentViewDesign == .regular
                 )
                 cell.backgroundConfiguration = .adaptiveListCell()

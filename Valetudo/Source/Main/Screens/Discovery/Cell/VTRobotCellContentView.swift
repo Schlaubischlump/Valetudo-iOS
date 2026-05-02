@@ -8,7 +8,7 @@ import UIKit
 
 final class VTRobotCellContentView: UIView, UIContentView {
     private let iconView: UIImageView = {
-        let imageView = UIImageView(image: .roboticVacuumFill)
+        let imageView = UIImageView(image: .discoveredRobot)
         imageView.tintColor = .systemBlue
         imageView.contentMode = .scaleAspectFit
         imageView.translatesAutoresizingMaskIntoConstraints = false

@@ -185,7 +185,9 @@ final class VTTimerDetailViewController: VTCollectionViewController {
 
             cell.contentConfiguration = VTTextFieldCellContentConfiguration(
                 id: item.id,
-                label: "CUSTOM_LABEL".localized(),
+                title: item.title,
+                subtitle: nil,
+                image: nil,
                 placeholder: "TIMER".localized(),
                 text: item.text
             ) { [weak self] newText in
@@ -207,7 +209,9 @@ final class VTTimerDetailViewController: VTCollectionViewController {
 
             cell.contentConfiguration = VTTimePickerCellContentConfiguration(
                 id: item.id,
-                label: "TIME".localized(),
+                title: item.title,
+                subtitle: nil,
+                image: nil,
                 hours: item.hours,
                 minutes: item.minutes
             ) { [weak self] localHour, localMin in
@@ -252,7 +256,7 @@ final class VTTimerDetailViewController: VTCollectionViewController {
 
             cell.contentConfiguration = VTDropDownCellContentConfiguration(
                 id: item.id,
-                title: item.id.localized(),
+                title: item.title,
                 options: item.options,
                 selection: item.active,
                 disableSelectionAfterAction: false
@@ -278,7 +282,7 @@ final class VTTimerDetailViewController: VTCollectionViewController {
 
             cell.contentConfiguration = VTDropDownCellContentConfiguration(
                 id: item.id,
-                title: item.id.localized(),
+                title: item.title,
                 options: item.options,
                 selection: item.active,
                 disableSelectionAfterAction: false
@@ -304,7 +308,7 @@ final class VTTimerDetailViewController: VTCollectionViewController {
 
             cell.contentConfiguration = VTDropDownCellContentConfiguration(
                 id: item.id,
-                title: item.id.localized(),
+                title: item.title,
                 options: item.options,
                 selection: item.active,
                 disableSelectionAfterAction: false
@@ -343,8 +347,8 @@ final class VTTimerDetailViewController: VTCollectionViewController {
 
             cell.contentConfiguration = VTListSelectionCellContentConfiguration(
                 id: item.id,
-                enabledTitle: "SELECTED_SEGMENTS".localized(),
-                disabledTitle: "AVAILABLE_SEGMENTS".localized(),
+                enabledTitle: item.enabledTitle,
+                disabledTitle: item.disabledTitle,
                 allowReordering: customOrder,
                 options: item.options,
                 active: item.active
@@ -434,7 +438,7 @@ final class VTTimerDetailViewController: VTCollectionViewController {
         snapshot.appendSections([.general])
         snapshot.appendItems([
             .checkbox(kEnabled, title: "ENABLED".localized(), enabled: timer.enabled),
-            .textField(kLabel, text: timer.label),
+            .textField(kLabel, title: "CUSTOM_LABEL".localized(), text: timer.label),
         ], toSection: .general)
 
         // schedule
@@ -451,7 +455,7 @@ final class VTTimerDetailViewController: VTCollectionViewController {
 
         snapshot.appendItems([
             .segment(kDow, active: activeWeekdays, options: weekdays),
-            .timePicker(kTime, hours: hour, minutes: minute),
+            .timePicker(kTime, title: "TIME".localized(), hours: hour, minutes: minute),
         ], toSection: .schedule)
 
         // pre-actions
@@ -480,7 +484,8 @@ final class VTTimerDetailViewController: VTCollectionViewController {
                 ]
                 // Add drop down menu only if enabled
                 if isEnabled {
-                    items.append(.dropDown(dropDownID, active: activePreset, options: presets))
+                    let title = kSetFan.localized()
+                    items.append(.dropDown(dropDownID, title: title, active: activePreset, options: presets))
                 }
 
                 snapshot.appendSections([section])
@@ -500,7 +505,7 @@ final class VTTimerDetailViewController: VTCollectionViewController {
 
         if isFullCleanup {
             snapshot.appendItems([
-                .dropDown(kAction, active: .fullCleanup, options: allActions),
+                .dropDown(kAction, title: "ACTION".localized(), active: .fullCleanup, options: allActions),
             ], toSection: .action)
         } else {
             let iterationCount = mapSegmentationProperties?.iterationCount
@@ -520,10 +525,10 @@ final class VTTimerDetailViewController: VTCollectionViewController {
 
             // Add base actions
             var actionItems: [VTAnyItem] = [
-                .dropDown(kAction, active: timer.action.type, options: allActions),
+                .dropDown(kAction, title: "ACTION".localized(), active: timer.action.type, options: allActions),
             ]
             if minIter != maxIter {
-                actionItems.append(.dropDown(kIterations, active: currentIter, options: allIters))
+                actionItems.append(.dropDown(kIterations, title: "ITERATIONS".localized(), active: currentIter, options: allIters))
             }
             if customOrderSupported {
                 actionItems.append(.checkbox(kCustomOrder, title: "USE_CUSTOM_ORDER".localized(), enabled: customOrder))
@@ -538,7 +543,13 @@ final class VTTimerDetailViewController: VTCollectionViewController {
             let activeSegments = timer.action.params.segmentIds?.compactMap { segmentsMap[$0] } ?? []
 
             let segmentActions: [VTAnyItem] = [
-                .listSelection(kSegments, active: activeSegments, options: allSegments),
+                .listSelection(
+                    kSegments,
+                    enabledTitle: "SELECTED_SEGMENTS".localized(),
+                    disabledTitle: "AVAILABLE_SEGMENTS".localized(),
+                    active: activeSegments,
+                    options: allSegments
+                ),
             ]
             let segmentSection = freshGroup()
             snapshot.appendSections([segmentSection])

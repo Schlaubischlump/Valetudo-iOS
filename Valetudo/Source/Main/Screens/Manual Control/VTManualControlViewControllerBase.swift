@@ -19,6 +19,7 @@ class VTManualControlViewControllerBase: VTViewController {
 
     private let enableSwitch: UISwitch = {
         let toggle = UISwitch()
+        toggle.preferredStyle = .sliding
         toggle.isOn = false
         return toggle
     }()

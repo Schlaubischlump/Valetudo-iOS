@@ -55,7 +55,7 @@ final class VTSegmentManagementViewController: VTMapEditingViewController {
             [
                 ToolbarActionDefinition(
                     title: "Split",
-                    image: .split,
+                    image: .splitSegments,
                     handler: { [weak self] in
                         guard let segment = self?.selectedSegments.first else { return }
                         self?.didTapSplit(segment: segment)
@@ -75,7 +75,7 @@ final class VTSegmentManagementViewController: VTMapEditingViewController {
             [
                 ToolbarActionDefinition(
                     title: "MATERIAL".localized(),
-                    image: .rectangle3GroupFill,
+                    image: .material,
                     handler: { [weak self] in
                         self?.didTapMaterial()
                     },
@@ -85,7 +85,7 @@ final class VTSegmentManagementViewController: VTMapEditingViewController {
                 ),
                 ToolbarActionDefinition(
                     title: "CUTTING_LINE".localized(),
-                    image: .scissors,
+                    image: .insertCuttingLine,
                     handler: { [weak self] in
                         self?.didTapCuttingLine()
                     },
@@ -95,7 +95,7 @@ final class VTSegmentManagementViewController: VTMapEditingViewController {
                 ),
                 ToolbarActionDefinition(
                     title: "RENAME".localized(),
-                    image: .pencil,
+                    image: .rename,
                     handler: { [weak self] in
                         self?.didTapRename()
                     },
@@ -105,7 +105,7 @@ final class VTSegmentManagementViewController: VTMapEditingViewController {
                 ),
                 ToolbarActionDefinition(
                     title: "JOIN".localized(),
-                    image: .union,
+                    image: .joinSegments,
                     handler: { [weak self] in
                         self?.didTapJoin()
                     },

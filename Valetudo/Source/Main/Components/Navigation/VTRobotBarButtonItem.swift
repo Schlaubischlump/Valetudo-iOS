@@ -13,7 +13,7 @@ class VTRobotBarButtonItem: UIBarButtonItem {
         self.parentViewController = parentViewController
         super.init()
         title = "ROBOTS".localized()
-        image = .roboticVacuumFill
+        image = .robotNavigationItem
         target = self
         action = #selector(goBackToRobotsListScreen(_:))
     }

@@ -6,9 +6,11 @@
 //
 import UIKit
 
-struct VTTimePickerCellContentConfiguration: UIContentConfiguration, Hashable {
+struct VTTimePickerCellContentConfiguration: VTStackedCellContentConfiguration {
     let id: String
-    let label: String
+    let title: String
+    let subtitle: String?
+    let image: UIImage?
     let hours: Int
     let minutes: Int
     let onChange: ((Int, Int) -> Void)?

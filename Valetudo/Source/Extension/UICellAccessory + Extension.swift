@@ -13,7 +13,7 @@ extension UICellAccessory {
         pointSize: CGFloat = 18,
         color: UIColor = .tintColor
     ) -> UICellAccessory {
-        let imageView = UIImageView(image: .plusCircleFill)
+        let imageView = UIImageView(image: .addListItem)
 
         imageView.tintColor = color
         imageView.preferredSymbolConfiguration = UIImage.SymbolConfiguration(

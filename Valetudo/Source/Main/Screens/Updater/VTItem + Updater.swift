@@ -9,11 +9,13 @@ import UIKit
 
 struct VTCurrentVersionItem: VTItem {
     let id: String
+    let title: String
     let versionString: String
 }
 
 struct VTCurrentCommitItem: VTItem {
     let id: String
+    let title: String
     let commitString: String
 }
 
@@ -43,18 +45,18 @@ struct VTInstallUpdateItem: VTItem {
 
 extension VTAnyItem {
     /// Version information
-    static func currentVersion(_ id: String, versionString: String) -> VTAnyItem {
-        VTAnyItem(VTCurrentVersionItem(id: id, versionString: versionString))
+    static func currentVersion(_ id: String, title: String, versionString: String) -> VTAnyItem {
+        VTAnyItem(VTCurrentVersionItem(id: id, title: title, versionString: versionString))
     }
 
     /// Commit information
-    static func currentCommit(_ id: String, commitString: String) -> VTAnyItem {
-        VTAnyItem(VTCurrentCommitItem(id: id, commitString: commitString))
+    static func currentCommit(_ id: String, title: String, commitString: String) -> VTAnyItem {
+        VTAnyItem(VTCurrentCommitItem(id: id, title: title, commitString: commitString))
     }
 
     /// Update provider selection information
-    static func updaterProvider(_ id: String, provider: VTUpdaterProvider) -> VTAnyItem {
-        VTAnyItem(VTUpdaterProviderItem(id: id, active: provider, options: VTUpdaterProvider.allCases))
+    static func updaterProvider(_ id: String, title: String, provider: VTUpdaterProvider) -> VTAnyItem {
+        VTAnyItem(VTUpdaterProviderItem(id: id, title: title, active: provider, options: VTUpdaterProvider.allCases))
     }
 
     /// Generic Update state with title and icon

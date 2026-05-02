@@ -19,7 +19,12 @@ final class VTTimerCellView: UIView, UIContentView {
 
     // MARK: - UI
 
-    private let toggle = UISwitch()
+    private let toggle: UISwitch = {
+        let toggle = UISwitch()
+        toggle.preferredStyle = .sliding
+        return toggle
+    }()
+
     private let titleLabel = UILabel()
 
     private let weekdaysStack = UIStackView()
@@ -58,7 +63,7 @@ final class VTTimerCellView: UIView, UIContentView {
         titleLabel.textColor = .label
 
         let runButton = UIButton(type: .system)
-        runButton.setImage(.playFill, for: .normal)
+        runButton.setImage(.timerRun, for: .normal)
         runButton.tintColor = .systemGreen
         runButton.addTarget(self, action: #selector(run), for: .touchUpInside)
 

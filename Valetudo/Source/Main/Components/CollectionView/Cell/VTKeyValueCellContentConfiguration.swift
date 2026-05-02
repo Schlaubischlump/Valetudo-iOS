@@ -7,10 +7,10 @@
 
 import UIKit
 
-struct VTKeyValueCellContentConfiguration: UIContentConfiguration, Hashable {
+struct VTKeyValueCellContentConfiguration: VTStackedCellContentConfiguration {
     let id: String
     let title: String
-    let value: String?
+    let subtitle: String?
     let usesHorizontalLayout: Bool
     var image: UIImage?
 

@@ -18,7 +18,7 @@ class VTValetudoEventBarButtonItem: UIBarButtonItem {
         self.parentViewController = parentViewController
         super.init()
         title = "EVENTS".localized()
-        image = .bellFill
+        image = .eventsNavigationItem
         target = self
         action = #selector(showEventsPopup(_:))
         Task { await startEventObservation() }

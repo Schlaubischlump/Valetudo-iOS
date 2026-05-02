@@ -6,9 +6,10 @@
 //
 import UIKit
 
-struct VTCheckboxCellContentConfiguration: UIContentConfiguration, Hashable {
+struct VTCheckboxCellContentConfiguration: VTStackedCellContentConfiguration {
     let id: String
     let title: String
+    let subtitle: String?
     let isOn: Bool
     let image: UIImage?
     var disableSelectionAfterAction: Bool = true
@@ -17,6 +18,7 @@ struct VTCheckboxCellContentConfiguration: UIContentConfiguration, Hashable {
     init(
         id: String,
         title: String,
+        subtitle: String? = nil,
         isOn: Bool,
         image: UIImage? = nil,
         disableSelectionAfterAction: Bool = true,
@@ -24,6 +26,7 @@ struct VTCheckboxCellContentConfiguration: UIContentConfiguration, Hashable {
     ) {
         self.id = id
         self.title = title
+        self.subtitle = subtitle
         self.isOn = isOn
         self.image = image
         self.disableSelectionAfterAction = disableSelectionAfterAction
@@ -41,6 +44,7 @@ struct VTCheckboxCellContentConfiguration: UIContentConfiguration, Hashable {
     static func == (lhs: VTCheckboxCellContentConfiguration, rhs: VTCheckboxCellContentConfiguration) -> Bool {
         lhs.id == rhs.id &&
             lhs.title == rhs.title &&
+            lhs.subtitle == rhs.subtitle &&
             lhs.isOn == rhs.isOn &&
             lhs.image == rhs.image
     }
@@ -48,6 +52,7 @@ struct VTCheckboxCellContentConfiguration: UIContentConfiguration, Hashable {
     func hash(into hasher: inout Hasher) {
         hasher.combine(id)
         hasher.combine(title)
+        hasher.combine(subtitle)
         hasher.combine(isOn)
         hasher.combine(image)
     }

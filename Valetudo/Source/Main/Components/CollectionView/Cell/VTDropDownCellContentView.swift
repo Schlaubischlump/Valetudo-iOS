@@ -6,26 +6,15 @@
 //
 import UIKit
 
-final class VTDropDownCellContentView<S: Describable & Hashable & Equatable>: UIView, UIContentView {
-    private let iconImageView = UIImageView()
-    private let titleLabel = UILabel()
+final class VTDropDownCellContentView<S: Describable & Hashable & Equatable>: VTStackedCellContentView<VTDropDownCellContentConfiguration<S>> {
     private let selectionButton = UIButton(type: .system)
 
     private var options: [S] = []
     private var selection: S?
+    private lazy var minimumHeightConstraint = heightAnchor.constraint(greaterThanOrEqualToConstant: 50)
 
-    var configuration: UIContentConfiguration {
-        didSet {
-            apply(configuration: configuration)
-        }
-    }
-
-    init(configuration: VTDropDownCellContentConfiguration<S>) {
-        self.configuration = configuration
-        super.init(frame: .zero)
-
-        setupViews()
-        apply(configuration: configuration)
+    override init(configuration: VTDropDownCellContentConfiguration<S>) {
+        super.init(configuration: configuration)
     }
 
     @available(*, unavailable)
@@ -33,39 +22,23 @@ final class VTDropDownCellContentView<S: Describable & Hashable & Equatable>: UI
         fatalError("init(coder:) has not been implemented")
     }
 
-    private func setupViews() {
-        iconImageView.contentMode = .scaleAspectFit
-        iconImageView.tintColor = .label
-        iconImageView.translatesAutoresizingMaskIntoConstraints = false
+    override func setupViews() {
+        super.setupViews()
 
-        titleLabel.translatesAutoresizingMaskIntoConstraints = false
         selectionButton.translatesAutoresizingMaskIntoConstraints = false
         selectionButton.showsMenuAsPrimaryAction = true
         selectionButton.changesSelectionAsPrimaryAction = true
+        selectionButton.setContentHuggingPriority(.required, for: .horizontal)
+        selectionButton.setContentCompressionResistancePriority(.required, for: .horizontal)
 
-        let stack = UIStackView(arrangedSubviews: [iconImageView, titleLabel, selectionButton])
-        stack.axis = .horizontal
-        stack.spacing = 8
-        stack.alignment = .center
-        stack.translatesAutoresizingMaskIntoConstraints = false
-
-        addSubview(stack)
-
-        NSLayoutConstraint.activate([
-            stack.topAnchor.constraint(equalTo: topAnchor, constant: 8),
-            stack.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -8),
-            stack.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 16),
-            stack.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -16),
-            iconImageView.widthAnchor.constraint(equalToConstant: 24),
-            iconImageView.heightAnchor.constraint(equalToConstant: 24),
-        ])
+        rootStack.addArrangedSubview(selectionButton)
     }
 
-    private func apply(configuration: UIContentConfiguration) {
-        guard let config = configuration as? VTDropDownCellContentConfiguration<S> else { return }
-        titleLabel.text = config.title
-        iconImageView.image = config.image?.withRenderingMode(.alwaysTemplate)
-        iconImageView.isHidden = config.image == nil
+    override func apply(configuration: VTDropDownCellContentConfiguration<S>) {
+        guard currentConfiguration != configuration else { return }
+        super.apply(configuration: configuration)
+
+        let config = configuration
         options = config.options
         selection = config.selection
         selectionButton.isEnabled = true

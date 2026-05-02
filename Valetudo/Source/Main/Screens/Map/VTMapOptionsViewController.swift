@@ -99,7 +99,7 @@ final class VTMapOptionsViewController: VTCollectionViewController {
             cell.contentConfiguration = VTKeyValueCellContentConfiguration(
                 id: item.id,
                 title: item.title,
-                value: item.value,
+                subtitle: item.value,
                 usesHorizontalLayout: false,
                 image: item.image
             )
@@ -165,7 +165,7 @@ final class VTMapOptionsViewController: VTCollectionViewController {
                     kMappingPass,
                     title: "MAP_OPTIONS_MAPPING_PASS_TITLE".localized(),
                     value: "MAP_OPTIONS_MAPPING_PASS_SUBTITLE".localized(),
-                    image: .mapFill
+                    image: .mappingPass
                 ),
             ], toSection: .mapping)
         }
@@ -175,7 +175,7 @@ final class VTMapOptionsViewController: VTCollectionViewController {
                     kMapReset,
                     title: "MAP_OPTIONS_RESET_TITLE".localized(),
                     value: "MAP_OPTIONS_RESET_SUBTITLE".localized(),
-                    image: .mapSlash
+                    image: .mapReset
                 ),
             ], toSection: .mapping)
         }
@@ -185,7 +185,7 @@ final class VTMapOptionsViewController: VTCollectionViewController {
                     kSegmentManagement,
                     title: "MAP_OPTIONS_SEGMENT_MANAGEMENT_TITLE".localized(),
                     value: "MAP_OPTIONS_SEGMENT_MANAGEMENT_SUBTITLE".localized(),
-                    image: .rectangle3GroupFill
+                    image: .segmentManagement
                 ),
             ], toSection: .management)
         }
@@ -195,7 +195,7 @@ final class VTMapOptionsViewController: VTCollectionViewController {
                     kVirtualRestrictionManagement,
                     title: "MAP_OPTIONS_VIRTUAL_RESTRICTION_MANAGEMENT_TITLE".localized(),
                     value: "MAP_OPTIONS_VIRTUAL_RESTRICTION_MANAGEMENT_SUBTITLE".localized(),
-                    image: .nosign
+                    image: .virtualRestrictionManagement
                 ),
             ], toSection: .management)
         }
@@ -217,7 +217,7 @@ final class VTMapOptionsViewController: VTCollectionViewController {
 
         switch item.id {
         case kMappingPass:
-            didTapMappingPass()
+            presentMappingPassConfirmation()
         case kMapReset:
             presentMapResetConfirmation()
         case kSegmentManagement:
@@ -256,6 +256,21 @@ final class VTMapOptionsViewController: VTCollectionViewController {
     }
 
     // MARK: - Alerts
+
+    /// Presents a confirmation before starting a mapping pass.
+    private func presentMappingPassConfirmation() {
+        let alert = UIAlertController(
+            title: "MAP_OPTIONS_MAPPING_PASS_CONFIRMATION_TITLE".localized(),
+            message: "MAP_OPTIONS_MAPPING_PASS_CONFIRMATION_MESSAGE".localized(),
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "CANCEL".localized(), style: .cancel))
+        alert.addAction(UIAlertAction(title: "MAP_OPTIONS_MAPPING_PASS_CONFIRMATION_ACTION".localized(), style: .default) { [weak self] _ in
+            self?.didTapMappingPass()
+        })
+
+        present(alert, animated: true)
+    }
 
     /// Presents a destructive confirmation before resetting the robot's stored map.
     private func presentMapResetConfirmation() {

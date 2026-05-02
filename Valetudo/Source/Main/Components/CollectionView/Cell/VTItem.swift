@@ -17,12 +17,14 @@ protocol VTItem: Sendable, Hashable {
 struct VTCheckboxItem: VTItem {
     let id: String
     let title: String
+    let subtitle: String?
     let enabled: Bool
     let image: UIImage?
 
-    init(id: String, title: String, enabled: Bool, image: UIImage? = nil) {
+    init(id: String, title: String, subtitle: String? = nil, enabled: Bool, image: UIImage? = nil) {
         self.id = id
         self.title = title
+        self.subtitle = subtitle
         self.enabled = enabled
         self.image = image
     }
@@ -31,18 +33,23 @@ struct VTCheckboxItem: VTItem {
 /// A free-form text input row.
 struct VTTextFieldItem: VTItem {
     let id: String
+    let title: String
     let text: String
 }
 
 /// A single-selection row backed by a dropdown menu.
 struct VTDropDownItem<T: Hashable & Sendable>: VTItem {
     let id: String
+    let title: String
+    let subtitle: String?
     let active: T
     let options: [T]
     let image: UIImage?
 
-    init(id: String, active: T, options: [T], image: UIImage? = nil) {
+    init(id: String, title: String, subtitle: String? = nil, active: T, options: [T], image: UIImage? = nil) {
         self.id = id
+        self.title = title
+        self.subtitle = subtitle
         self.active = active
         self.options = options
         self.image = image
@@ -59,6 +66,7 @@ struct VTSegmentItem<T: Hashable & Sendable>: VTItem {
 /// A row for editing an hour/minute time value.
 struct VTTimePickerItem: VTItem {
     let id: String
+    let title: String
     let hours: Int
     let minutes: Int
 }
@@ -66,6 +74,8 @@ struct VTTimePickerItem: VTItem {
 /// A row that presents and edits an ordered multi-selection list.
 struct VTListSelectionItem<T: Hashable & Sendable>: VTItem {
     let id: String
+    let enabledTitle: String
+    let disabledTitle: String
     let active: [T]
     let options: [T]
 }
@@ -123,33 +133,49 @@ struct VTAnyItem: Hashable {
 
     // MARK: - Factory
 
-    static func checkbox(_ id: String, title: String, enabled: Bool, image: UIImage? = nil) -> VTAnyItem {
-        VTAnyItem(VTCheckboxItem(id: id, title: title, enabled: enabled, image: image))
+    static func checkbox(_ id: String, title: String, subtitle: String? = nil, enabled: Bool, image: UIImage? = nil) -> VTAnyItem {
+        VTAnyItem(VTCheckboxItem(id: id, title: title, subtitle: subtitle, enabled: enabled, image: image))
     }
 
-    static func textField(_ id: String, text: String) -> VTAnyItem {
-        VTAnyItem(VTTextFieldItem(id: id, text: text))
+    static func textField(_ id: String, title: String, text: String) -> VTAnyItem {
+        VTAnyItem(VTTextFieldItem(id: id, title: title, text: text))
     }
 
     static func dropDown<T: Hashable & Sendable>(
         _ id: String,
+        title: String,
+        subtitle: String? = nil,
         active: T,
         options: [T],
         image: UIImage? = nil
     ) -> VTAnyItem {
-        VTAnyItem(VTDropDownItem(id: id, active: active, options: options, image: image))
+        VTAnyItem(VTDropDownItem(id: id, title: title, subtitle: subtitle, active: active, options: options, image: image))
     }
 
     static func segment<T: Hashable & Sendable>(_ id: String, active: Set<T>, options: [T]) -> VTAnyItem {
         VTAnyItem(VTSegmentItem(id: id, active: active, options: options))
     }
 
-    static func timePicker(_ id: String, hours: Int, minutes: Int) -> VTAnyItem {
-        VTAnyItem(VTTimePickerItem(id: id, hours: hours, minutes: minutes))
+    static func timePicker(_ id: String, title: String, hours: Int, minutes: Int) -> VTAnyItem {
+        VTAnyItem(VTTimePickerItem(id: id, title: title, hours: hours, minutes: minutes))
     }
 
-    static func listSelection<T: Hashable & Sendable>(_ id: String, active: [T], options: [T]) -> VTAnyItem {
-        VTAnyItem(VTListSelectionItem(id: id, active: active, options: options))
+    static func listSelection<T: Hashable & Sendable>(
+        _ id: String,
+        enabledTitle: String,
+        disabledTitle: String,
+        active: [T],
+        options: [T]
+    ) -> VTAnyItem {
+        VTAnyItem(
+            VTListSelectionItem(
+                id: id,
+                enabledTitle: enabledTitle,
+                disabledTitle: disabledTitle,
+                active: active,
+                options: options
+            )
+        )
     }
 
     static func loading(_ id: String, message: String) -> VTAnyItem {

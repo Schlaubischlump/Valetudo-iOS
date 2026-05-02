@@ -6,9 +6,11 @@
 //
 import UIKit
 
-struct VTTextFieldCellContentConfiguration: UIContentConfiguration, Hashable {
+struct VTTextFieldCellContentConfiguration: VTStackedCellContentConfiguration {
     let id: String
-    let label: String
+    let title: String
+    let subtitle: String?
+    let image: UIImage?
     let placeholder: String
     let text: String
     let onChange: ((String) -> Void)?
@@ -23,14 +25,14 @@ struct VTTextFieldCellContentConfiguration: UIContentConfiguration, Hashable {
 
     static func == (lhs: VTTextFieldCellContentConfiguration, rhs: VTTextFieldCellContentConfiguration) -> Bool {
         lhs.id == rhs.id &&
-            lhs.label == rhs.label &&
+            lhs.title == rhs.title &&
             lhs.placeholder == rhs.placeholder &&
             lhs.text == rhs.text
     }
 
     func hash(into hasher: inout Hasher) {
         hasher.combine(id)
-        hasher.combine(label)
+        hasher.combine(title)
         hasher.combine(placeholder)
         hasher.combine(text)
     }

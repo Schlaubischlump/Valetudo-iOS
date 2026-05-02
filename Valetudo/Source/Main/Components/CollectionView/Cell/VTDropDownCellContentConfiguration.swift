@@ -7,9 +7,10 @@
 import Foundation
 import UIKit
 
-struct VTDropDownCellContentConfiguration<S: Describable & Hashable & Equatable>: UIContentConfiguration, Hashable {
+struct VTDropDownCellContentConfiguration<S: Describable & Hashable & Equatable>: VTStackedCellContentConfiguration {
     let id: String
-    let title: String?
+    let title: String
+    let subtitle: String?
     let options: [S]
     let selection: S
     let image: UIImage?
@@ -18,7 +19,8 @@ struct VTDropDownCellContentConfiguration<S: Describable & Hashable & Equatable>
 
     init(
         id: String,
-        title: String?,
+        title: String,
+        subtitle: String? = nil,
         options: [S],
         selection: S,
         image: UIImage? = nil,
@@ -27,6 +29,7 @@ struct VTDropDownCellContentConfiguration<S: Describable & Hashable & Equatable>
     ) {
         self.id = id
         self.title = title
+        self.subtitle = subtitle
         self.options = options
         self.selection = selection
         self.image = image
@@ -45,6 +48,7 @@ struct VTDropDownCellContentConfiguration<S: Describable & Hashable & Equatable>
     static func == (lhs: VTDropDownCellContentConfiguration<S>, rhs: VTDropDownCellContentConfiguration<S>) -> Bool {
         lhs.id == rhs.id &&
             lhs.title == rhs.title &&
+            lhs.subtitle == rhs.subtitle &&
             lhs.options == rhs.options &&
             lhs.selection == rhs.selection &&
             lhs.image == rhs.image
@@ -53,6 +57,7 @@ struct VTDropDownCellContentConfiguration<S: Describable & Hashable & Equatable>
     func hash(into hasher: inout Hasher) {
         hasher.combine(id)
         hasher.combine(title)
+        hasher.combine(subtitle)
         hasher.combine(options)
         hasher.combine(selection)
         hasher.combine(image)

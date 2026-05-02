@@ -46,9 +46,9 @@ final class VTStartPauseStopControlRow: UIView {
     }
 
     private let buttonContainerView = UIView()
-    private let startPauseButton = VTControlButton(title: nil, icon: .playFill)
-    private let stopButton = VTControlButton(title: nil, icon: .stopFill)
-    private let homeButton = VTControlButton(title: nil, icon: .houseFill)
+    private let startPauseButton = VTControlButton(title: nil, icon: .cleaningStart)
+    private let stopButton = VTControlButton(title: nil, icon: .cleaningStop)
+    private let homeButton = VTControlButton(title: nil, icon: .returnToDock)
 
     override init(frame: CGRect) {
         super.init(frame: frame)

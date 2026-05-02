@@ -16,6 +16,8 @@ final class VTLoadingCellView: UIView, UIContentView {
         return label
     }()
 
+    private lazy var minimumHeightConstraint = heightAnchor.constraint(greaterThanOrEqualToConstant: 50)
+
     var configuration: UIContentConfiguration {
         didSet { apply(configuration: configuration) }
     }
@@ -42,6 +44,7 @@ final class VTLoadingCellView: UIView, UIContentView {
         addSubview(stack)
 
         NSLayoutConstraint.activate([
+            minimumHeightConstraint,
             stack.topAnchor.constraint(equalTo: topAnchor, constant: 16),
             stack.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -16),
             stack.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 16),

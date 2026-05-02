@@ -53,8 +53,8 @@ struct VTOperationModeItem: VTSegmentedItem {
 
     var icon: UIImage? {
         switch presetValue {
-        case .vacuum: .fanFill
-        case .mop: .dropFill
+        case .vacuum: .operationModeVacuum
+        case .mop: .operationModeMop
         case .vacuumAndMop: .operationModeVacuumAndMop
         case .vacuumThenMop: .operationModeVacuumThenMop
         default: nil
@@ -160,41 +160,41 @@ class VTRobotControlViewController: VTViewController {
 
     let modeRow = VTSegmentedControlRow<VTOperationModeItem>(
         title: VTPresetType.operationMode.description.capitalized,
-        titleIcon: .filemenuAndSelection
+        titleIcon: .operationModeControl
     )
 
     private let fanRow = VTSegmentedControlRow<VTFanItem>(
         title: VTPresetType.fanSpeed.description.capitalized,
-        titleIcon: .fanFill
+        titleIcon: .fanSpeedControl
     )
     private let waterRow = VTSegmentedControlRow<VTWaterGradeItem>(
         title: VTPresetType.waterGrade.description.capitalized,
-        titleIcon: .dropFill
+        titleIcon: .waterGradeControl
     )
     private let iterationsRow = VTSegmentedControlRow<VTRepeatItem>(
         title: "ITERATIONS".localized(),
-        titleIcon: .repeatSymbol
+        titleIcon: .cleaningIterationsControl
     )
 
     private let dockControls = {
         let dockControls = VTStackedControlRow<VTControlButton>(
             title: "CHARGER".localized(),
-            titleIcon: .dockArrowDownRectangle
+            titleIcon: .dockControls
         )
         dockControls.translatesAutoresizingMaskIntoConstraints = false
         dockControls.axis = .horizontal
 
         let cleanButton = VTToggleControlButton(
             title: "CLEAN".localizedUppercase(),
-            icon: .waterWaves
+            icon: .dockMopWash
         )
         let dryButton = VTToggleControlButton(
             title: "DRY".localizedUppercase(),
-            icon: .heatWavesAndFan
+            icon: .dockMopDry
         )
         let emptyButton = VTControlButton(
             title: "EMPTY".localizedUppercase(),
-            icon: .arrowUpTrashFill
+            icon: .dockEmpty
         )
 
         cleanButton.heightAnchor.constraint(equalToConstant: 50).isActive = true
@@ -220,7 +220,7 @@ class VTRobotControlViewController: VTViewController {
     private let attachmentsControls = {
         let attachmentsControls = VTStackedControlRow<VTControlButton>(
             title: "ATTACHMENTS".localized(),
-            titleIcon: .puzzlepieceExtensionFill
+            titleIcon: .attachments
         )
         attachmentsControls.axis = .vertical
         attachmentsControls.translatesAutoresizingMaskIntoConstraints = false
@@ -230,7 +230,7 @@ class VTRobotControlViewController: VTViewController {
     private let statisticsControls = {
         let statisticsControls = VTStackedControlRow<VTControlLabel>(
             title: "CURRENT_STATISTICS".localized(),
-            titleIcon: .chartBarFill
+            titleIcon: .currentStatistics
         )
         statisticsControls.axis = .horizontal
         statisticsControls.translatesAutoresizingMaskIntoConstraints = false
@@ -306,20 +306,20 @@ class VTRobotControlViewController: VTViewController {
                         }
                     case let .didReceiveError(msg):
                         log(message: msg, forSubsystem: .stateAttribute, level: .error)
-                        /*showRobotControlError(
-                            messageKey: "ROBOT_CONTROL_STATE_ATTRIBUTES_FAILED_MESSAGE",
-                            reason: msg
-                        )*/
+                    /* showRobotControlError(
+                         messageKey: "ROBOT_CONTROL_STATE_ATTRIBUTES_FAILED_MESSAGE",
+                         reason: msg
+                     ) */
                     default:
                         break
                     }
                 }
             } catch {
                 log(message: "Failed to update data: \(error.localizedDescription)", forSubsystem: .robotControl, level: .error)
-                /*showRobotControlError(
-                    messageKey: "ROBOT_CONTROL_INITIAL_LOAD_FAILED_MESSAGE",
-                    reason: error.localizedDescription
-                )*/
+                /* showRobotControlError(
+                     messageKey: "ROBOT_CONTROL_INITIAL_LOAD_FAILED_MESSAGE",
+                     reason: error.localizedDescription
+                 ) */
             }
         }
     }

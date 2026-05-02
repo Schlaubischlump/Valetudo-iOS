@@ -120,15 +120,15 @@ class VTUpdaterViewController: VTCollectionViewController {
             case let item as VTCurrentVersionItem:
                 cell.contentConfiguration = VTKeyValueCellContentConfiguration(
                     id: item.id,
-                    title: "VERSION".localized(),
-                    value: item.versionString,
+                    title: item.title,
+                    subtitle: item.versionString,
                     usesHorizontalLayout: self.currentViewDesign == .regular
                 )
             case let item as VTCurrentCommitItem:
                 cell.contentConfiguration = VTKeyValueCellContentConfiguration(
                     id: item.id,
-                    title: "COMMIT".localized(),
-                    value: item.commitString,
+                    title: item.title,
+                    subtitle: item.commitString,
                     usesHorizontalLayout: self.currentViewDesign == .regular
                 )
             default:
@@ -141,7 +141,7 @@ class VTUpdaterViewController: VTCollectionViewController {
             case let item as VTUpdaterProviderItem:
                 let config = VTDropDownCellContentConfiguration(
                     id: item.id,
-                    title: "UPDATE_CHANNEL".localized(),
+                    title: item.title,
                     options: item.options,
                     selection: item.active,
                     disableSelectionAfterAction: true
@@ -318,7 +318,7 @@ class VTUpdaterViewController: VTCollectionViewController {
         let unknownState: VTAnyItem = .updateState(
             kUpdateUnknown,
             title: "UPDATE_UNKNOWN".localized(),
-            image: .questionmarkCircleFill,
+            image: .updaterUnknownState,
             tintColor: .secondaryLabel
         )
         guard let state else { return unknownState }
@@ -327,7 +327,7 @@ class VTUpdaterViewController: VTCollectionViewController {
             return .updateState(
                 kUpToDate,
                 title: "UP_TO_DATE".localized(),
-                image: .checkmarkCircleFill,
+                image: .updaterUpToDateState,
                 tintColor: .systemGreen
             )
         case _ as VTUpdaterIdleState:
@@ -336,7 +336,7 @@ class VTUpdaterViewController: VTCollectionViewController {
             return .updateState(
                 kUpdatError,
                 title: "UPDATE_ERROR".localized(),
-                image: .xmarkCircleFill,
+                image: .updaterErrorState,
                 tintColor: .systemRed
             )
         case let downloadingState as VTUpdaterDownloadingState:
@@ -354,7 +354,7 @@ class VTUpdaterViewController: VTCollectionViewController {
             return .updateState(
                 kUpdateDisabled,
                 title: "UPDATE_DISABLED".localized(),
-                image: .circleSlashFill,
+                image: .updaterDisabledState,
                 tintColor: .secondaryLabel
             )
         case let approvalPendingState as VTUpdaterApprovalPendingState:
@@ -372,7 +372,7 @@ class VTUpdaterViewController: VTCollectionViewController {
                 return .installUpdate(
                     kInstallUpdate,
                     title: "INSTALL".localized(),
-                    image: .arrowTrianglehead2Counterclockwise,
+                    image: .updaterInstall,
                     version: applyPendingState.version
                 )
             }
@@ -457,7 +457,7 @@ class VTUpdaterViewController: VTCollectionViewController {
         var snapshot = dataSource.snapshot()
         let identifier = snapshot.itemIdentifiers(inSection: .main).last!
         snapshot.deleteItems([identifier])
-        snapshot.appendItems([.updaterProvider(kUpdateProvider, provider: provider)], toSection: .main)
+        snapshot.appendItems([.updaterProvider(kUpdateProvider, title: "UPDATE_CHANNEL".localized(), provider: provider)], toSection: .main)
         await dataSource.apply(snapshot, animatingDifferences: animated)
     }
 
@@ -481,9 +481,9 @@ class VTUpdaterViewController: VTCollectionViewController {
         var snapshot = VTUpdaterSnapshot()
         snapshot.appendSections([.main])
         snapshot.appendItems([
-            .currentVersion(kCurrentVersion, versionString: valetudoVersion?.release ?? unknownString),
-            .currentCommit(kCurrentCommit, commitString: valetudoVersion?.commit ?? unknownString),
-            .updaterProvider(kUpdateProvider, provider: selectedProvider),
+            .currentVersion(kCurrentVersion, title: "VERSION".localized(), versionString: valetudoVersion?.release ?? unknownString),
+            .currentCommit(kCurrentCommit, title: "COMMIT".localized(), commitString: valetudoVersion?.commit ?? unknownString),
+            .updaterProvider(kUpdateProvider, title: "UPDATE_CHANNEL".localized(), provider: selectedProvider),
         ], toSection: .main)
 
         snapshot.appendSections([.update])

@@ -6,37 +6,17 @@
 //
 import UIKit
 
-final class VTTimePickerCellContentView: UIView, UIContentView {
-    private let label = UILabel()
+final class VTTimePickerCellContentView: VTStackedCellContentView<VTTimePickerCellContentConfiguration> {
     private let picker = UIDatePicker()
-    private let stackView = UIStackView()
-    private let spacer = UIView()
 
-    private var currentConfiguration: VTTimePickerCellContentConfiguration!
-
-    var configuration: UIContentConfiguration {
-        get { currentConfiguration }
-        set {
-            guard let config = newValue as? VTTimePickerCellContentConfiguration else { return }
-            apply(config)
-        }
+    override init(configuration: VTTimePickerCellContentConfiguration) {
+        super.init(configuration: configuration)
     }
 
-    init(configuration: VTTimePickerCellContentConfiguration) {
-        super.init(frame: .zero)
-        setup()
-        apply(configuration)
-    }
+    override func setupViews() {
+        super.setupViews()
 
-    @available(*, unavailable)
-    required init?(coder _: NSCoder) {
-        fatalError()
-    }
-
-    private func setup() {
-        // Label
-        label.numberOfLines = 1
-        label.setContentHuggingPriority(.required, for: .horizontal)
+        rootStack.addArrangedSubview(picker)
 
         // Picker
         picker.datePickerMode = .time
@@ -45,42 +25,16 @@ final class VTTimePickerCellContentView: UIView, UIContentView {
         picker.setContentCompressionResistancePriority(.required, for: .horizontal)
 
         picker.addTarget(self, action: #selector(changed), for: .valueChanged)
-
-        // Spacer expands
-        spacer.setContentHuggingPriority(.defaultLow, for: .horizontal)
-        spacer.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
-
-        // Stack
-        stackView.axis = .horizontal
-        stackView.alignment = .center
-        stackView.translatesAutoresizingMaskIntoConstraints = false
-
-        stackView.addArrangedSubview(label)
-        stackView.addArrangedSubview(spacer) // 👈 key
-        stackView.addArrangedSubview(picker)
-
-        addSubview(stackView)
-
-        let vPad = 16.0
-        let hPad = 16.0
-
-        NSLayoutConstraint.activate([
-            stackView.topAnchor.constraint(equalTo: topAnchor, constant: vPad),
-            stackView.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -vPad),
-            stackView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: hPad),
-            stackView.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -hPad),
-        ])
     }
 
-    private func apply(_ config: VTTimePickerCellContentConfiguration) {
-        currentConfiguration = config
-
-        label.text = config.label
+    override func apply(configuration: VTTimePickerCellContentConfiguration) {
+        guard currentConfiguration != configuration else { return }
+        super.apply(configuration: configuration)
 
         let calendar = Calendar.current
         var components = DateComponents()
-        components.hour = config.hours
-        components.minute = config.minutes
+        components.hour = configuration.hours
+        components.minute = configuration.minutes
 
         if let date = calendar.date(from: components), picker.date != date {
             picker.date = date

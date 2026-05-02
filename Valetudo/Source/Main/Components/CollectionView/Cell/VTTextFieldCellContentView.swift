@@ -6,7 +6,7 @@
 //
 import UIKit
 
-final class VTTextFieldCellContentView: UIView, UIContentView {
+final class VTTextFieldCellContentView: VTStackedCellContentView<VTTextFieldCellContentConfiguration> {
     private let textField: UITextField = {
         let textField = UITextField()
         textField.clearButtonMode = .never
@@ -16,60 +16,27 @@ final class VTTextFieldCellContentView: UIView, UIContentView {
         return textField
     }()
 
-    private let label: UILabel = .init()
-    // label.textColor = .secondaryLabel
-
-    private var currentConfiguration: VTTextFieldCellContentConfiguration!
-
-    var configuration: UIContentConfiguration {
-        get { currentConfiguration }
-        set {
-            guard let config = newValue as? VTTextFieldCellContentConfiguration else { return }
-            apply(config)
-        }
+    override init(configuration: VTTextFieldCellContentConfiguration) {
+        super.init(configuration: configuration)
     }
 
-    init(configuration: VTTextFieldCellContentConfiguration) {
-        super.init(frame: .zero)
-        setup()
-        apply(configuration)
-    }
+    override func setupViews() {
+        super.setupViews()
 
-    @available(*, unavailable)
-    required init?(coder _: NSCoder) {
-        fatalError()
-    }
-
-    private func setup() {
         textField.delegate = self
         textField.translatesAutoresizingMaskIntoConstraints = false
-        addSubview(textField)
 
-        label.translatesAutoresizingMaskIntoConstraints = false
-        addSubview(label)
-
-        let hPad = 16.0
-        let vPad = 16.0
-        let spacing = 16.0
-        NSLayoutConstraint.activate([
-            label.leadingAnchor.constraint(equalTo: leadingAnchor, constant: hPad),
-            label.topAnchor.constraint(equalTo: topAnchor, constant: vPad),
-            label.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -vPad),
-            // label.widthAnchor.constraint(equalToConstant: 250),
-            textField.leadingAnchor.constraint(equalTo: label.trailingAnchor, constant: spacing),
-            textField.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -hPad),
-            textField.topAnchor.constraint(equalTo: topAnchor, constant: vPad),
-            textField.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -vPad),
-        ])
+        rootStack.addArrangedSubview(textField)
 
         textField.addTarget(self, action: #selector(changed), for: .editingChanged)
     }
 
-    private func apply(_ config: VTTextFieldCellContentConfiguration) {
-        currentConfiguration = config
-        textField.placeholder = config.placeholder
-        textField.text = config.text
-        label.text = config.label
+    override func apply(configuration: VTTextFieldCellContentConfiguration) {
+        guard currentConfiguration != configuration else { return }
+        super.apply(configuration: configuration)
+
+        textField.placeholder = configuration.placeholder
+        textField.text = configuration.text
     }
 
     @objc private func changed() {

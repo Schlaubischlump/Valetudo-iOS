@@ -101,6 +101,7 @@ final class VTListSelectionCellContentView<T: Hashable & Equatable & Sendable & 
 
             var content = UIListContentConfiguration.cell()
             content.text = item.description
+            content.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 10, leading: 0, bottom: 10, trailing: 0)
             cell.contentConfiguration = content
             cell.backgroundConfiguration = .adaptiveListCell()
             let section = Section(rawValue: indexPath.section)

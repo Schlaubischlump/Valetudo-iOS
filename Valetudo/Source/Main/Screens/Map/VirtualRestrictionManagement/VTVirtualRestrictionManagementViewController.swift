@@ -51,7 +51,7 @@ final class VTVirtualRestrictionManagementViewController: VTMapEditingViewContro
         [
             ToolbarActionDefinition(
                 title: "Remove",
-                image: .trash,
+                image: .virtualRestrictionDelete,
                 handler: { [weak self] in
                     self?.didTapRemove()
                 },

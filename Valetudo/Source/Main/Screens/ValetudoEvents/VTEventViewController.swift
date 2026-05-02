@@ -240,7 +240,7 @@ final class VTValetudoEventsViewController: VTCollectionViewController {
 
         var config = UIContentUnavailableConfiguration.empty()
         config.text = "NO_EVENTS".localized()
-        config.image = .bellFill
+        config.image = .eventsScreen
         config.imageProperties.preferredSymbolConfiguration = .init(pointSize: 36, weight: .regular)
         contentUnavailableConfiguration = config
     }
