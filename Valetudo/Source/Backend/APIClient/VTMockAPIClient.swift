@@ -43,6 +43,7 @@ actor VTMockAPIClient: VTAPIClientProtocol {
     private var updaterConfig = VTUpdaterConfig(updateProvider: .github)
     private var manualControlEnabled = false
     private var highResolutionManualControlEnabled = false
+    private var keyLockEnabled = false
     private var obstacleImagesEnabled = true
     private var presetSelections = VTMockAPIClient.defaultPresetSelections
     private var mapData = VTMockAPIClient.makeMockMap()
@@ -478,6 +479,22 @@ actor VTMockAPIClient: VTAPIClientProtocol {
 
     func getVirtualRestrictionsProperties() async throws -> VTVirtualRestrictionsProperties {
         VTVirtualRestrictionsProperties(supportedRestrictedZoneTypes: [.regular, .mop])
+    }
+
+    func getKeyLockIsEnabled() async throws -> Bool {
+        keyLockEnabled
+    }
+
+    func enableKeyLock() async throws {
+        keyLockEnabled = true
+    }
+
+    func disableKeyLock() async throws {
+        keyLockEnabled = false
+    }
+
+    func getKeyLockProperties() async throws -> [String: VTAnyCodable] {
+        [:]
     }
 
     // MARK: - 1.3 Properties

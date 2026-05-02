@@ -523,7 +523,7 @@ public actor VTAPIClient: VTAPIClientProtocol {
         return dictValue
     }
 
-    // MARK: - 1.2.15 MapSegmentRenameCapability
+    // MARK: - 1.2.16 MapSegmentRenameCapability
 
     private let mapSegmentRenameCapabilityPath: String = "MapSegmentRenameCapability"
 
@@ -546,7 +546,7 @@ public actor VTAPIClient: VTAPIClientProtocol {
         return dictValue
     }
 
-    // MARK: - 1.2.16 CombinedVirtualRestrictionsCapability
+    // MARK: - 1.2.17 CombinedVirtualRestrictionsCapability
 
     private let combinedVirtualRestrictionsCapabilityPath: String = "CombinedVirtualRestrictionsCapability"
 
@@ -567,6 +567,73 @@ public actor VTAPIClient: VTAPIClientProtocol {
             .appendingPathComponent(combinedVirtualRestrictionsCapabilityPath)
             .appendingPathComponent("properties")
         let request = VTRequest<VTVirtualRestrictionsProperties>(method: .GET, url: url)
+        return try await send(request)
+    }
+
+    // MARK: - 1.2.18 CombinedVirtualRestrictionsCapability
+
+    private let keyLockCapabilityPath: String = "KeyLockCapability"
+
+    public func getKeyLockIsEnabled() async throws -> Bool {
+        let url = capabilitiesURL.appendingPathComponent(keyLockCapabilityPath)
+        let request = VTRequest<VTKeyLockState>(method: .GET, url: url)
+        return try await send(request).enabled
+    }
+
+    public func enableKeyLock() async throws {
+        let url = capabilitiesURL.appendingPathComponent(keyLockCapabilityPath)
+        let request = VTRequest<Void>(method: .PUT, url: url, body: VTKeyLockAction(action: .enable))
+        try await send(request)
+    }
+
+    public func disableKeyLock() async throws {
+        let url = capabilitiesURL.appendingPathComponent(keyLockCapabilityPath)
+        let request = VTRequest<Void>(method: .PUT, url: url, body: VTKeyLockAction(action: .disable))
+        try await send(request)
+    }
+
+    /// Seems to be currently unused
+    public func getKeyLockProperties() async throws -> VTKeyLockProperties {
+        let url = capabilitiesURL
+            .appendingPathComponent(keyLockCapabilityPath)
+            .appendingPathComponent("properties")
+        let request = VTRequest<VTKeyLockProperties>(method: .GET, url: url)
+        return try await send(request)
+    }
+
+    // MARK: - 1.2.19 LocateCapability
+
+    private let locateCapabilityPath: String = "LocateCapability"
+
+    public func locateRobot() async throws {
+        let url = capabilitiesURL.appendingPathComponent(locateCapabilityPath)
+        let request = VTRequest<Void>(method: .PUT, url: url)
+        return try await send(request)
+    }
+
+    /// Seems to be currently unused
+    public func getLocateRobotProperties() async throws -> VTLocateRobotProperties {
+        let url = capabilitiesURL
+            .appendingPathComponent(locateCapabilityPath)
+            .appendingPathComponent("properties")
+        let request = VTRequest<VTLocateRobotProperties>(method: .GET, url: url)
+        return try await send(request)
+    }
+
+    // MARK: - 1.2.20 GoToLocationCapability
+
+    private let goToLocationCapabilityPath: String = "GoToLocationCapability"
+
+    public func goTo(x: Int, y: Int) async throws {
+        let url = capabilitiesURL.appendingPathComponent(goToLocationCapabilityPath)
+        let data = VTGoToAction(coordinates: VTMapCoordinate(x: x, y: y))
+        let request = VTRequest<Void>(method: .PUT, url: url, body: data)
+        try await send(request)
+    }
+
+    public func getGoToProperties() async throws -> VTGoToProperties {
+        let url = capabilitiesURL.appendingPathComponent(goToLocationCapabilityPath)
+        let request = VTRequest<VTGoToProperties>(method: .GET, url: url)
         return try await send(request)
     }
 

@@ -84,7 +84,7 @@ class VTStackedCellContentView<Configuration: VTStackedCellContentConfiguration>
         titleLabel.numberOfLines = 2
         titleLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
         titleLabel.setContentHuggingPriority(.defaultLow, for: .horizontal)
-        
+
         subtitleLabel.font = .preferredFont(forTextStyle: .subheadline)
         subtitleLabel.textColor = .secondaryLabel
         subtitleLabel.numberOfLines = 2

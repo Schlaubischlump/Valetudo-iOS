@@ -62,11 +62,6 @@ public protocol VTAPIClientProtocol: Actor {
     func clean(segmentIDs: [String], customOrder: Bool, iterations: Int) async throws
     func getMapSegmentationProperties() async throws -> VTMapSegmentationProperties
     func getMapSegments() async throws -> [VTMapSegment]
-    func joinMapSegments(segmentAID: String, segmentBID: String) async throws
-    func splitMapSegment(segmentID: String, pointA: CGPoint, pointB: CGPoint) async throws
-    func getMapSegmentEditProperties() async throws -> VTMapSegmentEditProperties
-    func renameMapSegment(segmentID: String, name: String) async throws
-    func getMapSegmentRenameProperties() async throws -> VTMapSegmentRenameProperties
 
     // MARK: - 1.2.4 AutoEmptyDockManualTriggerCapability
 
@@ -132,9 +127,40 @@ public protocol VTAPIClientProtocol: Actor {
 
     func setMapSegmentMaterial(segmentID: String, material: VTMaterial) async throws
     func getSupportedMapSegmentMaterials() async throws -> [VTMaterial]
+
+    // MARK: - 1.2.15 MapSegmentEditCapability
+
+    func joinMapSegments(segmentAID: String, segmentBID: String) async throws
+    func splitMapSegment(segmentID: String, pointA: CGPoint, pointB: CGPoint) async throws
+    func getMapSegmentEditProperties() async throws -> VTMapSegmentEditProperties
+
+    // MARK: - 1.2.16 MapSegmentRenameCapability
+
+    func renameMapSegment(segmentID: String, name: String) async throws
+    func getMapSegmentRenameProperties() async throws -> VTMapSegmentRenameProperties
+
+    // MARK: - 1.2.17 CombinedVirtualRestrictionsCapability
+
     func getVirtualRestrictions() async throws -> VTVirtualRestrictions
     func setVirtualRestrictions(_ restrictions: VTVirtualRestrictions) async throws
     func getVirtualRestrictionsProperties() async throws -> VTVirtualRestrictionsProperties
+
+    // MARK: - 1.2.18 CombinedVirtualRestrictionsCapability
+
+    func getKeyLockIsEnabled() async throws -> Bool
+    func enableKeyLock() async throws
+    func disableKeyLock() async throws
+    func getKeyLockProperties() async throws -> VTKeyLockProperties
+
+    // MARK: - 1.2.19 LocateCapability
+
+    func locateRobot() async throws
+    func getLocateRobotProperties() async throws -> VTLocateRobotProperties
+
+    // MARK: - 1.2.20 GoToLocationCapability
+
+    func goTo(x: Int, y: Int) async throws
+    func getGoToProperties() async throws -> VTGoToProperties
 
     // MARK: - 1.3 Properties
 
