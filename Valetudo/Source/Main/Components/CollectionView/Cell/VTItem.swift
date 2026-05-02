@@ -18,6 +18,14 @@ struct VTCheckboxItem: VTItem {
     let id: String
     let title: String
     let enabled: Bool
+    let image: UIImage?
+
+    init(id: String, title: String, enabled: Bool, image: UIImage? = nil) {
+        self.id = id
+        self.title = title
+        self.enabled = enabled
+        self.image = image
+    }
 }
 
 /// A free-form text input row.
@@ -31,6 +39,14 @@ struct VTDropDownItem<T: Hashable & Sendable>: VTItem {
     let id: String
     let active: T
     let options: [T]
+    let image: UIImage?
+
+    init(id: String, active: T, options: [T], image: UIImage? = nil) {
+        self.id = id
+        self.active = active
+        self.options = options
+        self.image = image
+    }
 }
 
 /// A segmented control row with one or more active options.
@@ -107,16 +123,21 @@ struct VTAnyItem: Hashable {
 
     // MARK: - Factory
 
-    static func checkbox(_ id: String, title: String, enabled: Bool) -> VTAnyItem {
-        VTAnyItem(VTCheckboxItem(id: id, title: title, enabled: enabled))
+    static func checkbox(_ id: String, title: String, enabled: Bool, image: UIImage? = nil) -> VTAnyItem {
+        VTAnyItem(VTCheckboxItem(id: id, title: title, enabled: enabled, image: image))
     }
 
     static func textField(_ id: String, text: String) -> VTAnyItem {
         VTAnyItem(VTTextFieldItem(id: id, text: text))
     }
 
-    static func dropDown<T: Hashable & Sendable>(_ id: String, active: T, options: [T]) -> VTAnyItem {
-        VTAnyItem(VTDropDownItem(id: id, active: active, options: options))
+    static func dropDown<T: Hashable & Sendable>(
+        _ id: String,
+        active: T,
+        options: [T],
+        image: UIImage? = nil
+    ) -> VTAnyItem {
+        VTAnyItem(VTDropDownItem(id: id, active: active, options: options, image: image))
     }
 
     static func segment<T: Hashable & Sendable>(_ id: String, active: Set<T>, options: [T]) -> VTAnyItem {

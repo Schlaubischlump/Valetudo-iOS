@@ -7,8 +7,8 @@
 import UIKit
 
 final class VTCheckboxCellContentView: UIView, UIContentView {
+    private let iconImageView = UIImageView()
     private let label: UILabel = .init()
-    // label.textColor = .secondaryLabel
 
     private let toggle = UISwitch()
 
@@ -34,9 +34,14 @@ final class VTCheckboxCellContentView: UIView, UIContentView {
     }
 
     private func setup() {
-        let stack = UIStackView(arrangedSubviews: [label, toggle])
+        iconImageView.contentMode = .scaleAspectFit
+        iconImageView.tintColor = .label
+        iconImageView.translatesAutoresizingMaskIntoConstraints = false
+
+        let stack = UIStackView(arrangedSubviews: [iconImageView, label, toggle])
         stack.axis = .horizontal
         stack.spacing = 8
+        stack.alignment = .center
         stack.translatesAutoresizingMaskIntoConstraints = false
 
         addSubview(stack)
@@ -48,6 +53,8 @@ final class VTCheckboxCellContentView: UIView, UIContentView {
             stack.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -vPad),
             stack.topAnchor.constraint(equalTo: topAnchor, constant: hPad),
             stack.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -hPad),
+            iconImageView.widthAnchor.constraint(equalToConstant: 24),
+            iconImageView.heightAnchor.constraint(equalToConstant: 24),
         ])
 
         toggle.addTarget(self, action: #selector(changed), for: .valueChanged)
@@ -56,6 +63,8 @@ final class VTCheckboxCellContentView: UIView, UIContentView {
     private func apply(_ config: VTCheckboxCellContentConfiguration) {
         currentConfiguration = config
         label.text = config.title
+        iconImageView.image = config.image?.withRenderingMode(.alwaysTemplate)
+        iconImageView.isHidden = config.image == nil
         toggle.isEnabled = true
         toggle.isOn = config.isOn
     }

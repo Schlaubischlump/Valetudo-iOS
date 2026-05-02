@@ -10,8 +10,25 @@ struct VTCheckboxCellContentConfiguration: UIContentConfiguration, Hashable {
     let id: String
     let title: String
     let isOn: Bool
+    let image: UIImage?
     var disableSelectionAfterAction: Bool = true
     let onChange: ((Bool) -> Void)?
+
+    init(
+        id: String,
+        title: String,
+        isOn: Bool,
+        image: UIImage? = nil,
+        disableSelectionAfterAction: Bool = true,
+        onChange: ((Bool) -> Void)? = nil
+    ) {
+        self.id = id
+        self.title = title
+        self.isOn = isOn
+        self.image = image
+        self.disableSelectionAfterAction = disableSelectionAfterAction
+        self.onChange = onChange
+    }
 
     func makeContentView() -> UIView & UIContentView {
         VTCheckboxCellContentView(configuration: self)
@@ -24,12 +41,14 @@ struct VTCheckboxCellContentConfiguration: UIContentConfiguration, Hashable {
     static func == (lhs: VTCheckboxCellContentConfiguration, rhs: VTCheckboxCellContentConfiguration) -> Bool {
         lhs.id == rhs.id &&
             lhs.title == rhs.title &&
-            lhs.isOn == rhs.isOn
+            lhs.isOn == rhs.isOn &&
+            lhs.image == rhs.image
     }
 
     func hash(into hasher: inout Hasher) {
         hasher.combine(id)
         hasher.combine(title)
         hasher.combine(isOn)
+        hasher.combine(image)
     }
 }

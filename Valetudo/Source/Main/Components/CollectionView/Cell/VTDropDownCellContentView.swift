@@ -7,6 +7,7 @@
 import UIKit
 
 final class VTDropDownCellContentView<S: Describable & Hashable & Equatable>: UIView, UIContentView {
+    private let iconImageView = UIImageView()
     private let titleLabel = UILabel()
     private let selectionButton = UIButton(type: .system)
 
@@ -33,12 +34,16 @@ final class VTDropDownCellContentView<S: Describable & Hashable & Equatable>: UI
     }
 
     private func setupViews() {
+        iconImageView.contentMode = .scaleAspectFit
+        iconImageView.tintColor = .label
+        iconImageView.translatesAutoresizingMaskIntoConstraints = false
+
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
         selectionButton.translatesAutoresizingMaskIntoConstraints = false
         selectionButton.showsMenuAsPrimaryAction = true
         selectionButton.changesSelectionAsPrimaryAction = true
 
-        let stack = UIStackView(arrangedSubviews: [titleLabel, selectionButton])
+        let stack = UIStackView(arrangedSubviews: [iconImageView, titleLabel, selectionButton])
         stack.axis = .horizontal
         stack.spacing = 8
         stack.alignment = .center
@@ -51,12 +56,16 @@ final class VTDropDownCellContentView<S: Describable & Hashable & Equatable>: UI
             stack.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -8),
             stack.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 16),
             stack.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -16),
+            iconImageView.widthAnchor.constraint(equalToConstant: 24),
+            iconImageView.heightAnchor.constraint(equalToConstant: 24),
         ])
     }
 
     private func apply(configuration: UIContentConfiguration) {
         guard let config = configuration as? VTDropDownCellContentConfiguration<S> else { return }
         titleLabel.text = config.title
+        iconImageView.image = config.image?.withRenderingMode(.alwaysTemplate)
+        iconImageView.isHidden = config.image == nil
         options = config.options
         selection = config.selection
         selectionButton.isEnabled = true
