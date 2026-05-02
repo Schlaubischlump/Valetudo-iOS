@@ -184,7 +184,6 @@ class VTRobotControlViewController: VTViewController {
         dockControls.translatesAutoresizingMaskIntoConstraints = false
         dockControls.axis = .horizontal
 
-        // TODO: Conditionally add these items based on the Capability of the robot
         let cleanButton = VTToggleControlButton(
             title: "CLEAN".localizedUppercase(),
             icon: .waterWaves
@@ -307,14 +306,20 @@ class VTRobotControlViewController: VTViewController {
                         }
                     case let .didReceiveError(msg):
                         log(message: msg, forSubsystem: .stateAttribute, level: .error)
-                    // TODO: Show error
+                        /*showRobotControlError(
+                            messageKey: "ROBOT_CONTROL_STATE_ATTRIBUTES_FAILED_MESSAGE",
+                            reason: msg
+                        )*/
                     default:
                         break
                     }
                 }
             } catch {
-                // TODO: Show error
                 log(message: "Failed to update data: \(error.localizedDescription)", forSubsystem: .robotControl, level: .error)
+                /*showRobotControlError(
+                    messageKey: "ROBOT_CONTROL_INITIAL_LOAD_FAILED_MESSAGE",
+                    reason: error.localizedDescription
+                )*/
             }
         }
     }
@@ -329,6 +334,16 @@ class VTRobotControlViewController: VTViewController {
             Task { await client.removeEventObserver(token: token, for: .stateAttributes) }
             observerToken = nil
         }
+    }
+
+    private func showRobotControlError(messageKey: String, reason: String) {
+        showError(
+            title: "ERROR".localized(),
+            message: String(
+                format: messageKey.localized(),
+                reason
+            )
+        )
     }
 
     @MainActor
@@ -496,7 +511,11 @@ class VTRobotControlViewController: VTViewController {
             }
         } catch {
             await updateButtons()
-            // TODO: Show error
+            log(message: error.localizedDescription, forSubsystem: .robotControl, level: .error)
+            showRobotControlError(
+                messageKey: "ROBOT_CONTROL_START_PAUSE_FAILED_MESSAGE",
+                reason: error.localizedDescription
+            )
         }
     }
 
@@ -505,7 +524,11 @@ class VTRobotControlViewController: VTViewController {
             try await client.stop()
         } catch {
             await updateButtons()
-            // TODO: Show error
+            log(message: error.localizedDescription, forSubsystem: .robotControl, level: .error)
+            showRobotControlError(
+                messageKey: "ROBOT_CONTROL_STOP_FAILED_MESSAGE",
+                reason: error.localizedDescription
+            )
         }
     }
 
@@ -514,7 +537,11 @@ class VTRobotControlViewController: VTViewController {
             try await client.home()
         } catch {
             await updateButtons()
-            // TODO: Show error
+            log(message: error.localizedDescription, forSubsystem: .robotControl, level: .error)
+            showRobotControlError(
+                messageKey: "ROBOT_CONTROL_HOME_FAILED_MESSAGE",
+                reason: error.localizedDescription
+            )
         }
     }
 
@@ -523,7 +550,11 @@ class VTRobotControlViewController: VTViewController {
             try await client.setPreset(value, forType: .fanSpeed)
         } catch {
             await updateButtons()
-            // TODO: Show error
+            log(message: error.localizedDescription, forSubsystem: .robotControl, level: .error)
+            showRobotControlError(
+                messageKey: "ROBOT_CONTROL_FAN_SPEED_FAILED_MESSAGE",
+                reason: error.localizedDescription
+            )
         }
     }
 
@@ -532,7 +563,11 @@ class VTRobotControlViewController: VTViewController {
             try await client.setPreset(value, forType: .waterGrade)
         } catch {
             await updateButtons()
-            // TODO: Show error
+            log(message: error.localizedDescription, forSubsystem: .robotControl, level: .error)
+            showRobotControlError(
+                messageKey: "ROBOT_CONTROL_WATER_GRADE_FAILED_MESSAGE",
+                reason: error.localizedDescription
+            )
         }
     }
 
@@ -541,7 +576,11 @@ class VTRobotControlViewController: VTViewController {
             try await client.setPreset(value, forType: .operationMode)
         } catch {
             await updateButtons()
-            // TODO: Show error
+            log(message: error.localizedDescription, forSubsystem: .robotControl, level: .error)
+            showRobotControlError(
+                messageKey: "ROBOT_CONTROL_OPERATION_MODE_FAILED_MESSAGE",
+                reason: error.localizedDescription
+            )
         }
     }
 
@@ -556,7 +595,11 @@ class VTRobotControlViewController: VTViewController {
             }
         } catch {
             await updateButtons()
-            // TODO: Show error
+            log(message: error.localizedDescription, forSubsystem: .robotControl, level: .error)
+            showRobotControlError(
+                messageKey: "ROBOT_CONTROL_DRY_MOP_PADS_FAILED_MESSAGE",
+                reason: error.localizedDescription
+            )
         }
     }
 
@@ -571,7 +614,11 @@ class VTRobotControlViewController: VTViewController {
             }
         } catch {
             await updateButtons()
-            // TODO: Show error
+            log(message: error.localizedDescription, forSubsystem: .robotControl, level: .error)
+            showRobotControlError(
+                messageKey: "ROBOT_CONTROL_CLEAN_MOP_PADS_FAILED_MESSAGE",
+                reason: error.localizedDescription
+            )
         }
     }
 
@@ -581,7 +628,11 @@ class VTRobotControlViewController: VTViewController {
             try await client.autoEmptyDock()
         } catch {
             await updateButtons()
-            // TODO: Show error
+            log(message: error.localizedDescription, forSubsystem: .robotControl, level: .error)
+            showRobotControlError(
+                messageKey: "ROBOT_CONTROL_EMPTY_DOCK_FAILED_MESSAGE",
+                reason: error.localizedDescription
+            )
         }
     }
 

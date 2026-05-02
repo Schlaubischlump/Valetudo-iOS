@@ -30,12 +30,12 @@ struct VTConsumableItem: Hashable {
             return remaining.value / 100.0
         case (.minutes, .minutes):
             guard let value = maxValue?.value else {
-                // TODO: log error
+                log(message: "Could not get progress for \(self).", forSubsystem: .consumable, level: .error)
                 return 0.0
             }
             return 1.0 - (remaining.value / value)
         default:
-            // TODO: log error
+            log(message: "Could not get progress for \(self).", forSubsystem: .consumable, level: .error)
             return 0.0
         }
     }

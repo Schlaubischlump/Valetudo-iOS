@@ -34,7 +34,6 @@ extension UICollectionViewController {
     }
 }
 
-// TODO: If more than one is visible we would rather refresh both at least on macOS
 extension UIViewController {
     @MainActor
     func activeRefreshHandler() -> (any VTRefreshHandling)? {

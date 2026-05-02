@@ -85,8 +85,14 @@ class VTConsumablesViewController: VTCollectionViewController {
                         let attrs = try? await client.getConsumables()
                         self?.updateItems(with: attrs ?? [], animated: false)
                     } catch {
-                        // TODO: Show error
                         log(message: error.localizedDescription, forSubsystem: .consumable, level: .error)
+                        self?.showError(
+                            title: "ERROR".localized(),
+                            message: String(
+                                format: "CONSUMABLE_RESET_FAILED_MESSAGE".localized(),
+                                error.localizedDescription
+                            )
+                        )
                     }
                 }
             }
@@ -131,7 +137,6 @@ class VTConsumablesViewController: VTCollectionViewController {
                      updateItems(with: stateAttributes.consumableStateAttributes, animated: true)
                  case .didReceiveError(let msg):
                      log(message: msg, forSubsystem: .stateAttribute, level: .error)
-                     // TODO: Show error
                  default:
                      break
                  }

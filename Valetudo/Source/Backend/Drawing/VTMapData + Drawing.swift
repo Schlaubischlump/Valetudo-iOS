@@ -220,8 +220,6 @@ extension VTMapData {
             }
 
             guard let shapeLayer else { continue }
-
-            // TODO: Use custom shape layer?
             container.addSublayer(shapeLayer)
         }
     }

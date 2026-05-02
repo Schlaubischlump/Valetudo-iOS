@@ -232,6 +232,17 @@
         }
       }
     },
+    "CONSUMABLE_RESET_FAILED_MESSAGE" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Failed to reset consumable.\n%@"
+          }
+        }
+      }
+    },
     "CONTROL" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -833,6 +844,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Log"
+          }
+        }
+      }
+    },
+    "LOG_EXPORT_FAILED_MESSAGE" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Failed to export log file.\n%@"
           }
         }
       }
@@ -1548,6 +1570,127 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Robot"
+          }
+        }
+      }
+    },
+    "ROBOT_CONTROL_CLEAN_MOP_PADS_FAILED_MESSAGE" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Failed to clean mop pads.\n%@"
+          }
+        }
+      }
+    },
+    "ROBOT_CONTROL_DRY_MOP_PADS_FAILED_MESSAGE" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Failed to dry mop pads.\n%@"
+          }
+        }
+      }
+    },
+    "ROBOT_CONTROL_EMPTY_DOCK_FAILED_MESSAGE" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Failed to empty the dock.\n%@"
+          }
+        }
+      }
+    },
+    "ROBOT_CONTROL_FAN_SPEED_FAILED_MESSAGE" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Failed to change fan speed.\n%@"
+          }
+        }
+      }
+    },
+    "ROBOT_CONTROL_HOME_FAILED_MESSAGE" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Failed to send robot home.\n%@"
+          }
+        }
+      }
+    },
+    "ROBOT_CONTROL_INITIAL_LOAD_FAILED_MESSAGE" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Failed to load robot controls.\n%@"
+          }
+        }
+      }
+    },
+    "ROBOT_CONTROL_OPERATION_MODE_FAILED_MESSAGE" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Failed to change operation mode.\n%@"
+          }
+        }
+      }
+    },
+    "ROBOT_CONTROL_START_PAUSE_FAILED_MESSAGE" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Failed to start or pause cleaning.\n%@"
+          }
+        }
+      }
+    },
+    "ROBOT_CONTROL_STATE_ATTRIBUTES_FAILED_MESSAGE" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Failed to update robot state.\n%@"
+          }
+        }
+      }
+    },
+    "ROBOT_CONTROL_STOP_FAILED_MESSAGE" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Failed to stop cleaning.\n%@"
+          }
+        }
+      }
+    },
+    "ROBOT_CONTROL_WATER_GRADE_FAILED_MESSAGE" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Failed to change water grade.\n%@"
           }
         }
       }

@@ -205,7 +205,6 @@ class VTHomeViewController: VTViewController {
                 }
             } catch {
                 log(message: error.localizedDescription, forSubsystem: .map, level: .error)
-                // TODO: Show error
             }
         }
     }
