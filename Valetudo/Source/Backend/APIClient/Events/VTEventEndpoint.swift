@@ -19,6 +19,9 @@ enum VTEventEndpointEventID: String {
 
     /// The Valetudo interaction event.
     case valetudoEvent = "ValetudoEventUpdated"
+
+    /// The Valetudo log content stream.
+    case log = "LogMessage"
 }
 
 /// A typed descriptor for a Valetudo event stream endpoint.
@@ -54,6 +57,16 @@ public struct VTEventEndpoint<E: Decodable & Equatable & Sendable, O: Sendable>:
             useSSE: false
         ) { anyEvents in
             anyEvents.map(\.event)
+        }
+    }
+
+    /// An endpoint that emits appended Valetudo log lines.
+    ///
+    /// The log stream exposes raw text chunks instead of JSON payloads. It would be nicer if this could return VTLogLines. However, it is not clear
+    /// how we can detect the end of a log message, if the message contains new lines. This is often the case for debug logs with json payloads.
+    public static var log: VTEventEndpoint<Data, String> {
+        .init(decodableType: Data.self, outputType: String.self, eventID: .log, useSSE: true) { logLine in
+            String(data: logLine, encoding: .utf8) ?? ""
         }
     }
 

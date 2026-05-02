@@ -47,6 +47,7 @@ public extension VTAPIClient {
         case .stateAttributes: stateURL.appendingPathComponent("attributes")
         case .valetudoEvent where !endpoint.useSSE: eventsURL
         case .valetudoEvent: fatalError("ValetudoEvent does not support SSE")
+        case .log: logURL.appendingPathComponent("content")
         }
 
         return endpoint.useSSE ? url.appendingPathComponent("sse") : url

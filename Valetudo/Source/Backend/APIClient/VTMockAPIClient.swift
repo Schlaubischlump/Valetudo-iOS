@@ -112,6 +112,8 @@ actor VTMockAPIClient: VTAPIClientProtocol {
                         await emitEvent(for: endpoint, to: continuation)
                     case .map:
                         continue
+                    case .log:
+                        continue
                     }
                 }
             }
@@ -514,10 +516,10 @@ actor VTMockAPIClient: VTAPIClientProtocol {
         logLevel = level
     }
 
-    func getLog() async throws -> [VTLogLine] {
+    func getLog() async throws -> [VTLogEntry] {
         [
-            VTLogLine(timestamp: Date(), level: "info", message: "Mock client started"),
-            VTLogLine(timestamp: Date(), level: "debug", message: "Mock log entry"),
+            VTLogEntry(timestamp: Date(), level: "info", message: "Mock client started"),
+            VTLogEntry(timestamp: Date(), level: "debug", message: "Mock log entry"),
         ]
     }
 
@@ -624,6 +626,11 @@ actor VTMockAPIClient: VTAPIClientProtocol {
             yield(mapData, to: continuation)
         case .valetudoEvent:
             yield(events, to: continuation)
+        case .log:
+            yield([
+                VTLogEntry(timestamp: Date(), level: "info", message: "Mock client started"),
+                VTLogEntry(timestamp: Date(), level: "debug", message: "Mock log entry"),
+            ], to: continuation)
         }
     }
 

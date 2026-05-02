@@ -9,7 +9,7 @@ import CoreGraphics
 import CoreImage
 import Foundation
 
-public struct VTLogLine: Sendable, Hashable {
+public struct VTLogEntry: Sendable, Hashable {
     let timestamp: Date
     let level: String
     let message: String
@@ -163,7 +163,7 @@ public protocol VTAPIClientProtocol: Actor {
 
     func getLogProperties() async throws -> VTLogLevel
     func setLogLevel(_ level: String) async throws
-    func getLog() async throws -> [VTLogLine]
+    func getLog() async throws -> [VTLogEntry]
 
     // MARK: - 4. Updater
 

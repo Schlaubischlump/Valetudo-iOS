@@ -9,14 +9,14 @@ import os.log
 /// High-performance log parser with SIMD-accelerated scanning and caching that operates on the byte data directly.
 enum VTLogParser {
     /// Parses log data directly from bytes
-    static func parse(data: Data) -> [VTLogLine] {
+    static func parse(data: Data) -> [VTLogEntry] {
         guard !data.isEmpty else { return [] }
 
         // let startTime = CFAbsoluteTimeGetCurrent()
 
         return data.withUnsafeBytes { buffer in
             guard let baseAddress = buffer.baseAddress?.assumingMemoryBound(to: UInt8.self) else {
-                return [VTLogLine]()
+                return [VTLogEntry]()
             }
             return parseBytes(baseAddress, count: buffer.count)
         }
@@ -109,12 +109,12 @@ enum VTLogParser {
 
     // MARK: - Core Parser
 
-    private static func parseBytes(_ bytes: UnsafePointer<UInt8>, count: Int) -> [VTLogLine] {
+    private static func parseBytes(_ bytes: UnsafePointer<UInt8>, count: Int) -> [VTLogEntry] {
         let boundaries = findEntryBoundariesSIMD(bytes, count: count)
 
         guard !boundaries.isEmpty else { return [] }
 
-        var results = [VTLogLine]()
+        var results = [VTLogEntry]()
         results.reserveCapacity(boundaries.count)
 
         var timestampCache = TimestampCache()
@@ -189,7 +189,7 @@ enum VTLogParser {
 
     private static func parseEntryAt(bytes: UnsafePointer<UInt8>, start: Int, end: Int,
                                      timestampCache: inout TimestampCache,
-                                     stringCache: inout StringCache) -> VTLogLine?
+                                     stringCache: inout StringCache) -> VTLogEntry?
     {
         var ptr = bytes.advanced(by: start + 1)
         let entryEnd = bytes.advanced(by: end)
@@ -223,7 +223,7 @@ enum VTLogParser {
 
         let message = extractMessage(from: ptr, to: entryEnd, cache: &stringCache)
 
-        return VTLogLine(timestamp: Date(timeIntervalSince1970: timestamp), level: level, message: message)
+        return VTLogEntry(timestamp: Date(timeIntervalSince1970: timestamp), level: level, message: message)
     }
 
     @inline(__always)

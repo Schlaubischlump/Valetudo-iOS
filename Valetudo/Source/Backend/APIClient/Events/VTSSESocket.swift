@@ -131,10 +131,14 @@ final actor VTSSESocket<E: Decodable & Equatable & Sendable, O: Sendable>: VTEve
         else { return }
 
         do {
-            let decoder = JSONDecoder()
-            decoder.dateDecodingStrategy = .iso8601Flexible
-            let result = try decoder.decode(endpoint.decodableType, from: data)
-            continuations.values.forEach { $0.yield(.didReceiveData(result)) }
+            if endpoint.decodableType == Data.self {
+                continuations.values.forEach { $0.yield(.didReceiveData(data as! E)) }
+            } else {
+                let decoder = JSONDecoder()
+                decoder.dateDecodingStrategy = .iso8601Flexible
+                let result = try decoder.decode(endpoint.decodableType, from: data)
+                continuations.values.forEach { $0.yield(.didReceiveData(result)) }
+            }
         } catch {
             continuations.values.forEach { $0.yield(.didReceiveError(error.localizedDescription)) }
         }

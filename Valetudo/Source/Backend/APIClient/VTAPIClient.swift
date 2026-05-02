@@ -630,7 +630,7 @@ public actor VTAPIClient: VTAPIClientProtocol {
         try await send(request)
     }
 
-    public func getLog() async throws -> [VTLogLine] {
+    public func getLog() async throws -> [VTLogEntry] {
         let url = logURL.appendingPathComponent("content")
         let request = VTRequest<String>(method: .GET, url: url, query: nil)
         let urlRequest = try await makeURLRequest(for: request)
