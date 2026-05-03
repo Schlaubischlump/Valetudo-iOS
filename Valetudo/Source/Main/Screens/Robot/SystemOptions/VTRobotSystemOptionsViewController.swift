@@ -29,7 +29,7 @@ private enum VTRobotSystemOptionsError: Error, LocalizedError {
 
 // TODO: Support Voice Packs
 
-final class VTRobotSystemOptionsViewController: VTCollectionViewController {
+final class VTRobotSystemOptionsViewController: VTListViewController<VTRobotSystemOptionsSection> {
     private struct DoNotDisturbState {
         var enabled: Bool = false
         var localStartTime: (hour: Int, minute: Int) = (0, 0)
@@ -71,227 +71,159 @@ final class VTRobotSystemOptionsViewController: VTCollectionViewController {
         var doNotDisturb = DoNotDisturbState()
     }
 
-    private typealias DataSource = UICollectionViewDiffableDataSource<VTRobotSystemOptionsSection, VTAnyItem>
-    private typealias Snapshot = NSDiffableDataSourceSnapshot<VTRobotSystemOptionsSection, VTAnyItem>
-
     private let client: any VTAPIClientProtocol
     private let availableCapabilities: Set<VTCapability>
 
-    private var dataSource: DataSource!
     private var state = State()
 
     init(client: any VTAPIClientProtocol, capabilities: Set<VTCapability>) {
         self.client = client
         availableCapabilities = capabilities
 
-        super.init(collectionViewLayout: UICollectionViewLayout())
-        setupAndApplyListLayout()
-
+        super.init()
         title = "ROBOT_SYSTEM_OPTIONS".localized()
     }
 
-    @available(*, unavailable)
-    @MainActor required init?(coder _: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
+    override func title(forSection: VTRobotSystemOptionsSection) -> String {
+        forSection.title
     }
 
-    // MARK: - View life cycle
-
-    override func viewDidLoad() {
-        super.viewDidLoad()
-
-        configureCollectionView()
-        configureDataSource()
-    }
-
-    override func viewWillAppear(_ animated: Bool) {
-        super.viewWillAppear(animated)
-
-        Task {
-            await reloadData(animated: false)
-        }
-    }
-
-    // MARK: - Setup CollectionView
-
-    private func setupAndApplyListLayout() {
-        var listConfig = UICollectionLayoutListConfiguration(appearance: .insetGrouped)
-        listConfig.showsSeparators = true
-        listConfig.headerMode = .supplementary
-        listConfig.backgroundColor = .adaptiveGroupedBackground
-
-        let layout = UICollectionViewCompositionalLayout.list(using: listConfig)
-        collectionView.setCollectionViewLayout(layout, animated: false)
-    }
-
-    private func configureCollectionView() {
-        collectionView.register(
-            VTHeaderView.self,
-            forSupplementaryViewOfKind: UICollectionView.elementKindSectionHeader,
-            withReuseIdentifier: VTHeaderView.reuseIdentifier
-        )
-    }
-
-    private func configureDataSource() {
-        let buttonCell = VTCellRegistration { cell, _, wrappedItem in
-            guard let item = wrappedItem.base as? VTButtonItem else {
-                fatalError("Unsupported key value item: \(wrappedItem.base)")
-            }
-            cell.contentConfiguration = VTButtonCellContentConfiguration(
-                id: item.id,
-                title: item.title,
-                disableSelectionAfterAction: true
-            ) { [weak self] in
-                guard let self, item.id == kSpeakerTestID else { return }
-                performUpdate(operationName: "Test Speaker Volume", itemID: item.id) { [client] in
-                    try await client.playSpeakerTestSound()
-                } onSuccess: {
-                    
-                }
-            }
-            cell.backgroundConfiguration = .adaptiveListCell()
-            cell.accessories = []
-        }
-
-        let sliderCell = VTCellRegistration { [weak self] cell, _, wrappedItem in
-            guard let item = wrappedItem.base as? VTSliderItem else {
-                fatalError("Unsupported key value item: \(wrappedItem.base)")
-            }
-
-            cell.contentConfiguration = VTSliderCellContentConfiguration(
-                id: item.id,
-                leftImage: item.leftImage,
-                rightImage: item.rightImage,
-                minValue: item.minValue,
-                maxValue: item.maxValue,
-                value: item.value,
-                disableSelectionAfterAction: true
-            ) { [weak self] newValue in
-                guard let self, item.id == kSpeakerVolumeID else { return }
-                performUpdate(operationName: "Change Speaker Volume", itemID: item.id) { [client] in
-                    try await client.setSpeakerVolume(Int(newValue))
-                } onSuccess: { [weak self] in
-                    self?.state.currentVolume = Int(newValue)
-                }
-            }
-            cell.backgroundConfiguration = .adaptiveListCell()
-            cell.accessories = []
-        }
-
-        let checkboxCell = VTCellRegistration { [weak self] cell, _, wrappedItem in
-            guard let item = wrappedItem.base as? VTCheckboxItem else {
-                fatalError("Unsupported checkbox item: \(wrappedItem.base)")
-            }
-
-            cell.contentConfiguration = VTCheckboxCellContentConfiguration(
-                id: item.id,
-                title: item.title,
-                subtitle: item.subtitle,
-                isOn: item.isOn,
-                image: item.image,
-                disableSelectionAfterAction: true
-            ) { [weak self] isOn in
-                guard let self, item.id == kDoNotDisturbEnabledID else { return }
-                performUpdate(operationName: "Toggle Do Not Disturb", itemID: item.id) { [weak self, client] in
-                    guard let self else { return }
-                    let newDndConfig = try await state.doNotDisturb.toDndConfiguration(enabled: isOn)
-                    try await client.setDoNotDisturbConfiguration(newDndConfig)
-                } onSuccess: { [weak self] in
-                    self?.state.doNotDisturb.enabled = isOn
-                }
-            }
-            cell.backgroundConfiguration = .adaptiveListCell()
-            cell.accessories = []
-        }
-
-        let timePickerCell = VTCellRegistration { [weak self] cell, _, wrappedItem in
-            guard let item = wrappedItem.base as? VTTimePickerItem else {
-                fatalError("Unsupported checkbox item: \(wrappedItem.base)")
-            }
-
-            cell.contentConfiguration = VTTimePickerCellContentConfiguration(
-                id: item.id,
-                title: item.title,
-                subtitle: item.subtitle,
-                image: item.image,
-                hours: item.hours,
-                minutes: item.minutes,
-                disableSelectionAfterAction: true
-            ) { [weak self] localHour, localMin in
-                guard let self, item.id == kDoNotDisturbStartID || item.id == kDoNotDisturbEndID else { return }
-                performUpdate(operationName: "Change Do Not Disturb Time", itemID: item.id) { [weak self, client] in
-                    guard let self else { return }
-                    let newDndConfig = if item.id == kDoNotDisturbStartID {
-                        try await state.doNotDisturb.toDndConfiguration(localStartTime: (localHour, localMin))
-                    } else {
-                        try await state.doNotDisturb.toDndConfiguration(localEndTime: (localHour, localMin))
-                    }
-                    try await client.setDoNotDisturbConfiguration(newDndConfig)
-                } onSuccess: { [weak self] in
-                    if item.id == kDoNotDisturbStartID {
-                        self?.state.doNotDisturb.localStartTime = (localHour, localMin)
-                    }
-                    if item.id == kDoNotDisturbEndID {
-                        self?.state.doNotDisturb.localEndTime = (localHour, localMin)
-                    }
-                }
-            }
-            cell.backgroundConfiguration = .adaptiveListCell()
-            cell.accessories = []
-        }
-
-        dataSource = DataSource(collectionView: collectionView) { collectionView, indexPath, wrappedItem in
-            let registration = switch wrappedItem.base {
-            case _ as VTButtonItem: buttonCell
-            case _ as VTSliderItem: sliderCell
-            case _ as VTCheckboxItem: checkboxCell
-            case _ as VTTimePickerItem: timePickerCell
-            default: fatalError("Unsupported item type: \(type(of: wrappedItem.base))")
-            }
-
-            return collectionView.dequeueConfiguredReusableCell(using: registration, for: indexPath, item: wrappedItem)
-        }
-
-        dataSource.supplementaryViewProvider = { [weak self] collectionView, kind, indexPath in
-            guard kind == UICollectionView.elementKindSectionHeader else { return nil }
-            guard
-                let self,
-                let header = collectionView.dequeueReusableSupplementaryView(
-                    ofKind: kind,
-                    withReuseIdentifier: VTHeaderView.reuseIdentifier,
-                    for: indexPath
-                ) as? VTHeaderView,
-                let section = dataSource.sectionIdentifier(for: indexPath.section)
-            else {
-                return nil
-            }
-
-            header.configure(text: section.title)
-            return header
-        }
-    }
-
-    // MARK: - Setup UI
-    
-    @MainActor
-    private func applySnapshot(animated: Bool, reconfigureItemWithIDs itemIDs: [String]) {
-        let sectionAndItems: [(VTRobotSystemOptionsSection, [VTAnyItem])] = [
-            .speaker => makeSpeakerItems(),
-            // .voicePacks => makeVoicePackItems(),
-            .doNotDisturb => makeDoNotDisturbItems(),
+    override func sections() -> [VTRobotSystemOptionsSection] {
+        [
+            .speaker,
+            // .voicePacks,
+            .doNotDisturb,
         ]
+    }
 
-        var snapshot = Snapshot()
-        for (sec, items) in sectionAndItems where !items.isEmpty {
-            snapshot.appendSections([sec])
-            snapshot.appendItems(items, toSection: sec)
-            // Force a reload to rollback incorrect items.
-            let refreshItems = items.filter { itemIDs.contains($0.id) }
-            snapshot.reconfigureItems(refreshItems)
+    override func items(forSection: VTRobotSystemOptionsSection) -> [VTAnyItem] {
+        switch forSection {
+        case .speaker:
+            makeSpeakerItems()
+        case .doNotDisturb:
+            makeDoNotDisturbItems()
         }
-        
+    }
 
-        dataSource.apply(snapshot, animatingDifferences: animated)
+    override func cellRegistration(forType: any VTItem.Type) -> VTCellRegistration {
+        switch forType {
+        case is VTButtonItem.Type:
+            VTCellRegistration { [weak self] cell, _, wrappedItem in
+                guard let item = wrappedItem.base as? VTButtonItem else {
+                    fatalError("Unsupported key value item: \(wrappedItem.base)")
+                }
+                cell.contentConfiguration = VTButtonCellContentConfiguration(
+                    id: item.id,
+                    title: item.title,
+                    disableSelectionAfterAction: true
+                ) { [weak self] in
+                    guard let self, item.id == kSpeakerTestID else { return }
+                    performUpdate(operationName: "Test Speaker Volume", itemID: item.id) { [client] in
+                        try await client.playSpeakerTestSound()
+                    }
+                }
+                cell.backgroundConfiguration = .adaptiveListCell()
+                cell.accessories = []
+            }
+        case is VTSliderItem.Type:
+            VTCellRegistration { [weak self] cell, _, wrappedItem in
+                guard let item = wrappedItem.base as? VTSliderItem else {
+                    fatalError("Unsupported key value item: \(wrappedItem.base)")
+                }
+
+                cell.contentConfiguration = VTSliderCellContentConfiguration(
+                    id: item.id,
+                    leftImage: item.leftImage,
+                    rightImage: item.rightImage,
+                    minValue: item.minValue,
+                    maxValue: item.maxValue,
+                    value: item.value,
+                    disableSelectionAfterAction: true
+                ) { [weak self] newValue in
+                    guard let self, item.id == kSpeakerVolumeID else { return }
+                    performUpdate(operationName: "Change Speaker Volume", itemID: item.id) { [client] in
+                        try await client.setSpeakerVolume(Int(newValue))
+                    } onSuccess: { [weak self] in
+                        self?.state.currentVolume = Int(newValue)
+                    }
+                }
+                cell.backgroundConfiguration = .adaptiveListCell()
+                cell.accessories = []
+            }
+        case is VTCheckboxItem.Type:
+            VTCellRegistration { [weak self] cell, _, wrappedItem in
+                guard let item = wrappedItem.base as? VTCheckboxItem else {
+                    fatalError("Unsupported checkbox item: \(wrappedItem.base)")
+                }
+
+                cell.contentConfiguration = VTCheckboxCellContentConfiguration(
+                    id: item.id,
+                    title: item.title,
+                    subtitle: item.subtitle,
+                    isOn: item.isOn,
+                    image: item.image,
+                    disableSelectionAfterAction: true
+                ) { [weak self] isOn in
+                    guard let self, item.id == kDoNotDisturbEnabledID else { return }
+                    performUpdate(operationName: "Toggle Do Not Disturb", itemID: item.id) { [weak self, client] in
+                        guard let self else { return }
+                        let newDndConfig = try await state.doNotDisturb.toDndConfiguration(enabled: isOn)
+                        try await client.setDoNotDisturbConfiguration(newDndConfig)
+                    } onSuccess: { [weak self] in
+                        self?.state.doNotDisturb.enabled = isOn
+                    }
+                }
+                cell.backgroundConfiguration = .adaptiveListCell()
+                cell.accessories = []
+            }
+        case is VTTimePickerItem.Type:
+            VTCellRegistration { [weak self] cell, _, wrappedItem in
+                guard let item = wrappedItem.base as? VTTimePickerItem else {
+                    fatalError("Unsupported checkbox item: \(wrappedItem.base)")
+                }
+
+                cell.contentConfiguration = VTTimePickerCellContentConfiguration(
+                    id: item.id,
+                    title: item.title,
+                    subtitle: item.subtitle,
+                    image: item.image,
+                    hours: item.hours,
+                    minutes: item.minutes,
+                    disableSelectionAfterAction: true
+                ) { [weak self] localHour, localMin in
+                    guard let self, item.id == kDoNotDisturbStartID || item.id == kDoNotDisturbEndID else { return }
+                    performUpdate(operationName: "Change Do Not Disturb Time", itemID: item.id) { [weak self, client] in
+                        guard let self else { return }
+                        let newDndConfig = if item.id == kDoNotDisturbStartID {
+                            try await state.doNotDisturb.toDndConfiguration(localStartTime: (localHour, localMin))
+                        } else {
+                            try await state.doNotDisturb.toDndConfiguration(localEndTime: (localHour, localMin))
+                        }
+                        try await client.setDoNotDisturbConfiguration(newDndConfig)
+                    } onSuccess: { [weak self] in
+                        if item.id == kDoNotDisturbStartID {
+                            self?.state.doNotDisturb.localStartTime = (localHour, localMin)
+                        }
+                        if item.id == kDoNotDisturbEndID {
+                            self?.state.doNotDisturb.localEndTime = (localHour, localMin)
+                        }
+                    }
+                }
+                cell.backgroundConfiguration = .adaptiveListCell()
+                cell.accessories = []
+            }
+        default:
+            fatalError("Unsupported cell registration for type \(forType)")
+        }
+    }
+
+    override var supportedCellTypes: [any VTItem.Type] {
+        [
+            VTButtonItem.self,
+            VTSliderItem.self,
+            VTCheckboxItem.self,
+            VTTimePickerItem.self,
+        ]
     }
 
     private func makeSpeakerItems() -> [VTAnyItem] {
@@ -353,8 +285,7 @@ final class VTRobotSystemOptionsViewController: VTCollectionViewController {
         ]
     }
 
-    @MainActor
-    private func reloadData(animated: Bool, reconfigureItemWithIDs itemIDs: [String] = []) async {
+    override func updateState() async {
         var nextState = state
 
         if availableCapabilities.contains(.speakerVolumeControl) {
@@ -378,51 +309,5 @@ final class VTRobotSystemOptionsViewController: VTCollectionViewController {
         }
 
         state = nextState
-        applySnapshot(animated: animated, reconfigureItemWithIDs: itemIDs)
-    }
-
-    // MARK: - Callbacks
-
-    private func performUpdate(
-        operationName: String,
-        itemID: String,
-        operation: @escaping @Sendable () async throws -> Void,
-        onSuccess: (@MainActor () -> Void)? = nil
-    ) {
-        Task { [weak self] in
-            guard let self else { return }
-
-            do {
-                try await operation()
-                await MainActor.run {
-                    onSuccess?()
-                }
-                await reloadData(animated: false, reconfigureItemWithIDs: [itemID])
-            } catch {
-                log(message: "\(operationName) failed: \(error.localizedDescription)", forSubsystem: .robotControl, level: .error)
-                await reconfigureItem(withID: itemID)
-            }
-        }
-    }
-    
-    @MainActor
-    private func reconfigureItem(withID id: String) async {
-        var snapshot = dataSource.snapshot()
-        guard let item = snapshot.itemIdentifiers.first(where: { $0.id == id }) else { return }
-        snapshot.reconfigureItems([item])
-        // Wait a little to make the rollback interaction smoother
-        try? await Task.sleep(nanoseconds: 250_000_000)
-        await dataSource.apply(snapshot, animatingDifferences: false)
-    }
-
-    override func collectionView(_: UICollectionView, shouldSelectItemAt indexPath: IndexPath) -> Bool {
-        guard let item = dataSource.itemIdentifier(for: indexPath) else { return false }
-        return item.base is VTKeyValueItem
-    }
-
-    
-    @MainActor
-    override func reconnectAndRefresh() async {
-        await reloadData(animated: false)
     }
 }

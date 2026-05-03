@@ -7,11 +7,10 @@
 import UIKit
 
 class VTListViewController<SectionType: Hashable & Sendable>: VTCollectionViewController {
+    typealias DataSource = UICollectionViewDiffableDataSource<SectionType, VTAnyItem>
+    typealias Snapshot = NSDiffableDataSourceSnapshot<SectionType, VTAnyItem>
 
-    private typealias DataSource = UICollectionViewDiffableDataSource<SectionType, VTAnyItem>
-    private typealias Snapshot = NSDiffableDataSourceSnapshot<SectionType, VTAnyItem>
-
-    private var dataSource: DataSource!
+    var dataSource: DataSource!
 
     init() {
         super.init(collectionViewLayout: UICollectionViewLayout())
@@ -39,29 +38,31 @@ class VTListViewController<SectionType: Hashable & Sendable>: VTCollectionViewCo
             await reloadData(animated: false)
         }
     }
-    
+
     // MARK: - Subclass methods
-    
-    func cellRegistration(forItem: any VTItem) -> VTCellRegistration {
-        fatalError("Not implemented!")
+
+    var supportedCellTypes: [any VTItem.Type] {
+        []
     }
-    
-    func title(forSection: SectionType) -> String {
-        fatalError("Not implemented!")
-    }
-    
-    func sections() -> [SectionType] {
-        fatalError("Not implemented!")
-    }
-    
-    func items(forSection: SectionType) -> [VTAnyItem] {
+
+    func cellRegistration(forType _: any VTItem.Type) -> VTCellRegistration {
         fatalError("Not implemented!")
     }
 
-    func updateState() {
-        
+    func title(forSection _: SectionType) -> String {
+        fatalError("Not implemented!")
     }
-    
+
+    func sections() -> [SectionType] {
+        fatalError("Not implemented!")
+    }
+
+    func items(forSection _: SectionType) -> [VTAnyItem] {
+        fatalError("Not implemented!")
+    }
+
+    func updateState() async {}
+
     // MARK: - Setup CollectionView
 
     private func setupAndApplyListLayout() {
@@ -81,13 +82,23 @@ class VTListViewController<SectionType: Hashable & Sendable>: VTCollectionViewCo
             withReuseIdentifier: VTHeaderView.reuseIdentifier
         )
     }
-    
+
+    private func identifier(forItemType: any VTItem.Type) -> String {
+        String(describing: forItemType)
+    }
+
     private func configureDataSource() {
+        let cellRegistrations = Dictionary(uniqueKeysWithValues: supportedCellTypes.map { ty in
+            String(describing: ty) => self.cellRegistration(forType: ty)
+        })
+
         dataSource = DataSource(collectionView: collectionView) { [weak self] collectionView, indexPath, wrappedItem in
-            guard let self, let item = wrappedItem.base as? (any VTItem) else {
+            guard let self,
+                  let item = wrappedItem.base as? (any VTItem),
+                  let registration = cellRegistrations[identifier(forItemType: type(of: item))]
+            else {
                 fatalError("Expected VTItem")
             }
-            let registration = cellRegistration(forItem: item)
             return collectionView.dequeueConfiguredReusableCell(using: registration, for: indexPath, item: wrappedItem)
         }
 
@@ -127,14 +138,14 @@ class VTListViewController<SectionType: Hashable & Sendable>: VTCollectionViewCo
 
         dataSource.apply(snapshot, animatingDifferences: animated)
     }
-    
+
     @MainActor
     private func reloadData(animated: Bool, reconfigureItemWithIDs itemIDs: [String] = []) async {
-        updateState()
+        await updateState()
         applySnapshot(animated: animated, reconfigureItemWithIDs: itemIDs)
     }
 
-    private func performUpdate(
+    func performUpdate(
         operationName: String,
         itemID: String,
         operation: @escaping @Sendable () async throws -> Void,

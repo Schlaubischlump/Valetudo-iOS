@@ -2333,6 +2333,17 @@
         }
       }
     },
+    "ROBOT_SYSTEM_QUIRKS" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "QUIRKS"
+          }
+        }
+      }
+    },
     "ROBOTS" : {
       "extractionState" : "manual",
       "localizations" : {
