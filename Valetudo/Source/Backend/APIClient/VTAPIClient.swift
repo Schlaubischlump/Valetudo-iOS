@@ -142,6 +142,14 @@ public actor VTAPIClient: VTAPIClientProtocol {
         return try await send(statisticsRequest)
     }
 
+    public func getCurrentStatisticsCapabilityProperties() async throws -> VTStatisticsCapabilityProperties {
+        let url = capabilitiesURL
+            .appendingPathComponent("CurrentStatisticsCapability")
+            .appendingPathComponent("properties")
+        let request = VTRequest<VTStatisticsCapabilityProperties>(method: .GET, url: url)
+        return try await send(request)
+    }
+
     // MARK: - 1.2.2 BasicControlCapability
 
     private let basicControlCapabilityPath: String = "BasicControlCapability"
@@ -174,6 +182,14 @@ public actor VTAPIClient: VTAPIClientProtocol {
         try await send(request)
     }
 
+    public func getBasicControlCapabilityProperties() async throws -> VTBasicControlCapabilityProperties {
+        let url = capabilitiesURL
+            .appendingPathComponent(basicControlCapabilityPath)
+            .appendingPathComponent("properties")
+        let request = VTRequest<VTBasicControlCapabilityProperties>(method: .GET, url: url)
+        return try await send(request)
+    }
+
     // MARK: - 1.2.3 MapSegmentationCapability
 
     private let mapSegmentationCapabilityPath: String = "MapSegmentationCapability"
@@ -201,10 +217,20 @@ public actor VTAPIClient: VTAPIClientProtocol {
 
     // MARK: - 1.2.4 AutoEmptyDockManualTriggerCapability
 
+    private let autoEmptyDockManualTriggerCapabilityPath: String = "AutoEmptyDockManualTriggerCapability"
+
     public func autoEmptyDock() async throws {
-        let url = capabilitiesURL.appendingPathComponent("AutoEmptyDockManualTriggerCapability")
-        let request = VTRequest<Void>(method: .PUT, url: url, query: nil, body: VTManualTriggerAction())
+        let url = capabilitiesURL.appendingPathComponent(autoEmptyDockManualTriggerCapabilityPath)
+        let request = VTRequest<Void>(method: .PUT, url: url, query: nil, body: VTAutoEmptyDockManualTriggerAction())
         try await send(request)
+    }
+
+    public func getAutoEmptyDockManualTriggerCapabilityProperties() async throws -> VTAutoEmptyDockManualTriggerCapabilityProperties {
+        let url = capabilitiesURL
+            .appendingPathComponent(autoEmptyDockManualTriggerCapabilityPath)
+            .appendingPathComponent("properties")
+        let request = VTRequest<VTAutoEmptyDockManualTriggerCapabilityProperties>(method: .GET, url: url)
+        return try await send(request)
     }
 
     // MARK: - 1.2.5 MopDockCleanManualTriggerCapability
@@ -213,13 +239,15 @@ public actor VTAPIClient: VTAPIClientProtocol {
 
     public func startMopDockClean() async throws {
         let url = capabilitiesURL.appendingPathComponent(mopDockCleanCapabilityPath)
-        let request = VTRequest<Void>(method: .PUT, url: url, query: nil, body: VTToggleStartStopAction(action: .start))
+        let data = VTMopDockCleanToggleStartStopAction(action: .start)
+        let request = VTRequest<Void>(method: .PUT, url: url, query: nil, body: data)
         try await send(request)
     }
 
     public func stopMopDockClean() async throws {
         let url = capabilitiesURL.appendingPathComponent(mopDockCleanCapabilityPath)
-        let request = VTRequest<Void>(method: .PUT, url: url, query: nil, body: VTToggleStartStopAction(action: .stop))
+        let data = VTMopDockCleanToggleStartStopAction(action: .stop)
+        let request = VTRequest<Void>(method: .PUT, url: url, query: nil, body: data)
         try await send(request)
     }
 
@@ -229,17 +257,19 @@ public actor VTAPIClient: VTAPIClientProtocol {
 
     public func startMopDockDry() async throws {
         let url = capabilitiesURL.appendingPathComponent(mopDockDryCapabilityPath)
-        let request = VTRequest<Void>(method: .PUT, url: url, query: nil, body: VTToggleStartStopAction(action: .start))
+        let data = VTMopDockDryToggleStartStopAction(action: .start)
+        let request = VTRequest<Void>(method: .PUT, url: url, query: nil, body: data)
         try await send(request)
     }
 
     public func stopMopDockDry() async throws {
         let url = capabilitiesURL.appendingPathComponent(mopDockDryCapabilityPath)
-        let request = VTRequest<Void>(method: .PUT, url: url, query: nil, body: VTToggleStartStopAction(action: .stop))
+        let data = VTMopDockDryToggleStartStopAction(action: .stop)
+        let request = VTRequest<Void>(method: .PUT, url: url, query: nil, body: data)
         try await send(request)
     }
 
-    // MARK: - 1.2.7 FanSpeedControlCapability / WaterUsageControlCapability / OperationModeControlCapability
+    // MARK: - 1.2.7 FanSpeedControlCapability / 1.2.8 WaterUsageControlCapability / 1.2.9 OperationModeControlCapability
 
     private func capabilityPath(forType type: VTPresetType) -> String {
         switch type {
@@ -266,24 +296,48 @@ public actor VTAPIClient: VTAPIClientProtocol {
         try await send(request)
     }
 
-    // MARK: - 1.2.8 ConsumableMonitoringCapability
+    public func getFanSpeedControlProperties() async throws -> VTFanSpeedControlCapabilityProperties {
+        let url = capabilitiesURL
+            .appendingPathComponent(capabilityPath(forType: .fanSpeed))
+            .appendingPathComponent("properties")
+        let request = VTRequest<VTFanSpeedControlCapabilityProperties>(method: .GET, url: url)
+        return try await send(request)
+    }
+
+    public func getWaterUsageControlProperties() async throws -> VTWaterUsageControlCapabilityProperties {
+        let url = capabilitiesURL
+            .appendingPathComponent(capabilityPath(forType: .waterGrade))
+            .appendingPathComponent("properties")
+        let request = VTRequest<VTWaterUsageControlCapabilityProperties>(method: .GET, url: url)
+        return try await send(request)
+    }
+
+    public func getOperationModeControlProperties() async throws -> VTOperationModeControlCapabilityProperties {
+        let url = capabilitiesURL
+            .appendingPathComponent(capabilityPath(forType: .operationMode))
+            .appendingPathComponent("properties")
+        let request = VTRequest<VTOperationModeControlCapabilityProperties>(method: .GET, url: url)
+        return try await send(request)
+    }
+
+    // MARK: - 1.2.10 ConsumableMonitoringCapability
 
     private let consumableMonitoringCapabilityPath: String = "ConsumableMonitoringCapability"
 
-    public func getConsumables() async throws -> [VTConsumableStateAttribute] {
+    public func getConsumables() async throws -> [VTConsumableState] {
         let url = capabilitiesURL
             .appendingPathComponent(consumableMonitoringCapabilityPath)
         let request = VTRequest<VTStateAttributeList>(method: .GET, url: url, query: nil)
         return try await send(request).attributes.compactMap {
-            $0 as? VTConsumableStateAttribute
+            $0 as? VTConsumableState
         }
     }
 
-    public func getPropertiesForConsumables() async throws -> [VTConsumableStateAttributeProperties] {
+    public func getPropertiesForConsumables() async throws -> [VTConsumableStateProperties] {
         let url = capabilitiesURL
             .appendingPathComponent(consumableMonitoringCapabilityPath)
             .appendingPathComponent("properties")
-        let request = VTRequest<VTConsumableStateAttributePropertiesList>(method: .GET, url: url, query: nil)
+        let request = VTRequest<VTConsumableStatePropertiesList>(method: .GET, url: url, query: nil)
         return try await send(request).availableConsumables
     }
 
@@ -291,7 +345,7 @@ public actor VTAPIClient: VTAPIClientProtocol {
         let url = capabilitiesURL
             .appendingPathComponent(consumableMonitoringCapabilityPath)
             .appendingPathComponent(type.rawValue)
-        let request = VTRequest<Void>(method: .PUT, url: url, query: nil, body: VTResetAction())
+        let request = VTRequest<Void>(method: .PUT, url: url, query: nil, body: VTResetConsumableAction())
         try await send(request)
     }
 
@@ -300,11 +354,11 @@ public actor VTAPIClient: VTAPIClientProtocol {
             .appendingPathComponent(consumableMonitoringCapabilityPath)
             .appendingPathComponent(type.rawValue)
             .appendingPathComponent(subtype.rawValue)
-        let request = VTRequest<Void>(method: .PUT, url: url, query: nil, body: VTResetAction())
+        let request = VTRequest<Void>(method: .PUT, url: url, query: nil, body: VTResetConsumableAction())
         try await send(request)
     }
 
-    // MARK: - 1.2.9 ManualControlCapability
+    // MARK: - 1.2.11 ManualControlCapability
 
     private let manualControlCapabilityPath: String = "ManualControlCapability"
 
@@ -347,7 +401,7 @@ public actor VTAPIClient: VTAPIClientProtocol {
         try await send(request)
     }
 
-    // MARK: - 1.2.10 ManualControlCapability
+    // MARK: - 1.2.12 HighResolutionManualControlCapability
 
     private let highResolutionManualControlCapabilityPath: String = "HighResolutionManualControlCapability"
 
@@ -379,7 +433,15 @@ public actor VTAPIClient: VTAPIClientProtocol {
         try await send(request)
     }
 
-    // MARK: - 1.2.11 ObstacleImagesCapability
+    public func getHighResolutionManualControlCapabilityProperties() async throws -> VTHighResolutionManualControlCapabilityProperties {
+        let url = capabilitiesURL
+            .appendingPathComponent(highResolutionManualControlCapabilityPath)
+            .appendingPathComponent("properties")
+        let request = VTRequest<VTHighResolutionManualControlCapabilityProperties>(method: .GET, url: url)
+        return try await send(request)
+    }
+
+    // MARK: - 1.2.13 ObstacleImagesCapability
 
     private let obstacleImagesCapabilityPath: String = "ObstacleImagesCapability"
 
@@ -425,14 +487,14 @@ public actor VTAPIClient: VTAPIClientProtocol {
         return try await send(request)
     }
 
-    // MARK: - 1.2.12 MapResetCapability
+    // MARK: - 1.2.14 MapResetCapability
 
     private let mapResetCapabilityPath: String = "MapResetCapability"
 
     public func resetMap() async throws {
         let url = capabilitiesURL
             .appendingPathComponent(mapResetCapabilityPath)
-        let request = VTRequest<Void>(method: .PUT, url: url, body: VTResetAction())
+        let request = VTRequest<Void>(method: .PUT, url: url, body: VTMapResetAction())
         return try await send(request)
     }
 
@@ -448,7 +510,7 @@ public actor VTAPIClient: VTAPIClientProtocol {
         return dictValue
     }
 
-    // MARK: - 1.2.13 MappingPassCapability
+    // MARK: - 1.2.15 MappingPassCapability
 
     private let mappingPassCapabilityPath: String = "MappingPassCapability"
 
@@ -471,7 +533,7 @@ public actor VTAPIClient: VTAPIClientProtocol {
         return dictValue
     }
 
-    // MARK: - 1.2.14 MapSegmentMaterialControlCapability
+    // MARK: - 1.2.16 MapSegmentMaterialControlCapability
 
     private let mapSegmentMaterialControlCapabilityPath: String = "MapSegmentMaterialControlCapability"
 
@@ -491,7 +553,7 @@ public actor VTAPIClient: VTAPIClientProtocol {
         return try await send(request).supportedMaterials
     }
 
-    // MARK: - 1.2.15 MapSegmentEditCapability
+    // MARK: - 1.2.17 MapSegmentEditCapability
 
     private let mapSegmentEditCapabilityPath: String = "MapSegmentEditCapability"
 
@@ -523,7 +585,7 @@ public actor VTAPIClient: VTAPIClientProtocol {
         return dictValue
     }
 
-    // MARK: - 1.2.16 MapSegmentRenameCapability
+    // MARK: - 1.2.18 MapSegmentRenameCapability
 
     private let mapSegmentRenameCapabilityPath: String = "MapSegmentRenameCapability"
 
@@ -546,7 +608,7 @@ public actor VTAPIClient: VTAPIClientProtocol {
         return dictValue
     }
 
-    // MARK: - 1.2.17 CombinedVirtualRestrictionsCapability
+    // MARK: - 1.2.19 CombinedVirtualRestrictionsCapability
 
     private let combinedVirtualRestrictionsCapabilityPath: String = "CombinedVirtualRestrictionsCapability"
 
@@ -570,7 +632,7 @@ public actor VTAPIClient: VTAPIClientProtocol {
         return try await send(request)
     }
 
-    // MARK: - 1.2.18 CombinedVirtualRestrictionsCapability
+    // MARK: - 1.2.20 KeyLockCapability
 
     private let keyLockCapabilityPath: String = "KeyLockCapability"
 
@@ -601,7 +663,7 @@ public actor VTAPIClient: VTAPIClientProtocol {
         return try await send(request)
     }
 
-    // MARK: - 1.2.19 LocateCapability
+    // MARK: - 1.2.21 LocateCapability
 
     private let locateCapabilityPath: String = "LocateCapability"
 
@@ -620,7 +682,7 @@ public actor VTAPIClient: VTAPIClientProtocol {
         return try await send(request)
     }
 
-    // MARK: - 1.2.20 GoToLocationCapability
+    // MARK: - 1.2.22 GoToLocationCapability
 
     private let goToLocationCapabilityPath: String = "GoToLocationCapability"
 
@@ -632,8 +694,732 @@ public actor VTAPIClient: VTAPIClientProtocol {
     }
 
     public func getGoToProperties() async throws -> VTGoToProperties {
-        let url = capabilitiesURL.appendingPathComponent(goToLocationCapabilityPath)
+        let url = capabilitiesURL
+            .appendingPathComponent(goToLocationCapabilityPath)
+            .appendingPathComponent("properties")
         let request = VTRequest<VTGoToProperties>(method: .GET, url: url)
+        return try await send(request)
+    }
+
+    // MARK: - 1.2.23 AutoEmptyDockAutoEmptyDurationControlCapability
+
+    private let autoEmptyDockAutoEmptyDurationControlCapabilityPath: String = "AutoEmptyDockAutoEmptyDurationControlCapability"
+
+    public func getAutoEmptyDockAutoEmptyDuration() async throws -> VTAutoEmptyDockAutoEmptyDuration {
+        let url = capabilitiesURL.appendingPathComponent(autoEmptyDockAutoEmptyDurationControlCapabilityPath)
+        let request = VTRequest<VTAutoEmptyDockAutoEmptyDurationControlCapabilityState>(method: .GET, url: url)
+        return try await send(request).duration
+    }
+
+    public func setAutoEmptyDockAutoEmptyDuration(_ duration: VTAutoEmptyDockAutoEmptyDuration) async throws {
+        let url = capabilitiesURL.appendingPathComponent(autoEmptyDockAutoEmptyDurationControlCapabilityPath)
+        let data = VTAutoEmptyDockAutoEmptyDurationControlCapabilityAction(duration: duration)
+        let request = VTRequest<Void>(method: .PUT, url: url, body: data)
+        try await send(request)
+    }
+
+    public func getAutoEmptyDockAutoEmptyDurationProperties() async throws -> VTAutoEmptyDockAutoEmptyDurationProperties {
+        let url = capabilitiesURL
+            .appendingPathComponent(autoEmptyDockAutoEmptyDurationControlCapabilityPath)
+            .appendingPathComponent("properties")
+        let request = VTRequest<VTAutoEmptyDockAutoEmptyDurationProperties>(method: .GET, url: url)
+        return try await send(request)
+    }
+
+    // MARK: - 1.2.24 AutoEmptyDockAutoEmptyIntervalControlCapability
+
+    private let autoEmptyDockAutoEmptyIntervalControlCapabilityPath: String = "AutoEmptyDockAutoEmptyIntervalControlCapability"
+
+    public func getAutoEmptyDockAutoEmptyInterval() async throws -> VTAutoEmptyDockAutoEmptyInterval {
+        let url = capabilitiesURL.appendingPathComponent(autoEmptyDockAutoEmptyIntervalControlCapabilityPath)
+        let request = VTRequest<VTAutoEmptyDockAutoEmptyIntervalControlCapabilityState>(method: .GET, url: url)
+        return try await send(request).interval
+    }
+
+    public func setAutoEmptyDockAutoEmptyInterval(_ interval: VTAutoEmptyDockAutoEmptyInterval) async throws {
+        let url = capabilitiesURL.appendingPathComponent(autoEmptyDockAutoEmptyIntervalControlCapabilityPath)
+        let data = VTAutoEmptyDockAutoEmptyIntervalControlCapabilityAction(interval: interval)
+        let request = VTRequest<Void>(method: .PUT, url: url, body: data)
+        try await send(request)
+    }
+
+    public func getAutoEmptyDockAutoEmptyIntervalProperties() async throws -> VTAutoEmptyDockAutoEmptyIntervalProperties {
+        let url = capabilitiesURL
+            .appendingPathComponent(autoEmptyDockAutoEmptyIntervalControlCapabilityPath)
+            .appendingPathComponent("properties")
+        let request = VTRequest<VTAutoEmptyDockAutoEmptyIntervalProperties>(method: .GET, url: url)
+        return try await send(request)
+    }
+
+    // MARK: - 1.2.25 CarpetSensorModeControlCapability
+
+    private let carpetSensorModeControlCapabilityPath: String = "CarpetSensorModeControlCapability"
+
+    public func getCarpetSensorMode() async throws -> VTCarpetSensorMode {
+        let url = capabilitiesURL.appendingPathComponent(carpetSensorModeControlCapabilityPath)
+        let request = VTRequest<VTCarpetSensorModeState>(method: .GET, url: url)
+        return try await send(request).mode
+    }
+
+    public func setCarpetSensorMode(_ mode: VTCarpetSensorMode) async throws {
+        let url = capabilitiesURL.appendingPathComponent(carpetSensorModeControlCapabilityPath)
+        let data = VTCarpetSensorModeAction(mode: mode)
+        let request = VTRequest<Void>(method: .PUT, url: url, body: data)
+        try await send(request)
+    }
+
+    public func getCarpetSensorModeControlProperties() async throws -> VTCarpetSensorModeControlProperties {
+        let url = capabilitiesURL
+            .appendingPathComponent(carpetSensorModeControlCapabilityPath)
+            .appendingPathComponent("properties")
+        let request = VTRequest<VTCarpetSensorModeControlProperties>(method: .GET, url: url)
+        return try await send(request)
+    }
+
+    // MARK: - 1.2.26 CleanRouteControlCapability
+
+    private let cleanRouteControlCapabilityPath: String = "CleanRouteControlCapability"
+
+    public func getCleanRoute() async throws -> VTCleanRoute {
+        let url = capabilitiesURL.appendingPathComponent(cleanRouteControlCapabilityPath)
+        let request = VTRequest<VTCleanRouteState>(method: .GET, url: url)
+        return try await send(request).route
+    }
+
+    public func setCleanRoute(_ route: VTCleanRoute) async throws {
+        let url = capabilitiesURL.appendingPathComponent(cleanRouteControlCapabilityPath)
+        let request = VTRequest<Void>(method: .PUT, url: url, body: VTCleanRouteAction(route: route))
+        try await send(request)
+    }
+
+    public func getCleanRouteControlProperties() async throws -> VTCleanRouteControlProperties {
+        let url = capabilitiesURL
+            .appendingPathComponent(cleanRouteControlCapabilityPath)
+            .appendingPathComponent("properties")
+        let request = VTRequest<VTCleanRouteControlProperties>(method: .GET, url: url)
+        return try await send(request)
+    }
+
+    // MARK: - 1.2.27 DoNotDisturbCapability
+
+    private let doNotDisturbCapabilityPath: String = "DoNotDisturbCapability"
+
+    public func getDoNotDisturbConfiguration() async throws -> VTDoNotDisturbConfiguration {
+        let url = capabilitiesURL.appendingPathComponent(doNotDisturbCapabilityPath)
+        let request = VTRequest<VTDoNotDisturbConfiguration>(method: .GET, url: url)
+        return try await send(request)
+    }
+
+    public func setDoNotDisturbConfiguration(_ configuration: VTDoNotDisturbConfiguration) async throws {
+        let url = capabilitiesURL.appendingPathComponent(doNotDisturbCapabilityPath)
+        let request = VTRequest<Void>(method: .PUT, url: url, body: configuration)
+        try await send(request)
+    }
+
+    public func getDoNotDisturbCapabilityProperties() async throws -> VTDoNotDisturbCapabilityProperties {
+        let url = capabilitiesURL
+            .appendingPathComponent(doNotDisturbCapabilityPath)
+            .appendingPathComponent("properties")
+        let request = VTRequest<VTDoNotDisturbCapabilityProperties>(method: .GET, url: url)
+        return try await send(request)
+    }
+
+    // MARK: - 1.2.28 MapSnapshotCapability
+
+    private let mapSnapshotCapabilityPath: String = "MapSnapshotCapability"
+
+    public func getMapSnapshots() async throws -> [VTMapSnapshot] {
+        let url = capabilitiesURL.appendingPathComponent(mapSnapshotCapabilityPath)
+        let request = VTRequest<[VTMapSnapshot]>(method: .GET, url: url)
+        return try await send(request)
+    }
+
+    public func restoreMapSnapshot(id: String) async throws {
+        let url = capabilitiesURL.appendingPathComponent(mapSnapshotCapabilityPath)
+        let request = VTRequest<Void>(method: .PUT, url: url, body: VTMapSnapshotAction(action: .restore, id: id))
+        try await send(request)
+    }
+
+    public func getMapSnapshotCapabilityProperties() async throws -> VTMapSnapshotCapabilityProperties {
+        let url = capabilitiesURL
+            .appendingPathComponent(mapSnapshotCapabilityPath)
+            .appendingPathComponent("properties")
+        let request = VTRequest<VTMapSnapshotCapabilityProperties>(method: .GET, url: url)
+        return try await send(request)
+    }
+
+    // MARK: - 1.2.29 MopDockMopDryingTimeControlCapability
+
+    private let mopDockMopDryingTimeControlCapabilityPath: String = "MopDockMopDryingTimeControlCapability"
+
+    public func getMopDockMopDryingDuration() async throws -> VTMopDockMopDryingDuration {
+        let url = capabilitiesURL.appendingPathComponent(mopDockMopDryingTimeControlCapabilityPath)
+        let request = VTRequest<VTMopDockMopDryingTimeControlCapabilityState>(method: .GET, url: url)
+        return try await send(request).duration
+    }
+
+    public func setMopDockMopDryingDuration(_ duration: VTMopDockMopDryingDuration) async throws {
+        let url = capabilitiesURL.appendingPathComponent(mopDockMopDryingTimeControlCapabilityPath)
+        let request = VTRequest<Void>(method: .PUT, url: url, body: VTMopDockMopDryingTimeControlCapabilityAction(duration: duration))
+        try await send(request)
+    }
+
+    public func getMopDockMopDryingTimeControlProperties() async throws -> VTMopDockMopDryingTimeControlProperties {
+        let url = capabilitiesURL
+            .appendingPathComponent(mopDockMopDryingTimeControlCapabilityPath)
+            .appendingPathComponent("properties")
+        let request = VTRequest<VTMopDockMopDryingTimeControlProperties>(method: .GET, url: url)
+        return try await send(request)
+    }
+
+    // MARK: - 1.2.30 MopDockMopWashTemperatureControlCapability
+
+    private let mopDockMopWashTemperatureControlCapabilityPath: String = "MopDockMopWashTemperatureControlCapability"
+
+    public func getMopDockMopWashTemperature() async throws -> VTMopDockMopWashTemperature {
+        let url = capabilitiesURL.appendingPathComponent(mopDockMopWashTemperatureControlCapabilityPath)
+        let request = VTRequest<VTMopDockMopWashTemperatureControlCapabilityState>(method: .GET, url: url)
+        return try await send(request).temperature
+    }
+
+    public func setMopDockMopWashTemperature(_ temperature: VTMopDockMopWashTemperature) async throws {
+        let url = capabilitiesURL.appendingPathComponent(mopDockMopWashTemperatureControlCapabilityPath)
+        let request = VTRequest<Void>(method: .PUT, url: url, body: VTMopDockMopWashTemperatureControlCapabilityAction(temperature: temperature))
+        try await send(request)
+    }
+
+    public func getMopDockMopWashTemperatureControlProperties() async throws -> VTMopDockMopWashTemperatureControlProperties {
+        let url = capabilitiesURL
+            .appendingPathComponent(mopDockMopWashTemperatureControlCapabilityPath)
+            .appendingPathComponent("properties")
+        let request = VTRequest<VTMopDockMopWashTemperatureControlProperties>(method: .GET, url: url)
+        return try await send(request)
+    }
+
+    // MARK: - 1.2.31 PendingMapChangeHandlingCapability
+
+    private let pendingMapChangeHandlingCapabilityPath: String = "PendingMapChangeHandlingCapability"
+
+    public func getPendingMapChangeHandlingIsEnabled() async throws -> Bool {
+        let url = capabilitiesURL.appendingPathComponent(pendingMapChangeHandlingCapabilityPath)
+        let request = VTRequest<VTPendingMapChangeHandlingCapabilityState>(method: .GET, url: url)
+        return try await send(request).enabled
+    }
+
+    public func acceptPendingMapChange() async throws {
+        let url = capabilitiesURL.appendingPathComponent(pendingMapChangeHandlingCapabilityPath)
+        let request = VTRequest<Void>(method: .PUT, url: url, body: VTPendingMapChangeHandlingAction(action: .accept))
+        try await send(request)
+    }
+
+    public func rejectPendingMapChange() async throws {
+        let url = capabilitiesURL.appendingPathComponent(pendingMapChangeHandlingCapabilityPath)
+        let request = VTRequest<Void>(method: .PUT, url: url, body: VTPendingMapChangeHandlingAction(action: .reject))
+        try await send(request)
+    }
+
+    public func getPendingMapChangeHandlingCapabilityProperties() async throws -> VTPendingMapChangeHandlingCapabilityProperties {
+        let url = capabilitiesURL
+            .appendingPathComponent(pendingMapChangeHandlingCapabilityPath)
+            .appendingPathComponent("properties")
+        let request = VTRequest<VTPendingMapChangeHandlingCapabilityProperties>(method: .GET, url: url)
+        return try await send(request)
+    }
+
+    // MARK: - 1.2.32 QuirksCapability
+
+    private let quirksCapabilityPath: String = "QuirksCapability"
+
+    public func getQuirk() async throws -> VTQuirk {
+        let url = capabilitiesURL.appendingPathComponent(quirksCapabilityPath)
+        let request = VTRequest<VTQuirk>(method: .GET, url: url)
+        return try await send(request)
+    }
+
+    public func setQuirk(id: String, value: String) async throws {
+        let url = capabilitiesURL.appendingPathComponent(quirksCapabilityPath)
+        let request = VTRequest<Void>(method: .PUT, url: url, body: VTQuirkAction(id: id, value: value))
+        try await send(request)
+    }
+
+    public func getQuirksCapabilityProperties() async throws -> VTQuirksCapabilityProperties {
+        let url = capabilitiesURL
+            .appendingPathComponent(quirksCapabilityPath)
+            .appendingPathComponent("properties")
+        let request = VTRequest<VTQuirksCapabilityProperties>(method: .GET, url: url)
+        return try await send(request)
+    }
+
+    // MARK: - 1.2.33 CarpetModeControlCapability
+
+    private let carpetModeControlCapabilityPath: String = "CarpetModeControlCapability"
+
+    public func getCarpetModeIsEnabled() async throws -> Bool {
+        let url = capabilitiesURL.appendingPathComponent(carpetModeControlCapabilityPath)
+        let request = VTRequest<VTCarpetModeControlCapabilityState>(method: .GET, url: url)
+        return try await send(request).enabled
+    }
+
+    public func enableCarpetMode() async throws {
+        let url = capabilitiesURL.appendingPathComponent(carpetModeControlCapabilityPath)
+        let request = VTRequest<Void>(method: .PUT, url: url, body: VTCarpetModeControlCapabilityAction(action: .enable))
+        try await send(request)
+    }
+
+    public func disableCarpetMode() async throws {
+        let url = capabilitiesURL.appendingPathComponent(carpetModeControlCapabilityPath)
+        let request = VTRequest<Void>(method: .PUT, url: url, body: VTCarpetModeControlCapabilityAction(action: .disable))
+        try await send(request)
+    }
+
+    public func getCarpetModeControlProperties() async throws -> VTCarpetModeControlCapabilityProperties {
+        let url = capabilitiesURL
+            .appendingPathComponent(carpetModeControlCapabilityPath)
+            .appendingPathComponent("properties")
+        let request = VTRequest<VTCarpetModeControlCapabilityProperties>(method: .GET, url: url)
+        return try await send(request)
+    }
+
+    // MARK: - 1.2.34 PersistentMapControlCapability
+
+    private let persistentMapControlCapabilityPath: String = "PersistentMapControlCapability"
+
+    public func getPersistentMapIsEnabled() async throws -> Bool {
+        let url = capabilitiesURL.appendingPathComponent(persistentMapControlCapabilityPath)
+        let request = VTRequest<VTPersistentMapControlCapabilityState>(method: .GET, url: url)
+        return try await send(request).enabled
+    }
+
+    public func enablePersistentMap() async throws {
+        let url = capabilitiesURL.appendingPathComponent(persistentMapControlCapabilityPath)
+        let request = VTRequest<Void>(method: .PUT, url: url, body: VTPersistentMapControlCapabilityAction(action: .enable))
+        try await send(request)
+    }
+
+    public func disablePersistentMap() async throws {
+        let url = capabilitiesURL.appendingPathComponent(persistentMapControlCapabilityPath)
+        let request = VTRequest<Void>(method: .PUT, url: url, body: VTPersistentMapControlCapabilityAction(action: .disable))
+        try await send(request)
+    }
+
+    public func getPersistentMapControlProperties() async throws -> VTPersistentMapControlCapabilityProperties {
+        let url = capabilitiesURL
+            .appendingPathComponent(persistentMapControlCapabilityPath)
+            .appendingPathComponent("properties")
+        let request = VTRequest<VTPersistentMapControlCapabilityProperties>(method: .GET, url: url)
+        return try await send(request)
+    }
+
+    // MARK: - 1.2.35 ObstacleAvoidanceControlCapability
+
+    private let obstacleAvoidanceControlCapabilityPath: String = "ObstacleAvoidanceControlCapability"
+
+    public func getObstacleAvoidanceIsEnabled() async throws -> Bool {
+        let url = capabilitiesURL.appendingPathComponent(obstacleAvoidanceControlCapabilityPath)
+        let request = VTRequest<VTObstacleAvoidanceControlCapabilityState>(method: .GET, url: url)
+        return try await send(request).enabled
+    }
+
+    public func enableObstacleAvoidance() async throws {
+        let url = capabilitiesURL.appendingPathComponent(obstacleAvoidanceControlCapabilityPath)
+        let request = VTRequest<Void>(method: .PUT, url: url, body: VTObstacleAvoidanceControlCapabilityAction(action: .enable))
+        try await send(request)
+    }
+
+    public func disableObstacleAvoidance() async throws {
+        let url = capabilitiesURL.appendingPathComponent(obstacleAvoidanceControlCapabilityPath)
+        let request = VTRequest<Void>(method: .PUT, url: url, body: VTObstacleAvoidanceControlCapabilityAction(action: .disable))
+        try await send(request)
+    }
+
+    public func getObstacleAvoidanceControlProperties() async throws -> VTObstacleAvoidanceControlCapabilityProperties {
+        let url = capabilitiesURL
+            .appendingPathComponent(obstacleAvoidanceControlCapabilityPath)
+            .appendingPathComponent("properties")
+        let request = VTRequest<VTObstacleAvoidanceControlCapabilityProperties>(method: .GET, url: url)
+        return try await send(request)
+    }
+
+    // MARK: - 1.2.36 PetObstacleAvoidanceControlCapability
+
+    private let petObstacleAvoidanceControlCapabilityPath: String = "PetObstacleAvoidanceControlCapability"
+
+    public func getPetObstacleAvoidanceIsEnabled() async throws -> Bool {
+        let url = capabilitiesURL.appendingPathComponent(petObstacleAvoidanceControlCapabilityPath)
+        let request = VTRequest<VTPetObstacleAvoidanceControlCapabilityState>(method: .GET, url: url)
+        return try await send(request).enabled
+    }
+
+    public func enablePetObstacleAvoidance() async throws {
+        let url = capabilitiesURL.appendingPathComponent(petObstacleAvoidanceControlCapabilityPath)
+        let request = VTRequest<Void>(method: .PUT, url: url, body: VTPetObstacleAvoidanceControlCapabilityAction(action: .enable))
+        try await send(request)
+    }
+
+    public func disablePetObstacleAvoidance() async throws {
+        let url = capabilitiesURL.appendingPathComponent(petObstacleAvoidanceControlCapabilityPath)
+        let request = VTRequest<Void>(method: .PUT, url: url, body: VTPetObstacleAvoidanceControlCapabilityAction(action: .disable))
+        try await send(request)
+    }
+
+    public func getPetObstacleAvoidanceControlProperties() async throws -> VTPetObstacleAvoidanceControlCapabilityProperties {
+        let url = capabilitiesURL
+            .appendingPathComponent(petObstacleAvoidanceControlCapabilityPath)
+            .appendingPathComponent("properties")
+        let request = VTRequest<VTPetObstacleAvoidanceControlCapabilityProperties>(method: .GET, url: url)
+        return try await send(request)
+    }
+
+    // MARK: - 1.2.37 CollisionAvoidantNavigationControlCapability
+
+    private let collisionAvoidantNavigationControlCapabilityPath: String = "CollisionAvoidantNavigationControlCapability"
+
+    public func getCollisionAvoidantNavigationIsEnabled() async throws -> Bool {
+        let url = capabilitiesURL.appendingPathComponent(collisionAvoidantNavigationControlCapabilityPath)
+        let request = VTRequest<VTCollisionAvoidantNavigationControlCapabilityState>(method: .GET, url: url)
+        return try await send(request).enabled
+    }
+
+    public func enableCollisionAvoidantNavigation() async throws {
+        let url = capabilitiesURL.appendingPathComponent(collisionAvoidantNavigationControlCapabilityPath)
+        let request = VTRequest<Void>(method: .PUT, url: url, body: VTCollisionAvoidantNavigationControlCapabilityAction(action: .enable))
+        try await send(request)
+    }
+
+    public func disableCollisionAvoidantNavigation() async throws {
+        let url = capabilitiesURL.appendingPathComponent(collisionAvoidantNavigationControlCapabilityPath)
+        let request = VTRequest<Void>(method: .PUT, url: url, body: VTCollisionAvoidantNavigationControlCapabilityAction(action: .disable))
+        try await send(request)
+    }
+
+    public func getCollisionAvoidantNavigationControlProperties() async throws -> VTCollisionAvoidantNavigationControlCapabilityProperties {
+        let url = capabilitiesURL
+            .appendingPathComponent(collisionAvoidantNavigationControlCapabilityPath)
+            .appendingPathComponent("properties")
+        let request = VTRequest<VTCollisionAvoidantNavigationControlCapabilityProperties>(method: .GET, url: url)
+        return try await send(request)
+    }
+
+    // MARK: - 1.2.38 MopExtensionControlCapability
+
+    private let mopExtensionControlCapabilityPath: String = "MopExtensionControlCapability"
+
+    public func getMopExtensionIsEnabled() async throws -> Bool {
+        let url = capabilitiesURL.appendingPathComponent(mopExtensionControlCapabilityPath)
+        let request = VTRequest<VTMopExtensionControlCapabilityState>(method: .GET, url: url)
+        return try await send(request).enabled
+    }
+
+    public func enableMopExtension() async throws {
+        let url = capabilitiesURL.appendingPathComponent(mopExtensionControlCapabilityPath)
+        let request = VTRequest<Void>(method: .PUT, url: url, body: VTMopExtensionControlCapabilityAction(action: .enable))
+        try await send(request)
+    }
+
+    public func disableMopExtension() async throws {
+        let url = capabilitiesURL.appendingPathComponent(mopExtensionControlCapabilityPath)
+        let request = VTRequest<Void>(method: .PUT, url: url, body: VTMopExtensionControlCapabilityAction(action: .disable))
+        try await send(request)
+    }
+
+    public func getMopExtensionControlProperties() async throws -> VTMopExtensionControlCapabilityProperties {
+        let url = capabilitiesURL
+            .appendingPathComponent(mopExtensionControlCapabilityPath)
+            .appendingPathComponent("properties")
+        let request = VTRequest<VTMopExtensionControlCapabilityProperties>(method: .GET, url: url)
+        return try await send(request)
+    }
+
+    // MARK: - 1.2.39 CameraLightControlCapability
+
+    private let cameraLightControlCapabilityPath: String = "CameraLightControlCapability"
+
+    public func getCameraLightIsEnabled() async throws -> Bool {
+        let url = capabilitiesURL.appendingPathComponent(cameraLightControlCapabilityPath)
+        let request = VTRequest<VTCameraLightControlCapabilityState>(method: .GET, url: url)
+        return try await send(request).enabled
+    }
+
+    public func enableCameraLight() async throws {
+        let url = capabilitiesURL.appendingPathComponent(cameraLightControlCapabilityPath)
+        let request = VTRequest<Void>(method: .PUT, url: url, body: VTCameraLightControlCapabilityAction(action: .enable))
+        try await send(request)
+    }
+
+    public func disableCameraLight() async throws {
+        let url = capabilitiesURL.appendingPathComponent(cameraLightControlCapabilityPath)
+        let request = VTRequest<Void>(method: .PUT, url: url, body: VTCameraLightControlCapabilityAction(action: .disable))
+        try await send(request)
+    }
+
+    public func getCameraLightControlProperties() async throws -> VTCameraLightControlCapabilityProperties {
+        let url = capabilitiesURL
+            .appendingPathComponent(cameraLightControlCapabilityPath)
+            .appendingPathComponent("properties")
+        let request = VTRequest<VTCameraLightControlCapabilityProperties>(method: .GET, url: url)
+        return try await send(request)
+    }
+
+    // MARK: - 1.2.40 MopTwistControlCapability
+
+    private let mopTwistControlCapabilityPath: String = "MopTwistControlCapability"
+
+    public func getMopTwistIsEnabled() async throws -> Bool {
+        let url = capabilitiesURL.appendingPathComponent(mopTwistControlCapabilityPath)
+        let request = VTRequest<VTMopTwistControlCapabilityState>(method: .GET, url: url)
+        return try await send(request).enabled
+    }
+
+    public func enableMopTwist() async throws {
+        let url = capabilitiesURL.appendingPathComponent(mopTwistControlCapabilityPath)
+        let request = VTRequest<Void>(method: .PUT, url: url, body: VTMopTwistControlCapabilityAction(action: .enable))
+        try await send(request)
+    }
+
+    public func disableMopTwist() async throws {
+        let url = capabilitiesURL.appendingPathComponent(mopTwistControlCapabilityPath)
+        let request = VTRequest<Void>(method: .PUT, url: url, body: VTMopTwistControlCapabilityAction(action: .disable))
+        try await send(request)
+    }
+
+    public func getMopTwistControlProperties() async throws -> VTMopTwistControlCapabilityProperties {
+        let url = capabilitiesURL
+            .appendingPathComponent(mopTwistControlCapabilityPath)
+            .appendingPathComponent("properties")
+        let request = VTRequest<VTMopTwistControlCapabilityProperties>(method: .GET, url: url)
+        return try await send(request)
+    }
+
+    // MARK: - 1.2.41 MopExtensionFurnitureLegHandlingControlCapability
+
+    private let mopExtensionFurnitureLegHandlingControlCapabilityPath: String = "MopExtensionFurnitureLegHandlingControlCapability"
+
+    public func getMopExtensionFurnitureLegHandlingIsEnabled() async throws -> Bool {
+        let url = capabilitiesURL.appendingPathComponent(mopExtensionFurnitureLegHandlingControlCapabilityPath)
+        let request = VTRequest<VTMopExtensionFurnitureLegHandlingControlCapabilityState>(method: .GET, url: url)
+        return try await send(request).enabled
+    }
+
+    public func enableMopExtensionFurnitureLegHandling() async throws {
+        let url = capabilitiesURL.appendingPathComponent(mopExtensionFurnitureLegHandlingControlCapabilityPath)
+        let request = VTRequest<Void>(method: .PUT, url: url, body: VTMopExtensionFurnitureLegHandlingControlCapabilityAction(action: .enable))
+        try await send(request)
+    }
+
+    public func disableMopExtensionFurnitureLegHandling() async throws {
+        let url = capabilitiesURL.appendingPathComponent(mopExtensionFurnitureLegHandlingControlCapabilityPath)
+        let request = VTRequest<Void>(method: .PUT, url: url, body: VTMopExtensionFurnitureLegHandlingControlCapabilityAction(action: .disable))
+        try await send(request)
+    }
+
+    public func getMopExtensionFurnitureLegHandlingControlProperties() async throws -> VTMopExtensionFurnitureLegHandlingControlCapabilityProperties {
+        let url = capabilitiesURL
+            .appendingPathComponent(mopExtensionFurnitureLegHandlingControlCapabilityPath)
+            .appendingPathComponent("properties")
+        let request = VTRequest<VTMopExtensionFurnitureLegHandlingControlCapabilityProperties>(method: .GET, url: url)
+        return try await send(request)
+    }
+
+    // MARK: - 1.2.42 MopDockMopAutoDryingControlCapability
+
+    private let mopDockMopAutoDryingControlCapabilityPath: String = "MopDockMopAutoDryingControlCapability"
+
+    public func getMopDockMopAutoDryingIsEnabled() async throws -> Bool {
+        let url = capabilitiesURL.appendingPathComponent(mopDockMopAutoDryingControlCapabilityPath)
+        let request = VTRequest<VTMopDockMopAutoDryingControlCapabilityState>(method: .GET, url: url)
+        return try await send(request).enabled
+    }
+
+    public func enableMopDockMopAutoDrying() async throws {
+        let url = capabilitiesURL.appendingPathComponent(mopDockMopAutoDryingControlCapabilityPath)
+        let request = VTRequest<Void>(method: .PUT, url: url, body: VTMopDockMopAutoDryingControlCapabilityAction(action: .enable))
+        try await send(request)
+    }
+
+    public func disableMopDockMopAutoDrying() async throws {
+        let url = capabilitiesURL.appendingPathComponent(mopDockMopAutoDryingControlCapabilityPath)
+        let request = VTRequest<Void>(method: .PUT, url: url, body: VTMopDockMopAutoDryingControlCapabilityAction(action: .disable))
+        try await send(request)
+    }
+
+    public func getMopDockMopAutoDryingControlProperties() async throws -> VTMopDockMopAutoDryingControlCapabilityProperties {
+        let url = capabilitiesURL
+            .appendingPathComponent(mopDockMopAutoDryingControlCapabilityPath)
+            .appendingPathComponent("properties")
+        let request = VTRequest<VTMopDockMopAutoDryingControlCapabilityProperties>(method: .GET, url: url)
+        return try await send(request)
+    }
+
+    // MARK: - 1.2.43 FloorMaterialDirectionAwareNavigationControlCapability
+
+    private let floorMaterialDirectionAwareNavigationControlCapabilityPath: String = "FloorMaterialDirectionAwareNavigationControlCapability"
+
+    public func getFloorMaterialDirectionAwareNavigationIsEnabled() async throws -> Bool {
+        let url = capabilitiesURL.appendingPathComponent(floorMaterialDirectionAwareNavigationControlCapabilityPath)
+        let request = VTRequest<VTFloorMaterialDirectionAwareNavigationControlCapabilityState>(method: .GET, url: url)
+        return try await send(request).enabled
+    }
+
+    public func enableFloorMaterialDirectionAwareNavigation() async throws {
+        let url = capabilitiesURL.appendingPathComponent(floorMaterialDirectionAwareNavigationControlCapabilityPath)
+        let request = VTRequest<Void>(method: .PUT, url: url, body: VTFloorMaterialDirectionAwareNavigationControlCapabilityAction(action: .enable))
+        try await send(request)
+    }
+
+    public func disableFloorMaterialDirectionAwareNavigation() async throws {
+        let url = capabilitiesURL.appendingPathComponent(floorMaterialDirectionAwareNavigationControlCapabilityPath)
+        let request = VTRequest<Void>(method: .PUT, url: url, body: VTFloorMaterialDirectionAwareNavigationControlCapabilityAction(action: .disable))
+        try await send(request)
+    }
+
+    public func getFloorMaterialDirectionAwareNavigationControlProperties() async throws -> VTFloorMaterialDirectionAwareNavigationControlCapabilityProperties {
+        let url = capabilitiesURL
+            .appendingPathComponent(floorMaterialDirectionAwareNavigationControlCapabilityPath)
+            .appendingPathComponent("properties")
+        let request = VTRequest<VTFloorMaterialDirectionAwareNavigationControlCapabilityProperties>(method: .GET, url: url)
+        return try await send(request)
+    }
+
+    // MARK: - 1.2.44 SpeakerTestCapability
+
+    private let speakerTestCapabilityPath: String = "SpeakerTestCapability"
+
+    public func playSpeakerTestSound() async throws {
+        let url = capabilitiesURL.appendingPathComponent(speakerTestCapabilityPath)
+        let request = VTRequest<Void>(method: .PUT, url: url, body: VTSpeakerTestAction(action: .playTestSound))
+        try await send(request)
+    }
+
+    public func getSpeakerTestCapabilityProperties() async throws -> VTSpeakerTestCapabilityProperties {
+        let url = capabilitiesURL
+            .appendingPathComponent(speakerTestCapabilityPath)
+            .appendingPathComponent("properties")
+        let request = VTRequest<VTSpeakerTestCapabilityProperties>(method: .GET, url: url)
+        return try await send(request)
+    }
+
+    // MARK: - 1.2.45 SpeakerVolumeControlCapability
+
+    private let speakerVolumeControlCapabilityPath: String = "SpeakerVolumeControlCapability"
+
+    public func getSpeakerVolume() async throws -> Int {
+        let url = capabilitiesURL.appendingPathComponent(speakerVolumeControlCapabilityPath)
+        let request = VTRequest<VTSpeakerVolumeState>(method: .GET, url: url)
+        return try await send(request).volume
+    }
+
+    public func setSpeakerVolume(_ volume: Int) async throws {
+        let url = capabilitiesURL.appendingPathComponent(speakerVolumeControlCapabilityPath)
+        let request = VTRequest<Void>(method: .PUT, url: url, body: VTSpeakerVolumeControlAction(action: .setVolume, value: volume))
+        try await send(request)
+    }
+
+    public func getSpeakerVolumeControlProperties() async throws -> VTSpeakerVolumeControlCapabilityProperties {
+        let url = capabilitiesURL
+            .appendingPathComponent(speakerVolumeControlCapabilityPath)
+            .appendingPathComponent("properties")
+        let request = VTRequest<VTSpeakerVolumeControlCapabilityProperties>(method: .GET, url: url)
+        return try await send(request)
+    }
+
+    // MARK: - 1.2.46 TotalStatisticsCapability
+
+    public func getTotalStatisticsCapability() async throws -> [VTValetudoDataPoint] {
+        let url = capabilitiesURL.appendingPathComponent("TotalStatisticsCapability")
+        let request = VTRequest<[VTValetudoDataPoint]>(method: .GET, url: url)
+        return try await send(request)
+    }
+
+    public func getTotalStatisticsCapabilityProperties() async throws -> VTStatisticsCapabilityProperties {
+        let url = capabilitiesURL
+            .appendingPathComponent("TotalStatisticsCapability")
+            .appendingPathComponent("properties")
+        let request = VTRequest<VTStatisticsCapabilityProperties>(method: .GET, url: url)
+        return try await send(request)
+    }
+
+    // MARK: - 1.2.47 VoicePackManagementCapability
+
+    private let voicePackManagementCapabilityPath: String = "VoicePackManagementCapability"
+
+    public func getVoicePackManagementStatus() async throws -> VTVoicePackManagementStatus {
+        let url = capabilitiesURL.appendingPathComponent(voicePackManagementCapabilityPath)
+        let request = VTRequest<VTVoicePackManagementStatus>(method: .GET, url: url)
+        return try await send(request)
+    }
+
+    public func downloadVoicePack(url: String, language: String, hash: String) async throws {
+        let endpoint = capabilitiesURL.appendingPathComponent(voicePackManagementCapabilityPath)
+        let body = VTVoicePackManagementAction(action: .download, url: url, language: language, hash: hash)
+        let request = VTRequest<Void>(method: .PUT, url: endpoint, body: body)
+        try await send(request)
+    }
+
+    public func getVoicePackManagementCapabilityProperties() async throws -> VTVoicePackManagementCapabilityProperties {
+        let url = capabilitiesURL
+            .appendingPathComponent(voicePackManagementCapabilityPath)
+            .appendingPathComponent("properties")
+        let request = VTRequest<VTVoicePackManagementCapabilityProperties>(method: .GET, url: url)
+        return try await send(request)
+    }
+
+    // MARK: - 1.2.48 WifiConfigurationCapability
+
+    private let wifiConfigurationCapabilityPath: String = "WifiConfigurationCapability"
+
+    public func getWifiConfiguration() async throws -> VTWifiConfiguration {
+        let url = capabilitiesURL.appendingPathComponent(wifiConfigurationCapabilityPath)
+        let request = VTRequest<VTWifiConfiguration>(method: .GET, url: url)
+        return try await send(request)
+    }
+
+    public func setWifiConfiguration(_ configuration: VTWifiConfigurationAction) async throws {
+        let url = capabilitiesURL.appendingPathComponent(wifiConfigurationCapabilityPath)
+        let request = VTRequest<Void>(method: .PUT, url: url, body: configuration)
+        try await send(request)
+    }
+
+    public func getWifiConfigurationCapabilityProperties() async throws -> VTWifiConfigurationCapabilityProperties {
+        let url = capabilitiesURL
+            .appendingPathComponent(wifiConfigurationCapabilityPath)
+            .appendingPathComponent("properties")
+        let request = VTRequest<VTWifiConfigurationCapabilityProperties>(method: .GET, url: url)
+        return try await send(request)
+    }
+
+    // MARK: - 1.2.49 WifiScanCapability
+
+    private let wifiScanCapabilityPath: String = "WifiScanCapability"
+
+    public func getWifiNetworks() async throws -> [VTWifiScanResult] {
+        let url = capabilitiesURL.appendingPathComponent(wifiScanCapabilityPath)
+        let request = VTRequest<[VTWifiScanResult]>(method: .GET, url: url)
+        return try await send(request)
+    }
+
+    public func getWifiScanCapabilityProperties() async throws -> VTWifiScanCapabilityProperties {
+        let url = capabilitiesURL
+            .appendingPathComponent(wifiScanCapabilityPath)
+            .appendingPathComponent("properties")
+        let request = VTRequest<VTWifiScanCapabilityProperties>(method: .GET, url: url)
+        return try await send(request)
+    }
+
+    // MARK: - 1.2.50 ZoneCleaningCapability
+
+    private let zoneCleaningCapabilityPath: String = "ZoneCleaningCapability"
+
+    public func clean(zones: [VTZoneCleaningZone], iterations: Int) async throws {
+        let url = capabilitiesURL.appendingPathComponent(zoneCleaningCapabilityPath)
+        let request = VTRequest<Void>(method: .PUT, url: url, body: VTZoneCleaningAction(action: .clean, zones: zones, iterations: iterations))
+        try await send(request)
+    }
+
+    public func getZoneCleaningCapabilityProperties() async throws -> VTZoneCleaningCapabilityProperties {
+        let url = capabilitiesURL
+            .appendingPathComponent(zoneCleaningCapabilityPath)
+            .appendingPathComponent("properties")
+        let request = VTRequest<VTZoneCleaningCapabilityProperties>(method: .GET, url: url)
         return try await send(request)
     }
 
@@ -833,8 +1619,6 @@ public actor VTAPIClient: VTAPIClientProtocol {
         let request = VTRequest<VTNetworkAdvertisementProperties>(method: .GET, url: url)
         return try await send(request)
     }
-
-    // MARK: - Internal
 
     private func send<T: Decodable>(_ request: VTRequest<T>) async throws -> T {
         try await send(request, decode)

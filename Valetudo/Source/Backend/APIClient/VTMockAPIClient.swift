@@ -17,6 +17,7 @@ extension VTStateAttributeList {
 actor VTMockAPIClient: VTAPIClientProtocol {
     private let emptyMapSegmentEditProperties: VTMapSegmentEditProperties = [:]
     private let emptyMapSegmentRenameProperties: VTMapSegmentRenameProperties = [:]
+    private let emptyProperties: [String: VTAnyCodable] = [:]
 
     func getSupportedMapSegmentMaterials() async throws -> [VTMaterial] {
         [
@@ -45,6 +46,70 @@ actor VTMockAPIClient: VTAPIClientProtocol {
     private var highResolutionManualControlEnabled = false
     private var keyLockEnabled = false
     private var obstacleImagesEnabled = true
+    private var toggleCapabilityStates: [String: Bool] = [
+        "CarpetModeControlCapability": true,
+        "PersistentMapControlCapability": true,
+        "ObstacleAvoidanceControlCapability": true,
+        "PetObstacleAvoidanceControlCapability": true,
+        "CollisionAvoidantNavigationControlCapability": false,
+        "MopExtensionControlCapability": true,
+        "CameraLightControlCapability": true,
+        "MopTwistControlCapability": false,
+        "MopExtensionFurnitureLegHandlingControlCapability": true,
+        "MopDockMopAutoDryingControlCapability": true,
+        "FloorMaterialDirectionAwareNavigationControlCapability": false,
+        "PendingMapChangeHandlingCapability": false,
+    ]
+    private var autoEmptyDockAutoEmptyDuration: VTAutoEmptyDockAutoEmptyDuration = .auto
+    private var autoEmptyDockAutoEmptyInterval: VTAutoEmptyDockAutoEmptyInterval = .normal
+    private var carpetSensorMode: VTCarpetSensorMode = .avoid
+    private var cleanRoute: VTCleanRoute = .normal
+    private var doNotDisturbConfiguration = VTDoNotDisturbConfiguration(
+        enabled: true,
+        start: VTDoNotDisturbTime(hour: 22, minute: 0),
+        end: VTDoNotDisturbTime(hour: 8, minute: 0),
+        metaData: [:]
+    )
+    private var mopDockMopDryingDuration: VTMopDockMopDryingDuration = .threeHours
+    private var mopDockMopWashTemperature: VTMopDockMopWashTemperature = .warm
+    private var quirk = VTQuirk(
+        id: "mock.cleaning.behavior",
+        options: ["balanced", "quiet", "aggressive"],
+        title: "Cleaning Behavior",
+        description: "Mock quirk exposed by the demo client.",
+        value: "balanced"
+    )
+    private var speakerVolume = 60
+    private var voicePackManagementStatus = VTVoicePackManagementStatus(
+        currentLanguage: "en",
+        operationStatus: VTVoicePackOperationStatus(type: .idle, progress: nil, metaData: [:])
+    )
+    private var wifiConfiguration = VTWifiConfiguration(
+        state: .connected,
+        details: VTWifiDetails(
+            ssid: "Valetudo Mock",
+            bssid: "00:11:22:33:44:55",
+            downspeed: 144,
+            upspeed: 54,
+            signal: -54,
+            ips: ["192.168.1.23"],
+            frequency: .twoPointFourGHz
+        ),
+        metaData: [:]
+    )
+    private let wifiNetworks: [VTWifiScanResult] = [
+        VTWifiScanResult(
+            bssid: "00:11:22:33:44:55",
+            details: VTWifiScanDetails(ssid: "Valetudo Mock", signal: -54),
+            metaData: [:]
+        ),
+        VTWifiScanResult(
+            bssid: "66:77:88:99:AA:BB",
+            details: VTWifiScanDetails(ssid: "Guest Network", signal: -71),
+            metaData: [:]
+        ),
+    ]
+    private var mapSnapshots: [VTMapSnapshot]
     private var presetSelections = VTMockAPIClient.defaultPresetSelections
     private var mapData = VTMockAPIClient.makeMockMap()
     private var observerTasks: [VTListenerToken: Task<Void, Never>] = [:]
@@ -64,6 +129,9 @@ actor VTMockAPIClient: VTAPIClientProtocol {
         )
         timers = [timer.id!: timer]
         events = []
+        mapSnapshots = [
+            VTMapSnapshot(id: "mock-snapshot-1", timestamp: Date().addingTimeInterval(-3600), map: mapData, metaData: [:]),
+        ]
     }
 
     // MARK: - 1. Robot
@@ -183,10 +251,19 @@ actor VTMockAPIClient: VTAPIClientProtocol {
         ]
     }
 
+    func getCurrentStatisticsCapabilityProperties() async throws -> VTStatisticsCapabilityProperties {
+        VTStatisticsCapabilityProperties(availableStatistics: [.count, .time, .area])
+    }
+
     func start() async throws {}
     func pause() async throws {}
     func stop() async throws {}
     func home() async throws {}
+
+    func getBasicControlCapabilityProperties() async throws -> VTBasicControlCapabilityProperties {
+        emptyProperties
+    }
+
     func clean(segmentIDs _: [String], customOrder _: Bool, iterations _: Int) async throws {}
     func getMapSegmentationProperties() async throws -> VTMapSegmentationProperties {
         VTMapSegmentationProperties(
@@ -263,16 +340,16 @@ actor VTMockAPIClient: VTAPIClientProtocol {
         stateAttributes = Self.makeStateAttributes(presetSelections: presetSelections)
     }
 
-    func getConsumables() async throws -> [VTConsumableStateAttribute] {
+    func getConsumables() async throws -> [VTConsumableState] {
         [
-            VTConsumableStateAttribute(
+            VTConsumableState(
                 __class: "ValetudoConsumable",
                 metaData: [:],
                 type: .brush,
                 subType: .main,
                 remaining: VTConsumableRemaining(value: 78, unit: .percent)
             ),
-            VTConsumableStateAttribute(
+            VTConsumableState(
                 __class: "ValetudoConsumable",
                 metaData: [:],
                 type: .filter,
@@ -282,10 +359,10 @@ actor VTMockAPIClient: VTAPIClientProtocol {
         ]
     }
 
-    func getPropertiesForConsumables() async throws -> [VTConsumableStateAttributeProperties] {
+    func getPropertiesForConsumables() async throws -> [VTConsumableStateProperties] {
         [
-            VTConsumableStateAttributeProperties(type: .brush, subType: .main, unit: .percent, maxValue: 100),
-            VTConsumableStateAttributeProperties(type: .filter, subType: .main, unit: .minutes, maxValue: 900),
+            VTConsumableStateProperties(type: .brush, subType: .main, unit: .percent, maxValue: 100),
+            VTConsumableStateProperties(type: .filter, subType: .main, unit: .minutes, maxValue: 900),
         ]
     }
 
@@ -324,7 +401,11 @@ actor VTMockAPIClient: VTAPIClientProtocol {
 
     func highResolutionManualControlMove(angle _: CGFloat, velocity _: CGFloat) async throws {}
 
-    // MARK: - 1.2.11 ObstacleImagesCapability
+    func getHighResolutionManualControlCapabilityProperties() async throws -> VTHighResolutionManualControlCapabilityProperties {
+        emptyProperties
+    }
+
+    // MARK: - 1.2.13 ObstacleImagesCapability
 
     func getObstacleImagesCapabilityIsEnabled() async throws -> Bool {
         obstacleImagesEnabled
@@ -352,7 +433,7 @@ actor VTMockAPIClient: VTAPIClientProtocol {
         VTObstacleImagesProperties(fileFormat: .ok, dimensions: .init(width: 0, height: 0))
     }
 
-    // MARK: - 1.2.12 MapResetCapability
+    // MARK: - 1.2.14 MapResetCapability
 
     func resetMap() async throws {}
 
@@ -360,7 +441,7 @@ actor VTMockAPIClient: VTAPIClientProtocol {
         [:]
     }
 
-    // MARK: - 1.2.13 MappingPassCapability
+    // MARK: - 1.2.15 MappingPassCapability
 
     func startMappingPass() async throws {}
 
@@ -401,10 +482,10 @@ actor VTMockAPIClient: VTAPIClientProtocol {
             )
         }
 
-        let restrictedZones = mapData.entities.compactMap { entity -> VTRestrictedZonePayload? in
+        let restrictedZones = mapData.entities.compactMap { entity -> VTRestrictionsZonePayload? in
             guard entity.points.count >= 8 else { return nil }
 
-            let type: VTVirtualRestrictedZoneType
+            let type: VTVirtualRestrictionsZoneType
             switch entity.type {
             case .no_go_area:
                 type = .regular
@@ -414,9 +495,9 @@ actor VTMockAPIClient: VTAPIClientProtocol {
                 return nil
             }
 
-            return VTRestrictedZonePayload(
+            return VTRestrictionsZonePayload(
                 type: type,
-                points: VTRectangularRestrictedZonePoints(
+                points: VTRectangularZonePoints(
                     pA: VTMapCoordinate(x: entity.points[0], y: entity.points[1]),
                     pB: VTMapCoordinate(x: entity.points[2], y: entity.points[3]),
                     pC: VTMapCoordinate(x: entity.points[4], y: entity.points[5]),
@@ -495,6 +576,427 @@ actor VTMockAPIClient: VTAPIClientProtocol {
 
     func getKeyLockProperties() async throws -> [String: VTAnyCodable] {
         [:]
+    }
+
+    func locateRobot() async throws {}
+
+    func getLocateRobotProperties() async throws -> VTLocateRobotProperties {
+        emptyProperties
+    }
+
+    func goTo(x _: Int, y _: Int) async throws {}
+
+    func getGoToProperties() async throws -> VTGoToProperties {
+        emptyProperties
+    }
+
+    func getAutoEmptyDockAutoEmptyDuration() async throws -> VTAutoEmptyDockAutoEmptyDuration {
+        autoEmptyDockAutoEmptyDuration
+    }
+
+    func setAutoEmptyDockAutoEmptyDuration(_ duration: VTAutoEmptyDockAutoEmptyDuration) async throws {
+        autoEmptyDockAutoEmptyDuration = duration
+    }
+
+    func getAutoEmptyDockAutoEmptyDurationProperties() async throws -> VTAutoEmptyDockAutoEmptyDurationProperties {
+        VTAutoEmptyDockAutoEmptyDurationProperties(supportedDurations: [.auto, .short, .medium, .long])
+    }
+
+    func getAutoEmptyDockAutoEmptyInterval() async throws -> VTAutoEmptyDockAutoEmptyInterval {
+        autoEmptyDockAutoEmptyInterval
+    }
+
+    func setAutoEmptyDockAutoEmptyInterval(_ interval: VTAutoEmptyDockAutoEmptyInterval) async throws {
+        autoEmptyDockAutoEmptyInterval = interval
+    }
+
+    func getAutoEmptyDockAutoEmptyIntervalProperties() async throws -> VTAutoEmptyDockAutoEmptyIntervalProperties {
+        VTAutoEmptyDockAutoEmptyIntervalProperties(supportedIntervals: [.off, .infrequent, .normal, .frequent])
+    }
+
+    func getAutoEmptyDockManualTriggerCapabilityProperties() async throws -> VTAutoEmptyDockManualTriggerCapabilityProperties {
+        emptyProperties
+    }
+
+    func getCarpetSensorMode() async throws -> VTCarpetSensorMode {
+        carpetSensorMode
+    }
+
+    func setCarpetSensorMode(_ mode: VTCarpetSensorMode) async throws {
+        carpetSensorMode = mode
+    }
+
+    func getCarpetSensorModeControlProperties() async throws -> VTCarpetSensorModeControlProperties {
+        VTCarpetSensorModeControlProperties(supportedModes: [.off, .avoid, .lift, .detach])
+    }
+
+    func getCleanRoute() async throws -> VTCleanRoute {
+        cleanRoute
+    }
+
+    func setCleanRoute(_ route: VTCleanRoute) async throws {
+        cleanRoute = route
+    }
+
+    func getCleanRouteControlProperties() async throws -> VTCleanRouteControlProperties {
+        VTCleanRouteControlProperties(
+            supportedRoutes: [.normal, .quick, .intensive, .deep],
+            mopOnly: [.normal, .quick],
+            oneTime: [.intensive, .deep]
+        )
+    }
+
+    func getDoNotDisturbConfiguration() async throws -> VTDoNotDisturbConfiguration {
+        doNotDisturbConfiguration
+    }
+
+    func setDoNotDisturbConfiguration(_ configuration: VTDoNotDisturbConfiguration) async throws {
+        doNotDisturbConfiguration = configuration
+    }
+
+    func getDoNotDisturbCapabilityProperties() async throws -> VTDoNotDisturbCapabilityProperties {
+        emptyProperties
+    }
+
+    func getMapSnapshots() async throws -> [VTMapSnapshot] {
+        mapSnapshots
+    }
+
+    func restoreMapSnapshot(id: String) async throws {
+        guard let snapshot = mapSnapshots.first(where: { $0.id == id }) else {
+            throw VTAPIError.missingID(String(describing: VTMapSnapshot.self))
+        }
+        mapData = snapshot.map
+    }
+
+    func getMapSnapshotCapabilityProperties() async throws -> VTMapSnapshotCapabilityProperties {
+        emptyProperties
+    }
+
+    func getMopDockMopDryingDuration() async throws -> VTMopDockMopDryingDuration {
+        mopDockMopDryingDuration
+    }
+
+    func setMopDockMopDryingDuration(_ duration: VTMopDockMopDryingDuration) async throws {
+        mopDockMopDryingDuration = duration
+    }
+
+    func getMopDockMopDryingTimeControlProperties() async throws -> VTMopDockMopDryingTimeControlProperties {
+        VTMopDockMopDryingTimeControlProperties(supportedDurations: [.twoHours, .threeHours, .fourHours, .cold])
+    }
+
+    func getMopDockMopWashTemperature() async throws -> VTMopDockMopWashTemperature {
+        mopDockMopWashTemperature
+    }
+
+    func setMopDockMopWashTemperature(_ temperature: VTMopDockMopWashTemperature) async throws {
+        mopDockMopWashTemperature = temperature
+    }
+
+    func getMopDockMopWashTemperatureControlProperties() async throws -> VTMopDockMopWashTemperatureControlProperties {
+        VTMopDockMopWashTemperatureControlProperties(supportedTemperatures: [.cold, .warm, .hot, .scalding, .boiling])
+    }
+
+    func getPendingMapChangeHandlingIsEnabled() async throws -> Bool {
+        toggleCapabilityStates["PendingMapChangeHandlingCapability"] ?? false
+    }
+
+    func acceptPendingMapChange() async throws {
+        toggleCapabilityStates["PendingMapChangeHandlingCapability"] = false
+    }
+
+    func rejectPendingMapChange() async throws {
+        toggleCapabilityStates["PendingMapChangeHandlingCapability"] = false
+    }
+
+    func getPendingMapChangeHandlingCapabilityProperties() async throws -> VTPendingMapChangeHandlingCapabilityProperties {
+        emptyProperties
+    }
+
+    func getFanSpeedControlProperties() async throws -> VTFanSpeedControlCapabilityProperties {
+        emptyProperties
+    }
+
+    func getWaterUsageControlProperties() async throws -> VTWaterUsageControlCapabilityProperties {
+        emptyProperties
+    }
+
+    func getOperationModeControlProperties() async throws -> VTOperationModeControlCapabilityProperties {
+        emptyProperties
+    }
+
+    func getQuirk() async throws -> VTQuirk {
+        quirk
+    }
+
+    func setQuirk(id: String, value: String) async throws {
+        quirk = VTQuirk(id: id, options: quirk.options, title: quirk.title, description: quirk.description, value: value)
+    }
+
+    func getQuirksCapabilityProperties() async throws -> VTQuirksCapabilityProperties {
+        emptyProperties
+    }
+
+    func getCarpetModeIsEnabled() async throws -> Bool {
+        toggleState(for: "CarpetModeControlCapability")
+    }
+
+    func enableCarpetMode() async throws {
+        setToggleState(for: "CarpetModeControlCapability", enabled: true)
+    }
+
+    func disableCarpetMode() async throws {
+        setToggleState(for: "CarpetModeControlCapability", enabled: false)
+    }
+
+    func getCarpetModeControlProperties() async throws -> VTCarpetModeControlCapabilityProperties {
+        emptyProperties
+    }
+
+    func getPersistentMapIsEnabled() async throws -> Bool {
+        toggleState(for: "PersistentMapControlCapability")
+    }
+
+    func enablePersistentMap() async throws {
+        setToggleState(for: "PersistentMapControlCapability", enabled: true)
+    }
+
+    func disablePersistentMap() async throws {
+        setToggleState(for: "PersistentMapControlCapability", enabled: false)
+    }
+
+    func getPersistentMapControlProperties() async throws -> VTPersistentMapControlCapabilityProperties {
+        emptyProperties
+    }
+
+    func getObstacleAvoidanceIsEnabled() async throws -> Bool {
+        toggleState(for: "ObstacleAvoidanceControlCapability")
+    }
+
+    func enableObstacleAvoidance() async throws {
+        setToggleState(for: "ObstacleAvoidanceControlCapability", enabled: true)
+    }
+
+    func disableObstacleAvoidance() async throws {
+        setToggleState(for: "ObstacleAvoidanceControlCapability", enabled: false)
+    }
+
+    func getObstacleAvoidanceControlProperties() async throws -> VTObstacleAvoidanceControlCapabilityProperties {
+        emptyProperties
+    }
+
+    func getPetObstacleAvoidanceIsEnabled() async throws -> Bool {
+        toggleState(for: "PetObstacleAvoidanceControlCapability")
+    }
+
+    func enablePetObstacleAvoidance() async throws {
+        setToggleState(for: "PetObstacleAvoidanceControlCapability", enabled: true)
+    }
+
+    func disablePetObstacleAvoidance() async throws {
+        setToggleState(for: "PetObstacleAvoidanceControlCapability", enabled: false)
+    }
+
+    func getPetObstacleAvoidanceControlProperties() async throws -> VTPetObstacleAvoidanceControlCapabilityProperties {
+        emptyProperties
+    }
+
+    func getCollisionAvoidantNavigationIsEnabled() async throws -> Bool {
+        toggleState(for: "CollisionAvoidantNavigationControlCapability")
+    }
+
+    func enableCollisionAvoidantNavigation() async throws {
+        setToggleState(for: "CollisionAvoidantNavigationControlCapability", enabled: true)
+    }
+
+    func disableCollisionAvoidantNavigation() async throws {
+        setToggleState(for: "CollisionAvoidantNavigationControlCapability", enabled: false)
+    }
+
+    func getCollisionAvoidantNavigationControlProperties() async throws -> VTCollisionAvoidantNavigationControlCapabilityProperties {
+        emptyProperties
+    }
+
+    func getMopExtensionIsEnabled() async throws -> Bool {
+        toggleState(for: "MopExtensionControlCapability")
+    }
+
+    func enableMopExtension() async throws {
+        setToggleState(for: "MopExtensionControlCapability", enabled: true)
+    }
+
+    func disableMopExtension() async throws {
+        setToggleState(for: "MopExtensionControlCapability", enabled: false)
+    }
+
+    func getMopExtensionControlProperties() async throws -> VTMopExtensionControlCapabilityProperties {
+        emptyProperties
+    }
+
+    func getCameraLightIsEnabled() async throws -> Bool {
+        toggleState(for: "CameraLightControlCapability")
+    }
+
+    func enableCameraLight() async throws {
+        setToggleState(for: "CameraLightControlCapability", enabled: true)
+    }
+
+    func disableCameraLight() async throws {
+        setToggleState(for: "CameraLightControlCapability", enabled: false)
+    }
+
+    func getCameraLightControlProperties() async throws -> VTCameraLightControlCapabilityProperties {
+        emptyProperties
+    }
+
+    func getMopTwistIsEnabled() async throws -> Bool {
+        toggleState(for: "MopTwistControlCapability")
+    }
+
+    func enableMopTwist() async throws {
+        setToggleState(for: "MopTwistControlCapability", enabled: true)
+    }
+
+    func disableMopTwist() async throws {
+        setToggleState(for: "MopTwistControlCapability", enabled: false)
+    }
+
+    func getMopTwistControlProperties() async throws -> VTMopTwistControlCapabilityProperties {
+        emptyProperties
+    }
+
+    func getMopExtensionFurnitureLegHandlingIsEnabled() async throws -> Bool {
+        toggleState(for: "MopExtensionFurnitureLegHandlingControlCapability")
+    }
+
+    func enableMopExtensionFurnitureLegHandling() async throws {
+        setToggleState(for: "MopExtensionFurnitureLegHandlingControlCapability", enabled: true)
+    }
+
+    func disableMopExtensionFurnitureLegHandling() async throws {
+        setToggleState(for: "MopExtensionFurnitureLegHandlingControlCapability", enabled: false)
+    }
+
+    func getMopExtensionFurnitureLegHandlingControlProperties() async throws -> VTMopExtensionFurnitureLegHandlingControlCapabilityProperties {
+        emptyProperties
+    }
+
+    func getMopDockMopAutoDryingIsEnabled() async throws -> Bool {
+        toggleState(for: "MopDockMopAutoDryingControlCapability")
+    }
+
+    func enableMopDockMopAutoDrying() async throws {
+        setToggleState(for: "MopDockMopAutoDryingControlCapability", enabled: true)
+    }
+
+    func disableMopDockMopAutoDrying() async throws {
+        setToggleState(for: "MopDockMopAutoDryingControlCapability", enabled: false)
+    }
+
+    func getMopDockMopAutoDryingControlProperties() async throws -> VTMopDockMopAutoDryingControlCapabilityProperties {
+        emptyProperties
+    }
+
+    func getFloorMaterialDirectionAwareNavigationIsEnabled() async throws -> Bool {
+        toggleState(for: "FloorMaterialDirectionAwareNavigationControlCapability")
+    }
+
+    func enableFloorMaterialDirectionAwareNavigation() async throws {
+        setToggleState(for: "FloorMaterialDirectionAwareNavigationControlCapability", enabled: true)
+    }
+
+    func disableFloorMaterialDirectionAwareNavigation() async throws {
+        setToggleState(for: "FloorMaterialDirectionAwareNavigationControlCapability", enabled: false)
+    }
+
+    func getFloorMaterialDirectionAwareNavigationControlProperties() async throws -> VTFloorMaterialDirectionAwareNavigationControlCapabilityProperties {
+        emptyProperties
+    }
+
+    func playSpeakerTestSound() async throws {}
+
+    func getSpeakerTestCapabilityProperties() async throws -> VTSpeakerTestCapabilityProperties {
+        emptyProperties
+    }
+
+    func getSpeakerVolume() async throws -> Int {
+        speakerVolume
+    }
+
+    func setSpeakerVolume(_ volume: Int) async throws {
+        speakerVolume = volume
+    }
+
+    func getSpeakerVolumeControlProperties() async throws -> VTSpeakerVolumeControlCapabilityProperties {
+        emptyProperties
+    }
+
+    func getTotalStatisticsCapability() async throws -> [VTValetudoDataPoint] {
+        [
+            VTValetudoDataPoint(__class: "ValetudoDataPoint", metaData: [:], timestamp: Date(), type: .time, value: 654_321),
+            VTValetudoDataPoint(__class: "ValetudoDataPoint", metaData: [:], timestamp: Date(), type: .area, value: 9_876_543),
+            VTValetudoDataPoint(__class: "ValetudoDataPoint", metaData: [:], timestamp: Date(), type: .count, value: 314),
+        ]
+    }
+
+    func getTotalStatisticsCapabilityProperties() async throws -> VTStatisticsCapabilityProperties {
+        VTStatisticsCapabilityProperties(availableStatistics: [.count, .time, .area])
+    }
+
+    func getVoicePackManagementStatus() async throws -> VTVoicePackManagementStatus {
+        voicePackManagementStatus
+    }
+
+    func downloadVoicePack(url _: String, language: String, hash _: String) async throws {
+        voicePackManagementStatus = VTVoicePackManagementStatus(
+            currentLanguage: language,
+            operationStatus: VTVoicePackOperationStatus(type: .downloading, progress: 100, metaData: [:])
+        )
+    }
+
+    func getVoicePackManagementCapabilityProperties() async throws -> VTVoicePackManagementCapabilityProperties {
+        emptyProperties
+    }
+
+    func getWifiConfiguration() async throws -> VTWifiConfiguration {
+        wifiConfiguration
+    }
+
+    func setWifiConfiguration(_ configuration: VTWifiConfigurationAction) async throws {
+        wifiConfiguration = VTWifiConfiguration(
+            state: .connected,
+            details: VTWifiDetails(
+                ssid: configuration.ssid,
+                bssid: wifiConfiguration.details?.bssid,
+                downspeed: wifiConfiguration.details?.downspeed,
+                upspeed: wifiConfiguration.details?.upspeed,
+                signal: wifiConfiguration.details?.signal,
+                ips: wifiConfiguration.details?.ips,
+                frequency: wifiConfiguration.details?.frequency
+            ),
+            metaData: configuration.metaData ?? [:]
+        )
+    }
+
+    func getWifiConfigurationCapabilityProperties() async throws -> VTWifiConfigurationCapabilityProperties {
+        VTWifiConfigurationCapabilityProperties(provisionedReconfigurationSupported: true)
+    }
+
+    func getWifiNetworks() async throws -> [VTWifiScanResult] {
+        wifiNetworks
+    }
+
+    func getWifiScanCapabilityProperties() async throws -> VTWifiScanCapabilityProperties {
+        emptyProperties
+    }
+
+    func clean(zones _: [VTZoneCleaningZone], iterations _: Int) async throws {}
+
+    func getZoneCleaningCapabilityProperties() async throws -> VTZoneCleaningCapabilityProperties {
+        VTZoneCleaningCapabilityProperties(
+            zoneCount: VTZoneCleaningCountRange(min: 1, max: 5),
+            iterationCount: VTZoneCleaningCountRange(min: 1, max: 3)
+        )
     }
 
     // MARK: - 1.3 Properties
@@ -649,6 +1151,14 @@ actor VTMockAPIClient: VTAPIClientProtocol {
     }
 
     // MARK: - Helpers
+
+    private func toggleState(for capability: String) -> Bool {
+        toggleCapabilityStates[capability] ?? false
+    }
+
+    private func setToggleState(for capability: String, enabled: Bool) {
+        toggleCapabilityStates[capability] = enabled
+    }
 
     private func storeObserverTask(_ task: Task<Void, Never>, for token: VTListenerToken) {
         observerTasks[token] = task

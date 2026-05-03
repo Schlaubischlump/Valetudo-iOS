@@ -7,42 +7,6 @@
 
 import Foundation
 
-public enum VTPresetType: String, Codable, Sendable, Describable {
-    case fanSpeed = "fan_speed"
-    case waterGrade = "water_grade"
-    case operationMode = "operation_mode"
-
-    public var description: String {
-        switch self {
-        case .waterGrade: "WATER_GRADE".localized()
-        case .fanSpeed: "FAN_SPEED".localized()
-        case .operationMode: "OPERATION_MODE".localized()
-        }
-    }
-}
-
-public enum VTPresetValue: String, Codable, Sendable, Describable {
-    case off, min, low, medium, high, max, turbo, custom
-    case vacuum, mop, vacuumAndMop = "vacuum_and_mop", vacuumThenMop = "vacuum_then_mop"
-
-    public var description: String {
-        switch self {
-        case .off: "OFF".localized()
-        case .min: "MIN".localized()
-        case .low: "LOW".localized()
-        case .medium: "MEDIUM".localized()
-        case .high: "HIGH".localized()
-        case .max: "MAX".localized()
-        case .turbo: "TURBO".localized()
-        case .custom: "CUSTOM".localized()
-        case .vacuum: "VACUUM".localized()
-        case .mop: "MOP".localized()
-        case .vacuumAndMop: "VACUUM_AND_MOP".localized()
-        case .vacuumThenMop: "VACUUM_THEN_MOP".localized()
-        }
-    }
-}
-
 public enum VTStatusValue: String, Codable, Sendable, Describable {
     case docked, error, idle, returning, cleaning, paused, manualControl = "manual_control", moving
 
@@ -96,38 +60,6 @@ public enum VTDockStatusValue: String, Codable, Sendable, Describable {
         case .emptying: "EMPTYING".localized()
         case .cleaning: "CLEANING".localized()
         case .drying: "DRYING".localized()
-        }
-    }
-}
-
-public enum VTConsumableUnit: String, Codable, Sendable {
-    case percent, minutes
-}
-
-public enum VTConsumableType: String, Codable, Sendable, Describable {
-    case brush, filter, cleaning, mop, detergent
-
-    public var description: String {
-        switch self {
-        case .brush: "BRUSH".localized()
-        case .cleaning: "CLEANING".localized()
-        case .detergent: "DETERGENT".localized()
-        case .filter: "FILTER".localized()
-        case .mop: "MOP".localized()
-        }
-    }
-}
-
-public enum VTConsumableSubType: String, Codable, Sendable, Describable {
-    case main, sideRight = "side_right", sensor, all, dock
-
-    public var description: String {
-        switch self {
-        case .all: "ALL".localized()
-        case .dock: "DOCK".localized()
-        case .main: "MAIN".localized()
-        case .sensor: "SENSOR".localized()
-        case .sideRight: "RIGHT".localized()
         }
     }
 }
@@ -205,56 +137,22 @@ public struct VTStatusStateAttribute: VTStateAttribute {
 
 extension VTStatusStateAttribute: Equatable {}
 
-public struct VTConsumableRemaining: Codable, Sendable, Describable {
-    public let value: Double
-    public let unit: VTConsumableUnit
-
-    public var description: String {
-        switch unit {
-        case .percent:
-            return "\(Int(value)) %"
-        case .minutes:
-            let formatter = DateComponentsFormatter()
-            formatter.allowedUnits = [.day, .hour, .minute]
-            formatter.unitsStyle = .abbreviated
-            formatter.zeroFormattingBehavior = [.pad]
-            return formatter.string(from: DateComponents(minute: Int(value))) ?? ""
-        }
-    }
-}
-
-extension VTConsumableRemaining: Equatable {}
-
-public struct VTConsumableStateAttribute: VTStateAttribute {
-    public let __class: String
-    public let metaData: [String: VTAnyCodable]
-    public let type: VTConsumableType
-    public let subType: VTConsumableSubType
-    public let remaining: VTConsumableRemaining
-}
-
-extension VTConsumableStateAttribute: Equatable {}
-
-public struct VTConsumableStateAttributeProperties: Decodable, Sendable, Equatable {
-    public let type: VTConsumableType
-    public let subType: VTConsumableSubType
-    public let unit: VTConsumableUnit
-    public let maxValue: Double?
-}
-
-public struct VTConsumableStateAttributePropertiesList: Decodable, Sendable, Equatable {
-    public let availableConsumables: [VTConsumableStateAttributeProperties]
-}
-
 extension VTAnyCodable {
     static let attachmentStateAttribute: VTAnyCodable = .string("AttachmentStateAttribute")
     static let dockStatusStateAttribute: VTAnyCodable = .string("DockStatusStateAttribute")
     static let presetSelectionStateAttribute: VTAnyCodable = .string("PresetSelectionStateAttribute")
     static let batteryStateAttribute: VTAnyCodable = .string("BatteryStateAttribute")
     static let statusStateAttribute: VTAnyCodable = .string("StatusStateAttribute")
+}
+
+/// Since, Valetudo 2025.10.0: Consumables are no longer state attributes
+/// This is just here for possible backwards compatibility.
+extension VTAnyCodable {
     static let consumableStateAttribute: VTAnyCodable = .string("ConsumableStateAttribute")
     static let valetudoConsumable: VTAnyCodable = .string("ValetudoConsumable")
 }
+
+extension VTConsumableState: VTStateAttribute {}
 
 public struct VTStateAttributeList: Decodable, Sendable {
     public let attributes: [any VTStateAttribute]
@@ -434,7 +332,7 @@ public struct VTStateAttributeList: Decodable, Sendable {
             case .statusStateAttribute:
                 try decodedAttributes.append(jsonDecoder.decode(VTStatusStateAttribute.self, from: jsonData))
             case .consumableStateAttribute, .valetudoConsumable:
-                try decodedAttributes.append(jsonDecoder.decode(VTConsumableStateAttribute.self, from: jsonData))
+                try decodedAttributes.append(jsonDecoder.decode(VTConsumableState.self, from: jsonData))
             default:
                 log(message: "Unknown __class: \(className)", forSubsystem: .stateAttribute, level: .error)
                 continue

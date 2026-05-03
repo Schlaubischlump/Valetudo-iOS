@@ -12,7 +12,7 @@ import UIKit
 final class VTVirtualRestrictionManagementViewController: VTMapEditingViewController {
     private let capabilities: Set<VTCapability>
     private var hasLocalChanges = false
-    private var supportedRestrictedZoneTypes: Set<VTVirtualRestrictionsZoneTypes> = []
+    private var supportedRestrictedZoneTypes: Set<VTVirtualRestrictionsZoneType> = []
 
     private var restrictionOverlays: [VTMapOverlay] {
         mapView?.transientOverlays ?? []
@@ -356,18 +356,18 @@ final class VTVirtualRestrictionManagementViewController: VTMapEditingViewContro
             )
         }
 
-        let restrictedZones = restrictionOverlays.compactMap { overlay -> VTRestrictedZonePayload? in
+        let restrictedZones = restrictionOverlays.compactMap { overlay -> VTRestrictionsZonePayload? in
             guard let zone = overlay as? VTRectangularVirtualRestrictionMapOverlay else { return nil }
 
             let topLeft = zone.rect.origin
             let topRight = CGPoint(x: zone.rect.maxX, y: zone.rect.minY)
             let bottomRight = CGPoint(x: zone.rect.maxX, y: zone.rect.maxY)
             let bottomLeft = CGPoint(x: zone.rect.minX, y: zone.rect.maxY)
-            let type: VTVirtualRestrictedZoneType = zone is VTNoMopAreaMapOverlay ? .mop : .regular
+            let type: VTVirtualRestrictionsZoneType = zone is VTNoMopAreaMapOverlay ? .mop : .regular
 
-            return VTRestrictedZonePayload(
+            return VTRestrictionsZonePayload(
                 type: type,
-                points: VTRectangularRestrictedZonePoints(
+                points: VTRectangularZonePoints(
                     pA: coordinate(from: mapView.cmCoordinate(fromOverlayPoint: topLeft)),
                     pB: coordinate(from: mapView.cmCoordinate(fromOverlayPoint: topRight)),
                     pC: coordinate(from: mapView.cmCoordinate(fromOverlayPoint: bottomRight)),

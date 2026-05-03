@@ -17,7 +17,7 @@ class VTConsumablesViewController: VTCollectionViewController {
     }
 
     /// optional meta data, in particular the max value, for items
-    private var itemProperties: [VTConsumableID: VTConsumableStateAttributeProperties] = [:]
+    private var itemProperties: [VTConsumableID: VTConsumableStateProperties] = [:]
 
     private var dataSource: VTConsumablesDataSource!
     private var items: [VTConsumableItem] = []
@@ -166,7 +166,7 @@ class VTConsumablesViewController: VTCollectionViewController {
         updateItems(with: attrs ?? [], animated: animated)
     }
 
-    private func updateItems(with attributes: [VTConsumableStateAttribute], animated: Bool) {
+    private func updateItems(with attributes: [VTConsumableState], animated: Bool) {
         items = attributes.map { attr in
             let id = VTConsumableID(type: attr.type, subType: attr.subType)
             let prop = itemProperties[id]
