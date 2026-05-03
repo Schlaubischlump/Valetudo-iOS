@@ -26,11 +26,17 @@ struct VTListSelectionCellContentConfiguration<T: Hashable & Sendable & Describa
     static func == (lhs: Self, rhs: Self) -> Bool {
         lhs.id == rhs.id &&
             lhs.options == rhs.options &&
-            lhs.active == rhs.active
+            lhs.active == rhs.active &&
+            lhs.allowReordering == rhs.allowReordering &&
+            lhs.enabledTitle == rhs.enabledTitle &&
+            lhs.disabledTitle == rhs.disabledTitle
     }
 
     func hash(into hasher: inout Hasher) {
         hasher.combine(id)
+        hasher.combine(enabledTitle)
+        hasher.combine(disabledTitle)
+        hasher.combine(allowReordering)
         hasher.combine(options)
         hasher.combine(active)
     }

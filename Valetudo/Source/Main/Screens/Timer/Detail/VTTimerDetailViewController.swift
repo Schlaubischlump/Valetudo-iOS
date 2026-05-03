@@ -146,7 +146,7 @@ final class VTTimerDetailViewController: VTCollectionViewController {
             cell.contentConfiguration = VTCheckboxCellContentConfiguration(
                 id: item.id,
                 title: item.title,
-                isOn: item.enabled,
+                isOn: item.isOn,
                 disableSelectionAfterAction: disabledToggleOnAction
             ) { [weak self] new in
                 guard let self else { return }
@@ -213,7 +213,8 @@ final class VTTimerDetailViewController: VTCollectionViewController {
                 subtitle: nil,
                 image: nil,
                 hours: item.hours,
-                minutes: item.minutes
+                minutes: item.minutes,
+                disableSelectionAfterAction: false
             ) { [weak self] localHour, localMin in
                 guard let self else { return }
 

@@ -16,7 +16,7 @@ final class VTTextFieldCellContentView: VTStackedCellContentView<VTTextFieldCell
         return textField
     }()
 
-    override init(configuration: VTTextFieldCellContentConfiguration) {
+    required init(configuration: VTTextFieldCellContentConfiguration) {
         super.init(configuration: configuration)
     }
 
@@ -40,7 +40,9 @@ final class VTTextFieldCellContentView: VTStackedCellContentView<VTTextFieldCell
     }
 
     @objc private func changed() {
-        currentConfiguration.onChange?(textField.text ?? "")
+        let newText = textField.text ?? ""
+        currentConfiguration.text = newText
+        currentConfiguration.onChange?(newText)
     }
 }
 

@@ -13,7 +13,7 @@ final class VTDropDownCellContentView<S: Describable & Hashable & Equatable>: VT
     private var selection: S?
     private lazy var minimumHeightConstraint = heightAnchor.constraint(greaterThanOrEqualToConstant: 50)
 
-    override init(configuration: VTDropDownCellContentConfiguration<S>) {
+    required init(configuration: VTDropDownCellContentConfiguration<S>) {
         super.init(configuration: configuration)
     }
 
@@ -38,17 +38,20 @@ final class VTDropDownCellContentView<S: Describable & Hashable & Equatable>: VT
         guard currentConfiguration != configuration else { return }
         super.apply(configuration: configuration)
 
-        let config = configuration
+        var config = configuration
         options = config.options
         selection = config.selection
-        selectionButton.isEnabled = true
+        selectionButton.isEnabled = configuration.isEnabled
 
         // Build menu
         selectionButton.menu = UIMenu(children: options.map { sel in
             UIAction(title: sel.description, state: sel == selection ? .on : .off) { [weak self] _ in
-                self?.selectionButton.isEnabled = !config.disableSelectionAfterAction
+                let isEnabled = !config.disableSelectionAfterAction
+                config.isEnabled = isEnabled
+                self?.selectionButton.isEnabled = isEnabled
                 self?.selection = sel
                 config.onChange?(sel)
+                self?.currentConfiguration = config
             }
         })
 

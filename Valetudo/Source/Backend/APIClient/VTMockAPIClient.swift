@@ -72,13 +72,15 @@ actor VTMockAPIClient: VTAPIClientProtocol {
     )
     private var mopDockMopDryingDuration: VTMopDockMopDryingDuration = .threeHours
     private var mopDockMopWashTemperature: VTMopDockMopWashTemperature = .warm
-    private var quirk = VTQuirk(
-        id: "mock.cleaning.behavior",
-        options: ["balanced", "quiet", "aggressive"],
-        title: "Cleaning Behavior",
-        description: "Mock quirk exposed by the demo client.",
-        value: "balanced"
-    )
+    private var quirks = [
+        "mock.cleaning.behavior": VTQuirk(
+            id: "mock.cleaning.behavior",
+            options: ["balanced", "quiet", "aggressive"],
+            title: "Cleaning Behavior",
+            description: "Mock quirk exposed by the demo client.",
+            value: "balanced"
+        ),
+    ]
     private var speakerVolume = 60
     private var voicePackManagementStatus = VTVoicePackManagementStatus(
         currentLanguage: "en",
@@ -725,12 +727,20 @@ actor VTMockAPIClient: VTAPIClientProtocol {
         emptyProperties
     }
 
-    func getQuirk() async throws -> VTQuirk {
-        quirk
+    func getQuirks() async throws -> [VTQuirk] {
+        Array(quirks.values)
     }
 
     func setQuirk(id: String, value: String) async throws {
-        quirk = VTQuirk(id: id, options: quirk.options, title: quirk.title, description: quirk.description, value: value)
+        if let quirk = quirks[id] {
+            quirks[id] = VTQuirk(
+                id: quirk.id,
+                options: quirk.options,
+                title: quirk.title,
+                description: quirk.description,
+                value: value
+            )
+        }
     }
 
     func getQuirksCapabilityProperties() async throws -> VTQuirksCapabilityProperties {

@@ -6,7 +6,7 @@
 //
 import UIKit
 
-final class VTListSelectionCellContentView<T: Hashable & Equatable & Sendable & Describable>: UIView, UIContentView, UICollectionViewDelegate, UICollectionViewDropDelegate, UICollectionViewDragDelegate {
+final class VTListSelectionCellContentView<T: Hashable & Equatable & Sendable & Describable>: UIView, VTContentView, UICollectionViewDelegate, UICollectionViewDropDelegate, UICollectionViewDragDelegate {
     private enum Section: Int, CaseIterable {
         case enabled
         case disabled
@@ -15,13 +15,13 @@ final class VTListSelectionCellContentView<T: Hashable & Equatable & Sendable & 
     private let collectionView: UICollectionView
     private var dataSource: UICollectionViewDiffableDataSource<Section, T>!
 
-    private var currentConfiguration: VTListSelectionCellContentConfiguration<T>!
+    var currentConfiguration: VTListSelectionCellContentConfiguration<T>!
 
     var configuration: UIContentConfiguration {
         get { currentConfiguration }
         set {
             guard let config = newValue as? VTListSelectionCellContentConfiguration<T> else { return }
-            apply(config)
+            apply(configuration: config)
         }
     }
 
@@ -47,9 +47,9 @@ final class VTListSelectionCellContentView<T: Hashable & Equatable & Sendable & 
 
         super.init(frame: .zero)
 
-        setup()
+        setupViews()
         configureDataSource()
-        apply(configuration)
+        apply(configuration: configuration)
     }
 
     @available(*, unavailable)
@@ -71,7 +71,7 @@ final class VTListSelectionCellContentView<T: Hashable & Equatable & Sendable & 
 
     // MARK: - Setup
 
-    private func setup() {
+    func setupViews() {
         collectionView.register(
             VTHeaderView.self,
             forSupplementaryViewOfKind: UICollectionView.elementKindSectionHeader,
@@ -136,7 +136,7 @@ final class VTListSelectionCellContentView<T: Hashable & Equatable & Sendable & 
 
     // MARK: - Apply Snapshot
 
-    private func apply(_ config: VTListSelectionCellContentConfiguration<T>) {
+    func apply(configuration config: VTListSelectionCellContentConfiguration<T>) {
         currentConfiguration = config
 
         var snapshot = NSDiffableDataSourceSnapshot<Section, T>()

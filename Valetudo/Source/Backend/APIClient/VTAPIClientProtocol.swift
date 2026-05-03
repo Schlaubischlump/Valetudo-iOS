@@ -235,7 +235,7 @@ public protocol VTAPIClientProtocol: Actor {
 
     // MARK: - 1.2.32 QuirksCapability
 
-    func getQuirk() async throws -> VTQuirk
+    func getQuirks() async throws -> [VTQuirk]
     func setQuirk(id: String, value: String) async throws
     func getQuirksCapabilityProperties() async throws -> VTQuirksCapabilityProperties
 

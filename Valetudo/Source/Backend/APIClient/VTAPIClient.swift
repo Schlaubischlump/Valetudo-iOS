@@ -455,7 +455,7 @@ public actor VTAPIClient: VTAPIClientProtocol {
     public func enableObstacleImagesCapability() async throws {
         let url = capabilitiesURL
             .appendingPathComponent(obstacleImagesCapabilityPath)
-        let request = VTRequest<Void>(method: .PUT, url: url, body: VTObstacleImagesAction(action: .enabled))
+        let request = VTRequest<Void>(method: .PUT, url: url, body: VTObstacleImagesAction(action: .enable))
         return try await send(request)
     }
 
@@ -669,7 +669,8 @@ public actor VTAPIClient: VTAPIClientProtocol {
 
     public func locateRobot() async throws {
         let url = capabilitiesURL.appendingPathComponent(locateCapabilityPath)
-        let request = VTRequest<Void>(method: .PUT, url: url)
+        let data = VTLocateRobotAction()
+        let request = VTRequest<Void>(method: .PUT, url: url, body: data)
         return try await send(request)
     }
 
@@ -930,9 +931,9 @@ public actor VTAPIClient: VTAPIClientProtocol {
 
     private let quirksCapabilityPath: String = "QuirksCapability"
 
-    public func getQuirk() async throws -> VTQuirk {
+    public func getQuirks() async throws -> [VTQuirk] {
         let url = capabilitiesURL.appendingPathComponent(quirksCapabilityPath)
-        let request = VTRequest<VTQuirk>(method: .GET, url: url)
+        let request = VTRequest<[VTQuirk]>(method: .GET, url: url)
         return try await send(request)
     }
 

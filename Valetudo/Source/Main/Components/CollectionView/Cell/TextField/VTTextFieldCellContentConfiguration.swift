@@ -12,7 +12,7 @@ struct VTTextFieldCellContentConfiguration: VTStackedCellContentConfiguration {
     let subtitle: String?
     let image: UIImage?
     let placeholder: String
-    let text: String
+    var text: String
     let onChange: ((String) -> Void)?
 
     func makeContentView() -> UIView & UIContentView {
@@ -26,6 +26,9 @@ struct VTTextFieldCellContentConfiguration: VTStackedCellContentConfiguration {
     static func == (lhs: VTTextFieldCellContentConfiguration, rhs: VTTextFieldCellContentConfiguration) -> Bool {
         lhs.id == rhs.id &&
             lhs.title == rhs.title &&
+            lhs.image == rhs.image &&
+            lhs.subtitle == rhs.subtitle &&
+            lhs.title == rhs.title &&
             lhs.placeholder == rhs.placeholder &&
             lhs.text == rhs.text
     }
@@ -33,6 +36,8 @@ struct VTTextFieldCellContentConfiguration: VTStackedCellContentConfiguration {
     func hash(into hasher: inout Hasher) {
         hasher.combine(id)
         hasher.combine(title)
+        hasher.combine(subtitle)
+        hasher.combine(image)
         hasher.combine(placeholder)
         hasher.combine(text)
     }

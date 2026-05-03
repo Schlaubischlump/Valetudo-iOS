@@ -7,7 +7,7 @@
 import Foundation
 
 enum VTObstacleImagesActionType: String, Encodable, Hashable {
-    case enabled
+    case enable
     case disable
 }
 

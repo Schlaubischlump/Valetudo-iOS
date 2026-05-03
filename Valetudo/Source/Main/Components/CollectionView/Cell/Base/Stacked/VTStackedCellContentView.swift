@@ -6,7 +6,7 @@
 //
 import UIKit
 
-class VTStackedCellContentView<Configuration: VTStackedCellContentConfiguration>: UIView, UIContentView {
+class VTStackedCellContentView<Configuration: VTStackedCellContentConfiguration>: UIView, VTContentView {
     var currentConfiguration: Configuration!
 
     let rootStack = UIStackView()
@@ -29,7 +29,7 @@ class VTStackedCellContentView<Configuration: VTStackedCellContentConfiguration>
         }
     }
 
-    init(configuration: Configuration) {
+    required init(configuration: Configuration) {
         super.init(frame: .zero)
         setupViews()
         apply(configuration: configuration)

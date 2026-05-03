@@ -6,7 +6,7 @@
 //
 import UIKit
 
-final class VTProgressCellView: UIView, UIContentView {
+final class VTProgressCellView: UIView, VTContentView {
     private let progressView: UIProgressView = {
         let progressView = UIProgressView(progressViewStyle: .bar)
         progressView.trackTintColor = .secondarySystemFill
@@ -25,13 +25,19 @@ final class VTProgressCellView: UIView, UIContentView {
 
     private lazy var minimumHeightConstraint = heightAnchor.constraint(greaterThanOrEqualToConstant: 50)
 
+    var currentConfiguration: VTProgressCellContentConfiguration!
+
     var configuration: UIContentConfiguration {
-        didSet { apply(configuration: configuration) }
+        get { currentConfiguration }
+        set {
+            guard let config = newValue as? VTProgressCellContentConfiguration else { return }
+            apply(configuration: config)
+        }
     }
 
     init(configuration: VTProgressCellContentConfiguration) {
-        self.configuration = configuration
         super.init(frame: .zero)
+
         setupViews()
         apply(configuration: configuration)
     }
@@ -41,7 +47,7 @@ final class VTProgressCellView: UIView, UIContentView {
         fatalError("init(coder:) has not been implemented")
     }
 
-    private func setupViews() {
+    func setupViews() {
         let stack = UIStackView(arrangedSubviews: [messageLabel, progressView])
         stack.axis = .vertical
         stack.spacing = 8
@@ -64,9 +70,11 @@ final class VTProgressCellView: UIView, UIContentView {
         ])
     }
 
-    private func apply(configuration: UIContentConfiguration) {
-        guard let config = configuration as? VTProgressCellContentConfiguration else { return }
-        messageLabel.text = config.message
-        progressView.progress = Float(config.progress / 100.0)
+    func apply(configuration: VTProgressCellContentConfiguration) {
+        guard currentConfiguration != configuration else { return }
+        currentConfiguration = configuration
+
+        messageLabel.text = configuration.message
+        progressView.progress = Float(configuration.progress / 100.0)
     }
 }

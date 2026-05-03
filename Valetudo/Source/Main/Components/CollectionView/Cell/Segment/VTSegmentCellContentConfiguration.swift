@@ -9,7 +9,7 @@ import UIKit
 struct VTSegmentCellContentConfiguration<S: Describable & Hashable & Equatable>: UIContentConfiguration, Hashable {
     let id: String
     let options: [S]
-    let active: Set<S>
+    var active: Set<S>
     let onChange: ((Set<S>) -> Void)?
 
     func makeContentView() -> UIView & UIContentView {

@@ -9,5 +9,5 @@ enum VTLocateRobotActionType: String, Encodable, Hashable {
 }
 
 struct VTLocateRobotAction: Encodable, Hashable {
-    let action: VTLocateRobotActionType
+    let action: VTLocateRobotActionType = .locate
 }

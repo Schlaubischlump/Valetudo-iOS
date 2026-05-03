@@ -77,6 +77,8 @@ public extension UIImage {
     static let mopDryingTime = UIImage(systemName: "timer")
     static let systemOptions = UIImage(systemName: "gearshape.2.fill")
     static let quirks = UIImage(systemName: "star")
+    static let speakerQuite = UIImage(systemName: "speaker.fill")
+    static let speakerLoud = UIImage(systemName: "speaker.wave.3.fill")
 
     static let overlayResize = UIImage(systemName: "arrow.up.left.and.arrow.down.right")
     static let overlayRemove = UIImage(systemName: "trash.fill")

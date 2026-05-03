@@ -71,24 +71,24 @@ private final class ToggleButton<S: Describable & Hashable & Equatable>: UILabel
     }
 }
 
-final class VTSegmentCellContentView<S: Describable & Hashable & Equatable>: UIView, UIContentView {
+final class VTSegmentCellContentView<S: Describable & Hashable & Equatable>: UIView, VTContentView {
     private let stack = UIStackView()
     private var buttons: [ToggleButton<S>] = []
 
-    private var currentConfiguration: VTSegmentCellContentConfiguration<S>!
+    var currentConfiguration: VTSegmentCellContentConfiguration<S>!
 
     var configuration: UIContentConfiguration {
         get { currentConfiguration }
         set {
             guard let config = newValue as? VTSegmentCellContentConfiguration<S> else { return }
-            apply(config)
+            apply(configuration: config)
         }
     }
 
     init(configuration: VTSegmentCellContentConfiguration<S>) {
         super.init(frame: .zero)
-        setup()
-        apply(configuration)
+        setupViews()
+        apply(configuration: configuration)
     }
 
     @available(*, unavailable)
@@ -96,7 +96,7 @@ final class VTSegmentCellContentView<S: Describable & Hashable & Equatable>: UIV
         fatalError()
     }
 
-    private func setup() {
+    func setupViews() {
         stack.axis = .horizontal
         stack.spacing = 8
         stack.distribution = .fillEqually
@@ -115,22 +115,24 @@ final class VTSegmentCellContentView<S: Describable & Hashable & Equatable>: UIV
         ])
     }
 
-    private func apply(_ config: VTSegmentCellContentConfiguration<S>) {
-        currentConfiguration = config
+    func apply(configuration: VTSegmentCellContentConfiguration<S>) {
+        guard currentConfiguration != configuration else { return }
+        currentConfiguration = configuration
 
         // Rebuild buttons (simple + safe for diffable)
         stack.arrangedSubviews.forEach { $0.removeFromSuperview() }
         buttons.removeAll()
 
-        for value in config.options {
+        for value in configuration.options {
             let button = ToggleButton(value: value)
-            let isSelected = config.active.contains(value)
+            let isSelected = configuration.active.contains(value)
             button.isSelected = isSelected
             button.onTap = { [weak self] _ in
                 guard let self else { return }
 
                 let (_, newSelection) = zip(buttons, currentConfiguration.options).filter(\.0.isSelected).unzip()
 
+                currentConfiguration.active = Set(newSelection)
                 currentConfiguration.onChange?(Set(newSelection))
             }
 

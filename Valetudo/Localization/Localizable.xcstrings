@@ -111,6 +111,17 @@
         }
       }
     },
+    "BEHAVIOR" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Behavior"
+          }
+        }
+      }
+    },
     "BRUSH" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -129,6 +140,94 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cancel"
+          }
+        }
+      }
+    },
+    "CARPET_MODE" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Carpet Mode"
+          }
+        }
+      }
+    },
+    "CARPET_MODE_DESCRIPTION" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "When enabled, the vacuum will recognize carpets automatically and increase the suction."
+          }
+        }
+      }
+    },
+    "CARPET_SENSOR" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Carpet Sensor"
+          }
+        }
+      }
+    },
+    "CARPET_SENSOR_AVOID" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avoid"
+          }
+        }
+      }
+    },
+    "CARPET_SENSOR_DESCRIPTION" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Select what action the robot should take if it detects carpet while mopping."
+          }
+        }
+      }
+    },
+    "CARPET_SENSOR_DETACH" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Detach"
+          }
+        }
+      }
+    },
+    "CARPET_SENSOR_LIFT" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lift"
+          }
+        }
+      }
+    },
+    "CARPET_SENSOR_OFF" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Off"
           }
         }
       }
@@ -166,6 +265,72 @@
         }
       }
     },
+    "CLEAN_ROUTE" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clean Route"
+          }
+        }
+      }
+    },
+    "CLEAN_ROUTE_DEEP" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deep"
+          }
+        }
+      }
+    },
+    "CLEAN_ROUTE_DESCRIPTION" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trade speed for thoroughness and vice-versa. \"Deep\" only applies when mopping."
+          }
+        }
+      }
+    },
+    "CLEAN_ROUTE_INTENSIVE" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Intensive"
+          }
+        }
+      }
+    },
+    "CLEAN_ROUTE_NORMAL" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Normal"
+          }
+        }
+      }
+    },
+    "CLEAN_ROUTE_QUICK" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quick"
+          }
+        }
+      }
+    },
     "CLEANING" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -173,6 +338,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cleaning"
+          }
+        }
+      }
+    },
+    "COLLISION_AVOIDANT_NAVIGATION" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Collision-avoidant Navigation"
+          }
+        }
+      }
+    },
+    "COLLISION_AVOIDANT_NAVIGATION_DESCRIPTION" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Drive a more conservative route to reduce collisions. May cause missed spots."
           }
         }
       }
@@ -210,6 +397,17 @@
         }
       }
     },
+    "CONSUMABLE_RESET_FAILED_MESSAGE" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Failed to reset consumable.\n%@"
+          }
+        }
+      }
+    },
     "CONSUMABLES" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -228,17 +426,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Monitore and reset consumable states"
-          }
-        }
-      }
-    },
-    "CONSUMABLE_RESET_FAILED_MESSAGE" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Failed to reset consumable.\n%@"
           }
         }
       }
@@ -375,6 +562,17 @@
         }
       }
     },
+    "DISABLED" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Disabled"
+          }
+        }
+      }
+    },
     "DISCARD_CHANGES" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -397,6 +595,17 @@
         }
       }
     },
+    "DO_NOT_DISTURB" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Do Not Disturb"
+          }
+        }
+      }
+    },
     "DOCK" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -404,6 +613,72 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Dock"
+          }
+        }
+      }
+    },
+    "DOCK_AUTO_EMPTY" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dock Auto-Empty"
+          }
+        }
+      }
+    },
+    "DOCK_AUTO_EMPTY_DESCRIPTION" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Select if and/or how often the dock should auto-empty the robot."
+          }
+        }
+      }
+    },
+    "DOCK_AUTO_EMPTY_FREQUENT" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Frequent"
+          }
+        }
+      }
+    },
+    "DOCK_AUTO_EMPTY_INFREQUENT" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Infrequent"
+          }
+        }
+      }
+    },
+    "DOCK_AUTO_EMPTY_NORMAL" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Normal"
+          }
+        }
+      }
+    },
+    "DOCK_AUTO_EMPTY_OFF" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Off"
           }
         }
       }
@@ -551,6 +826,28 @@
         }
       }
     },
+    "END" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "End"
+          }
+        }
+      }
+    },
+    "END_TIME" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "End Time"
+          }
+        }
+      }
+    },
     "ENVIRONMENT" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -668,391 +965,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "General"
-          }
-        }
-      }
-    },
-    "LOCK_KEYS" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Lock Keys"
-          }
-        }
-      }
-    },
-    "LOCK_KEYS_DESCRIPTION" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Prevents the robot from being operated using its physical buttons."
-          }
-        }
-      }
-    },
-    "LOCATE_ROBOT" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Locate Robot"
-          }
-        }
-      }
-    },
-    "LOCATE_ROBOT_DESCRIPTION" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "The robot will play a sound to announce its location"
-          }
-        }
-      }
-    },
-    "BEHAVIOR" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Behavior"
-          }
-        }
-      }
-    },
-    "COLLISION_AVOIDANT_NAVIGATION" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Collision-avoidant Navigation"
-          }
-        }
-      }
-    },
-    "COLLISION_AVOIDANT_NAVIGATION_DESCRIPTION" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Drive a more conservative route to reduce collisions. May cause missed spots."
-          }
-        }
-      }
-    },
-    "MATERIAL_ALIGNED_NAVIGATION" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Material-aligned Navigation"
-          }
-        }
-      }
-    },
-    "MATERIAL_ALIGNED_NAVIGATION_DESCRIPTION" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Clean along the direction of the configured/detected floor material (if applicable)."
-          }
-        }
-      }
-    },
-    "CLEAN_ROUTE" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Clean Route"
-          }
-        }
-      }
-    },
-    "CLEAN_ROUTE_DESCRIPTION" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Trade speed for thoroughness and vice-versa. \"Deep\" only applies when mopping."
-          }
-        }
-      }
-    },
-    "CARPET_MODE" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Carpet Mode"
-          }
-        }
-      }
-    },
-    "CARPET_MODE_DESCRIPTION" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "When enabled, the vacuum will recognize carpets automatically and increase the suction."
-          }
-        }
-      }
-    },
-    "CARPET_SENSOR" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Carpet Sensor"
-          }
-        }
-      }
-    },
-    "CARPET_SENSOR_DESCRIPTION" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Select what action the robot should take if it detects carpet while mopping."
-          }
-        }
-      }
-    },
-    "MOP_TWIST" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mop Twist"
-          }
-        }
-      }
-    },
-    "MOP_TWIST_DESCRIPTION" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Twist the robot to mop closer to walls and furniture. Will increase the cleanup duration."
-          }
-        }
-      }
-    },
-    "PERCEPTION" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Perception"
-          }
-        }
-      }
-    },
-    "OBSTACLE_AVOIDANCE" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Obstacle Avoidance"
-          }
-        }
-      }
-    },
-    "OBSTACLE_AVOIDANCE_DESCRIPTION" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Avoid obstacles using sensors such as lasers or cameras. May suffer from false positives."
-          }
-        }
-      }
-    },
-    "PET_OBSTACLE_AVOIDANCE" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pet Obstacle Avoidance"
-          }
-        }
-      }
-    },
-    "PET_OBSTACLE_AVOIDANCE_DESCRIPTION" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Fine-tune obstacle avoidance to avoid obstacles left by pets. Will increase the general false positive rate."
-          }
-        }
-      }
-    },
-    "OBSTACLE_IMAGES" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Obstacle Images"
-          }
-        }
-      }
-    },
-    "OBSTACLE_IMAGES_DESCRIPTION" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Take pictures of all encountered obstacles."
-          }
-        }
-      }
-    },
-    "DOCK_AUTO_EMPTY" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Dock Auto-Empty"
-          }
-        }
-      }
-    },
-    "DOCK_AUTO_EMPTY_DESCRIPTION" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Select if and/or how often the dock should auto-empty the robot."
-          }
-        }
-      }
-    },
-    "MOP_AUTO_DRYING" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mop Auto-Drying"
-          }
-        }
-      }
-    },
-    "MOP_AUTO_DRYING_DESCRIPTION" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Automatically dry the mop pads after a cleanup."
-          }
-        }
-      }
-    },
-    "MOP_DRYING_TIME" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mop Drying Time"
-          }
-        }
-      }
-    },
-    "MOP_DRYING_TIME_DESCRIPTION" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Select how long the mop should be dried with hot air after a cleanup."
-          }
-        }
-      }
-    },
-    "ROBOT_OPTIONS" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Robot Options"
-          }
-        }
-      }
-    },
-    "SYSTEM_OPTIONS" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "System Options"
-          }
-        }
-      }
-    },
-    "SYSTEM_OPTIONS_DESCRIPTION" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Voice packs, Do not disturb, Speaker settings"
-          }
-        }
-      }
-    },
-    "QUIRKS" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Quirks"
-          }
-        }
-      }
-    },
-    "QUIRKS_DESCRIPTION" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Configure firmware-specific quirks"
           }
         }
       }
@@ -1222,6 +1134,50 @@
         }
       }
     },
+    "LOCATE_ROBOT" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Locate Robot"
+          }
+        }
+      }
+    },
+    "LOCATE_ROBOT_DESCRIPTION" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The robot will play a sound to announce its location"
+          }
+        }
+      }
+    },
+    "LOCK_KEYS" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lock Keys"
+          }
+        }
+      }
+    },
+    "LOCK_KEYS_DESCRIPTION" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prevents the robot from being operated using its physical buttons."
+          }
+        }
+      }
+    },
     "LOG" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1365,17 +1321,6 @@
         }
       }
     },
-    "MAP_OPTIONS_MAPPING_PASS_SUBTITLE" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Create a new map"
-          }
-        }
-      }
-    },
     "MAP_OPTIONS_MAPPING_PASS_CONFIRMATION_ACTION" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1405,6 +1350,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Start Mapping Pass?"
+          }
+        }
+      }
+    },
+    "MAP_OPTIONS_MAPPING_PASS_SUBTITLE" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Create a new map"
           }
         }
       }
@@ -1574,6 +1530,28 @@
         }
       }
     },
+    "MATERIAL_ALIGNED_NAVIGATION" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Material-aligned Navigation"
+          }
+        }
+      }
+    },
+    "MATERIAL_ALIGNED_NAVIGATION_DESCRIPTION" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clean along the direction of the configured/detected floor material (if applicable)."
+          }
+        }
+      }
+    },
     "MATERIAL_GENERIC" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1706,6 +1684,116 @@
         }
       }
     },
+    "MOP_AUTO_DRYING" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mop Auto-Drying"
+          }
+        }
+      }
+    },
+    "MOP_AUTO_DRYING_DESCRIPTION" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatically dry the mop pads after a cleanup."
+          }
+        }
+      }
+    },
+    "MOP_DRYING_TIME" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mop Drying Time"
+          }
+        }
+      }
+    },
+    "MOP_DRYING_TIME_COLD" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cold Air"
+          }
+        }
+      }
+    },
+    "MOP_DRYING_TIME_DESCRIPTION" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Select how long the mop should be dried with hot air after a cleanup."
+          }
+        }
+      }
+    },
+    "MOP_DRYING_TIME_FOUR_HOURS" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "4 Hours"
+          }
+        }
+      }
+    },
+    "MOP_DRYING_TIME_THREE_HOURS" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "3 Hours"
+          }
+        }
+      }
+    },
+    "MOP_DRYING_TIME_TWO_HOURS" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "2 Hours"
+          }
+        }
+      }
+    },
+    "MOP_TWIST" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mop Twist"
+          }
+        }
+      }
+    },
+    "MOP_TWIST_DESCRIPTION" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Twist the robot to mop closer to walls and furniture. Will increase the cleanup duration."
+          }
+        }
+      }
+    },
     "MORE_DETAILS" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1779,6 +1867,50 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "No Robots Found"
+          }
+        }
+      }
+    },
+    "OBSTACLE_AVOIDANCE" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Obstacle Avoidance"
+          }
+        }
+      }
+    },
+    "OBSTACLE_AVOIDANCE_DESCRIPTION" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avoid obstacles using sensors such as lasers or cameras. May suffer from false positives."
+          }
+        }
+      }
+    },
+    "OBSTACLE_IMAGES" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Obstacle Images"
+          }
+        }
+      }
+    },
+    "OBSTACLE_IMAGES_DESCRIPTION" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Take pictures of all encountered obstacles."
           }
         }
       }
@@ -1871,6 +2003,39 @@
         }
       }
     },
+    "PERCEPTION" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Perception"
+          }
+        }
+      }
+    },
+    "PET_OBSTACLE_AVOIDANCE" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pet Obstacle Avoidance"
+          }
+        }
+      }
+    },
+    "PET_OBSTACLE_AVOIDANCE_DESCRIPTION" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fine-tune obstacle avoidance to avoid obstacles left by pets. Will increase the general false positive rate."
+          }
+        }
+      }
+    },
     "PID" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1882,6 +2047,17 @@
         }
       }
     },
+    "PLAY_TEST_SOUND" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Play Test Sound"
+          }
+        }
+      }
+    },
     "PRE_ACTIONS" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1889,6 +2065,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pre-Actions"
+          }
+        }
+      }
+    },
+    "QUIRKS" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quirks"
+          }
+        }
+      }
+    },
+    "QUIRKS_DESCRIPTION" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Configure firmware-specific quirks"
           }
         }
       }
@@ -2113,6 +2311,28 @@
         }
       }
     },
+    "ROBOT_OPTIONS" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Robot Options"
+          }
+        }
+      }
+    },
+    "ROBOT_SYSTEM_OPTIONS" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "System Options"
+          }
+        }
+      }
+    },
     "ROBOTS" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2245,6 +2465,50 @@
         }
       }
     },
+    "SPEAKER" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Speaker"
+          }
+        }
+      }
+    },
+    "START" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start"
+          }
+        }
+      }
+    },
+    "START_TIME" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start Time"
+          }
+        }
+      }
+    },
+    "STATUS" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Status"
+          }
+        }
+      }
+    },
     "SYS" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2300,6 +2564,39 @@
         }
       }
     },
+    "SYSTEM_OPTIONS" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "System Options"
+          }
+        }
+      }
+    },
+    "SYSTEM_OPTIONS_DESCRIPTION" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Voice packs, Do not disturb, Speaker settings"
+          }
+        }
+      }
+    },
+    "TEST_SPEAKER" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Test Sound Volume"
+          }
+        }
+      }
+    },
     "TIME" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2318,17 +2615,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Timer"
-          }
-        }
-      }
-    },
-    "TIMERS" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Timers"
           }
         }
       }
@@ -2373,6 +2659,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Failed to update timer.\n%@"
+          }
+        }
+      }
+    },
+    "TIMERS" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Timers"
           }
         }
       }
@@ -2663,6 +2960,17 @@
         }
       }
     },
+    "VOICE_PACKS" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Voice Packs"
+          }
+        }
+      }
+    },
     "WATER_GRADE" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2681,6 +2989,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Watertank"
+          }
+        }
+      }
+    },
+    "WIFI" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wi-Fi"
           }
         }
       }

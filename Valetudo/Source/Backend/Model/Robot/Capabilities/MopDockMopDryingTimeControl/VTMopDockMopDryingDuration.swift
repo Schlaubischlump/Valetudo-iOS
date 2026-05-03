@@ -11,3 +11,18 @@ public enum VTMopDockMopDryingDuration: String, Codable, Sendable, Hashable {
     case fourHours = "4h"
     case cold
 }
+
+extension VTMopDockMopDryingDuration: Describable {
+    public var description: String {
+        switch self {
+        case .twoHours:
+            "MOP_DRYING_TIME_TWO_HOURS".localized()
+        case .threeHours:
+            "MOP_DRYING_TIME_THREE_HOURS".localized()
+        case .fourHours:
+            "MOP_DRYING_TIME_FOUR_HOURS".localized()
+        case .cold:
+            "MOP_DRYING_TIME_COLD".localized()
+        }
+    }
+}

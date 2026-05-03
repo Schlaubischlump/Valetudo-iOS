@@ -7,113 +7,48 @@
 
 import UIKit
 
-private enum VTRobotOptionsSection: Int, CaseIterable {
-    case general
-    case behavior
-    case perception
-    case dock
-    case misc
+private let kLocateRobotID = "LOCATE_ROBOT"
+private let kLockKeysID = "LOCK_KEYS"
+private let kCollisionAvoidantNavigationID = "COLLISION_AVOIDANT_NAVIGATION"
+private let kMaterialAlignedNavigationID = "MATERIAL_ALIGNED_NAVIGATION"
+private let kCleanRouteID = "CLEAN_ROUTE"
+private let kCarpetModeID = "CARPET_MODE"
+private let kCarpetSensorID = "CARPET_SENSOR"
+private let kMopTwistID = "MOP_TWIST"
+private let kObstacleAvoidanceID = "OBSTACLE_AVOIDANCE"
+private let kPetObstacleAvoidanceID = "PET_OBSTACLE_AVOIDANCE"
+private let kObstacleImagesID = "OBSTACLE_IMAGES"
+private let kDockAutoEmptyID = "DOCK_AUTO_EMPTY"
+private let kMopAutoDryingID = "MOP_AUTO_DRYING"
+private let kMopDryingTimeID = "MOP_DRYING_TIME"
+private let kSystemOptionsID = "SYSTEM_OPTIONS"
+private let kQuirksID = "QUIRKS"
 
-    var title: String {
-        switch self {
-        case .general:
-            "GENERAL".localized()
-        case .behavior:
-            "BEHAVIOR".localized()
-        case .perception:
-            "PERCEPTION".localized()
-        case .dock:
-            "DOCK".localized()
-        case .misc:
-            "MISC".localized()
-        }
-    }
-}
-
-private enum VTCleanRouteOption: String, CaseIterable {
-    case fast = "Fast"
-    case balanced = "Balanced"
-    case deep = "Deep"
-}
-
-private enum VTCarpetSensorOption: String, CaseIterable {
-    case ignore = "Ignore"
-    case avoid = "Avoid"
-    case liftMop = "Lift Mop"
-}
-
-private enum VTDockAutoEmptyOption: String, CaseIterable {
-    case off = "Off"
-    case afterEveryCleanup = "After Every Cleanup"
-    case everyTwoCleanups = "Every 2 Cleanups"
-}
-
-private enum VTMopDryingTimeOption: String, CaseIterable {
-    case twoHours = "2 Hours"
-    case threeHours = "3 Hours"
-    case fourHours = "4 Hours"
-}
-
-extension VTCleanRouteOption: Describable {
-    var description: String {
-        rawValue
-    }
-}
-
-extension VTCarpetSensorOption: Describable {
-    var description: String {
-        rawValue
-    }
-}
-
-extension VTDockAutoEmptyOption: Describable {
-    var description: String {
-        rawValue
-    }
-}
-
-extension VTMopDryingTimeOption: Describable {
-    var description: String {
-        rawValue
-    }
-}
+// TODO: Check if we covered all options. For that we need to check the Valetudo source code
 
 final class VTRobotOptionsViewController: VTCollectionViewController {
     private struct State {
         var lockKeysEnabled = false
-        var collisionAvoidantNavigationEnabled = true
+        var collisionAvoidantNavigationEnabled = false
         var materialAlignedNavigationEnabled = false
-        var cleanRoute: VTCleanRouteOption = .balanced
-        var carpetModeEnabled = true
-        var carpetSensor: VTCarpetSensorOption = .liftMop
-        var mopTwistEnabled = true
-        var obstacleAvoidanceEnabled = true
+        var cleanRoute: VTCleanRoute = .normal
+        var supportedCleanRoutes: [VTCleanRoute] = []
+        var carpetModeEnabled = false
+        var carpetSensor: VTCarpetSensorMode = .lift
+        var supportedCarpetSensorModes: [VTCarpetSensorMode] = []
+        var mopTwistEnabled = false
+        var obstacleAvoidanceEnabled = false
         var petObstacleAvoidanceEnabled = false
-        var obstacleImagesEnabled = true
-        var dockAutoEmpty: VTDockAutoEmptyOption = .afterEveryCleanup
-        var mopAutoDryingEnabled = true
-        var mopDryingTime: VTMopDryingTimeOption = .threeHours
+        var obstacleImagesEnabled = false
+        var dockAutoEmpty: VTAutoEmptyDockAutoEmptyInterval = .normal
+        var supportedDockAutoEmptyIntervals: [VTAutoEmptyDockAutoEmptyInterval] = []
+        var mopAutoDryingEnabled = false
+        var mopDryingTime: VTMopDockMopDryingDuration = .threeHours
+        var supportedMopDryingTimes: [VTMopDockMopDryingDuration] = []
     }
 
     private typealias DataSource = UICollectionViewDiffableDataSource<VTRobotOptionsSection, VTAnyItem>
     private typealias Snapshot = NSDiffableDataSourceSnapshot<VTRobotOptionsSection, VTAnyItem>
-
-    private static let locateRobotID = "locateRobot"
-    private static let lockKeysID = "lockKeys"
-    private static let collisionAvoidantNavigationID = "collisionAvoidantNavigation"
-    private static let materialAlignedNavigationID = "materialAlignedNavigation"
-    private static let cleanRouteID = "cleanRoute"
-    private static let carpetModeID = "carpetMode"
-    private static let carpetSensorID = "carpetSensor"
-    private static let mopTwistID = "mopTwist"
-    private static let obstacleAvoidanceID = "obstacleAvoidance"
-    private static let petObstacleAvoidanceID = "petObstacleAvoidance"
-    private static let obstacleImagesID = "obstacleImages"
-    private static let dockAutoEmptyID = "dockAutoEmpty"
-    private static let mopAutoDryingID = "mopAutoDrying"
-    private static let mopDryingTimeID = "mopDryingTime"
-    private static let systemOptionsID = "systemOptions"
-    private static let quirksID = "quirks"
 
     private let client: any VTAPIClientProtocol
     private var dataSource: DataSource!
@@ -172,7 +107,7 @@ final class VTRobotOptionsViewController: VTCollectionViewController {
     }
 
     private func configureDataSource() {
-        let linkCell = VTCellRegistration { [weak self] cell, _, wrappedItem in
+        let keyValueCell = VTCellRegistration { [weak self] cell, _, wrappedItem in
             guard let item = wrappedItem.base as? VTKeyValueItem else {
                 fatalError("Unsupported key value item: \(wrappedItem.base)")
             }
@@ -197,8 +132,9 @@ final class VTRobotOptionsViewController: VTCollectionViewController {
                 id: item.id,
                 title: item.title,
                 subtitle: item.subtitle,
-                isOn: item.enabled,
-                image: item.image
+                isOn: item.isOn,
+                image: item.image,
+                disableSelectionAfterAction: true
             ) { [weak self] isOn in
                 self?.updateToggle(id: item.id, isOn: isOn)
             }
@@ -207,7 +143,7 @@ final class VTRobotOptionsViewController: VTCollectionViewController {
         }
 
         let cleanRouteDropdownCell = VTCellRegistration { [weak self] cell, _, wrappedItem in
-            guard let item = wrappedItem.base as? VTDropDownItem<VTCleanRouteOption> else {
+            guard let item = wrappedItem.base as? VTDropDownItem<VTCleanRoute> else {
                 fatalError("Unsupported clean route item: \(wrappedItem.base)")
             }
 
@@ -218,16 +154,16 @@ final class VTRobotOptionsViewController: VTCollectionViewController {
                 options: item.options,
                 selection: item.active,
                 image: item.image,
-                disableSelectionAfterAction: false
+                disableSelectionAfterAction: true
             ) { [weak self] selection in
-                self?.state.cleanRoute = selection
+                self?.updateCleanRoute(selection)
             }
             cell.backgroundConfiguration = .adaptiveListCell()
             cell.accessories = []
         }
 
         let carpetSensorDropdownCell = VTCellRegistration { [weak self] cell, _, wrappedItem in
-            guard let item = wrappedItem.base as? VTDropDownItem<VTCarpetSensorOption> else {
+            guard let item = wrappedItem.base as? VTDropDownItem<VTCarpetSensorMode> else {
                 fatalError("Unsupported carpet sensor item: \(wrappedItem.base)")
             }
 
@@ -238,16 +174,16 @@ final class VTRobotOptionsViewController: VTCollectionViewController {
                 options: item.options,
                 selection: item.active,
                 image: item.image,
-                disableSelectionAfterAction: false
+                disableSelectionAfterAction: true
             ) { [weak self] selection in
-                self?.state.carpetSensor = selection
+                self?.updateCarpetSensor(selection)
             }
             cell.backgroundConfiguration = .adaptiveListCell()
             cell.accessories = []
         }
 
         let dockAutoEmptyDropdownCell = VTCellRegistration { [weak self] cell, _, wrappedItem in
-            guard let item = wrappedItem.base as? VTDropDownItem<VTDockAutoEmptyOption> else {
+            guard let item = wrappedItem.base as? VTDropDownItem<VTAutoEmptyDockAutoEmptyInterval> else {
                 fatalError("Unsupported dock auto-empty item: \(wrappedItem.base)")
             }
 
@@ -258,16 +194,16 @@ final class VTRobotOptionsViewController: VTCollectionViewController {
                 options: item.options,
                 selection: item.active,
                 image: item.image,
-                disableSelectionAfterAction: false
+                disableSelectionAfterAction: true
             ) { [weak self] selection in
-                self?.state.dockAutoEmpty = selection
+                self?.updateDockAutoEmpty(selection)
             }
             cell.backgroundConfiguration = .adaptiveListCell()
             cell.accessories = []
         }
 
         let mopDryingTimeDropdownCell = VTCellRegistration { [weak self] cell, _, wrappedItem in
-            guard let item = wrappedItem.base as? VTDropDownItem<VTMopDryingTimeOption> else {
+            guard let item = wrappedItem.base as? VTDropDownItem<VTMopDockMopDryingDuration> else {
                 fatalError("Unsupported mop drying time item: \(wrappedItem.base)")
             }
 
@@ -278,9 +214,9 @@ final class VTRobotOptionsViewController: VTCollectionViewController {
                 options: item.options,
                 selection: item.active,
                 image: item.image,
-                disableSelectionAfterAction: false
+                disableSelectionAfterAction: true
             ) { [weak self] selection in
-                self?.state.mopDryingTime = selection
+                self?.updateMopDryingTime(selection)
             }
             cell.backgroundConfiguration = .adaptiveListCell()
             cell.accessories = []
@@ -288,20 +224,13 @@ final class VTRobotOptionsViewController: VTCollectionViewController {
 
         dataSource = DataSource(collectionView: collectionView) { collectionView, indexPath, wrappedItem in
             let registration = switch wrappedItem.base {
-            case _ as VTKeyValueItem:
-                linkCell
-            case _ as VTCheckboxItem:
-                checkboxCell
-            case _ as VTDropDownItem<VTCleanRouteOption>:
-                cleanRouteDropdownCell
-            case _ as VTDropDownItem<VTCarpetSensorOption>:
-                carpetSensorDropdownCell
-            case _ as VTDropDownItem<VTDockAutoEmptyOption>:
-                dockAutoEmptyDropdownCell
-            case _ as VTDropDownItem<VTMopDryingTimeOption>:
-                mopDryingTimeDropdownCell
-            default:
-                fatalError("Unsupported item type: \(type(of: wrappedItem.base))")
+            case _ as VTKeyValueItem: keyValueCell
+            case _ as VTCheckboxItem: checkboxCell
+            case _ as VTDropDownItem<VTCleanRoute>: cleanRouteDropdownCell
+            case _ as VTDropDownItem<VTCarpetSensorMode>: carpetSensorDropdownCell
+            case _ as VTDropDownItem<VTAutoEmptyDockAutoEmptyInterval>: dockAutoEmptyDropdownCell
+            case _ as VTDropDownItem<VTMopDockMopDryingDuration>: mopDryingTimeDropdownCell
+            default: fatalError("Unsupported item type: \(type(of: wrappedItem.base))")
             }
 
             return collectionView.dequeueConfiguredReusableCell(using: registration, for: indexPath, item: wrappedItem)
@@ -329,37 +258,22 @@ final class VTRobotOptionsViewController: VTCollectionViewController {
     // MARK: - Setup UI
 
     @MainActor
-    private func applySnapshot(animated: Bool) {
+    private func applySnapshot(animated: Bool, reconfigureItemWithIDs itemIDs: [String]) {
+        let sectionAndItems: [(VTRobotOptionsSection, [VTAnyItem])] = [
+            .general => makeGeneralItems(),
+            .behavior => makeBehaviorItems(),
+            .perception => makePerceptionItems(),
+            .dock => makeDockItems(),
+            .misc => makeMiscItems(),
+        ]
+
         var snapshot = Snapshot()
-
-        let generalItems = makeGeneralItems()
-        if !generalItems.isEmpty {
-            snapshot.appendSections([.general])
-            snapshot.appendItems(generalItems, toSection: .general)
-        }
-
-        let behaviorItems = makeBehaviorItems()
-        if !behaviorItems.isEmpty {
-            snapshot.appendSections([.behavior])
-            snapshot.appendItems(behaviorItems, toSection: .behavior)
-        }
-
-        let perceptionItems = makePerceptionItems()
-        if !perceptionItems.isEmpty {
-            snapshot.appendSections([.perception])
-            snapshot.appendItems(perceptionItems, toSection: .perception)
-        }
-
-        let dockItems = makeDockItems()
-        if !dockItems.isEmpty {
-            snapshot.appendSections([.dock])
-            snapshot.appendItems(dockItems, toSection: .dock)
-        }
-
-        let miscItems = makeMiscItems()
-        if !miscItems.isEmpty {
-            snapshot.appendSections([.misc])
-            snapshot.appendItems(miscItems, toSection: .misc)
+        for (sec, items) in sectionAndItems where !items.isEmpty {
+            snapshot.appendSections([sec])
+            snapshot.appendItems(items, toSection: sec)
+            // Force a reload to rollback incorrect items.
+            let refreshItems = items.filter { itemIDs.contains($0.id) }
+            snapshot.reconfigureItems(refreshItems)
         }
 
         dataSource.apply(snapshot, animatingDifferences: animated)
@@ -370,7 +284,7 @@ final class VTRobotOptionsViewController: VTCollectionViewController {
 
         if availableCapabilities.contains(.locate) {
             items.append(.keyValue(
-                Self.locateRobotID,
+                kLocateRobotID,
                 title: "LOCATE_ROBOT".localized(),
                 value: "LOCATE_ROBOT_DESCRIPTION".localized(),
                 image: .locateRobot
@@ -378,7 +292,7 @@ final class VTRobotOptionsViewController: VTCollectionViewController {
         }
         if availableCapabilities.contains(.keyLock) {
             items.append(.checkbox(
-                Self.lockKeysID,
+                kLockKeysID,
                 title: "LOCK_KEYS".localized(),
                 subtitle: "LOCK_KEYS_DESCRIPTION".localized(),
                 enabled: state.lockKeysEnabled,
@@ -394,7 +308,7 @@ final class VTRobotOptionsViewController: VTCollectionViewController {
 
         if availableCapabilities.contains(.collisionAvoidantNavigationControl) {
             items.append(.checkbox(
-                Self.collisionAvoidantNavigationID,
+                kCollisionAvoidantNavigationID,
                 title: "COLLISION_AVOIDANT_NAVIGATION".localized(),
                 subtitle: "COLLISION_AVOIDANT_NAVIGATION_DESCRIPTION".localized(),
                 enabled: state.collisionAvoidantNavigationEnabled,
@@ -403,7 +317,7 @@ final class VTRobotOptionsViewController: VTCollectionViewController {
         }
         if availableCapabilities.contains(.floorMaterialDirectionAwareNavigationControl) {
             items.append(.checkbox(
-                Self.materialAlignedNavigationID,
+                kMaterialAlignedNavigationID,
                 title: "MATERIAL_ALIGNED_NAVIGATION".localized(),
                 subtitle: "MATERIAL_ALIGNED_NAVIGATION_DESCRIPTION".localized(),
                 enabled: state.materialAlignedNavigationEnabled,
@@ -412,17 +326,17 @@ final class VTRobotOptionsViewController: VTCollectionViewController {
         }
         if availableCapabilities.contains(.cleanRouteControl) {
             items.append(.dropDown(
-                Self.cleanRouteID,
+                kCleanRouteID,
                 title: "CLEAN_ROUTE".localized(),
                 subtitle: "CLEAN_ROUTE_DESCRIPTION".localized(),
                 active: state.cleanRoute,
-                options: VTCleanRouteOption.allCases,
+                options: state.supportedCleanRoutes.isEmpty ? [state.cleanRoute] : state.supportedCleanRoutes,
                 image: .cleanRoute
             ))
         }
         if availableCapabilities.contains(.carpetModeControl) {
             items.append(.checkbox(
-                Self.carpetModeID,
+                kCarpetModeID,
                 title: "CARPET_MODE".localized(),
                 subtitle: "CARPET_MODE_DESCRIPTION".localized(),
                 enabled: state.carpetModeEnabled,
@@ -431,17 +345,17 @@ final class VTRobotOptionsViewController: VTCollectionViewController {
         }
         if availableCapabilities.contains(.carpetSensorModeControl) {
             items.append(.dropDown(
-                Self.carpetSensorID,
+                kCarpetSensorID,
                 title: "CARPET_SENSOR".localized(),
                 subtitle: "CARPET_SENSOR_DESCRIPTION".localized(),
                 active: state.carpetSensor,
-                options: VTCarpetSensorOption.allCases,
+                options: state.supportedCarpetSensorModes.isEmpty ? [state.carpetSensor] : state.supportedCarpetSensorModes,
                 image: .carpetSensor
             ))
         }
         if availableCapabilities.contains(.mopTwistControl) {
             items.append(.checkbox(
-                Self.mopTwistID,
+                kMopTwistID,
                 title: "MOP_TWIST".localized(),
                 subtitle: "MOP_TWIST_DESCRIPTION".localized(),
                 enabled: state.mopTwistEnabled,
@@ -457,7 +371,7 @@ final class VTRobotOptionsViewController: VTCollectionViewController {
 
         if availableCapabilities.contains(.obstacleAvoidanceControl) {
             items.append(.checkbox(
-                Self.obstacleAvoidanceID,
+                kObstacleAvoidanceID,
                 title: "OBSTACLE_AVOIDANCE".localized(),
                 subtitle: "OBSTACLE_AVOIDANCE_DESCRIPTION".localized(),
                 enabled: state.obstacleAvoidanceEnabled,
@@ -466,7 +380,7 @@ final class VTRobotOptionsViewController: VTCollectionViewController {
         }
         if availableCapabilities.contains(.petObstacleAvoidanceControl) {
             items.append(.checkbox(
-                Self.petObstacleAvoidanceID,
+                kPetObstacleAvoidanceID,
                 title: "PET_OBSTACLE_AVOIDANCE".localized(),
                 subtitle: "PET_OBSTACLE_AVOIDANCE_DESCRIPTION".localized(),
                 enabled: state.petObstacleAvoidanceEnabled,
@@ -475,7 +389,7 @@ final class VTRobotOptionsViewController: VTCollectionViewController {
         }
         if availableCapabilities.contains(.obstacleImages) {
             items.append(.checkbox(
-                Self.obstacleImagesID,
+                kObstacleImagesID,
                 title: "OBSTACLE_IMAGES".localized(),
                 subtitle: "OBSTACLE_IMAGES_DESCRIPTION".localized(),
                 enabled: state.obstacleImagesEnabled,
@@ -491,17 +405,17 @@ final class VTRobotOptionsViewController: VTCollectionViewController {
 
         if availableCapabilities.contains(.autoEmptyDockAutoEmptyIntervalControl) {
             items.append(.dropDown(
-                Self.dockAutoEmptyID,
+                kDockAutoEmptyID,
                 title: "DOCK_AUTO_EMPTY".localized(),
                 subtitle: "DOCK_AUTO_EMPTY_DESCRIPTION".localized(),
                 active: state.dockAutoEmpty,
-                options: VTDockAutoEmptyOption.allCases,
+                options: state.supportedDockAutoEmptyIntervals.isEmpty ? [state.dockAutoEmpty] : state.supportedDockAutoEmptyIntervals,
                 image: .dockAutoEmpty
             ))
         }
         if availableCapabilities.contains(.mopDockMopAutoDryingControl) {
             items.append(.checkbox(
-                Self.mopAutoDryingID,
+                kMopAutoDryingID,
                 title: "MOP_AUTO_DRYING".localized(),
                 subtitle: "MOP_AUTO_DRYING_DESCRIPTION".localized(),
                 enabled: state.mopAutoDryingEnabled,
@@ -510,11 +424,11 @@ final class VTRobotOptionsViewController: VTCollectionViewController {
         }
         if availableCapabilities.contains(.mopDockMopDryingTimeControl) {
             items.append(.dropDown(
-                Self.mopDryingTimeID,
+                kMopDryingTimeID,
                 title: "MOP_DRYING_TIME".localized(),
                 subtitle: "MOP_DRYING_TIME_DESCRIPTION".localized(),
                 active: state.mopDryingTime,
-                options: VTMopDryingTimeOption.allCases,
+                options: state.supportedMopDryingTimes.isEmpty ? [state.mopDryingTime] : state.supportedMopDryingTimes,
                 image: .mopDryingTime
             ))
         }
@@ -527,7 +441,7 @@ final class VTRobotOptionsViewController: VTCollectionViewController {
 
         if supportsSystemOptions {
             items.append(.keyValue(
-                Self.systemOptionsID,
+                kSystemOptionsID,
                 title: "SYSTEM_OPTIONS".localized(),
                 value: "SYSTEM_OPTIONS_DESCRIPTION".localized(),
                 image: .systemOptions
@@ -535,7 +449,7 @@ final class VTRobotOptionsViewController: VTCollectionViewController {
         }
         if availableCapabilities.contains(.quirks) {
             items.append(.keyValue(
-                Self.quirksID,
+                kQuirksID,
                 title: "QUIRKS".localized(),
                 value: "QUIRKS_DESCRIPTION".localized(),
                 image: .quirks
@@ -551,22 +465,69 @@ final class VTRobotOptionsViewController: VTCollectionViewController {
             availableCapabilities.contains(.speakerVolumeControl) ||
             availableCapabilities.contains(.speakerTest)
     }
-
+    
     @MainActor
-    private func reloadData(animated: Bool) async {
-        availableCapabilities = await Set((try? client.getCapabilities()) ?? [])
-        if availableCapabilities.contains(.keyLock) {
-            state.lockKeysEnabled = await (try? client.getKeyLockIsEnabled()) ?? false
+    private func reloadData(animated: Bool, reconfigureItemWithIDs itemIDs: [String] = []) async {
+        if let capabilities = try? await client.getCapabilities() {
+            availableCapabilities = Set(capabilities)
+        } else {
+            availableCapabilities = []
         }
-        applySnapshot(animated: animated)
+
+        var nextState = state
+
+        if availableCapabilities.contains(.keyLock) {
+            nextState.lockKeysEnabled = await (try? client.getKeyLockIsEnabled()) ?? nextState.lockKeysEnabled
+        }
+        if availableCapabilities.contains(.collisionAvoidantNavigationControl) {
+            nextState.collisionAvoidantNavigationEnabled = await (try? client.getCollisionAvoidantNavigationIsEnabled()) ?? nextState.collisionAvoidantNavigationEnabled
+        }
+        if availableCapabilities.contains(.floorMaterialDirectionAwareNavigationControl) {
+            nextState.materialAlignedNavigationEnabled = await (try? client.getFloorMaterialDirectionAwareNavigationIsEnabled()) ?? nextState.materialAlignedNavigationEnabled
+        }
+        if availableCapabilities.contains(.cleanRouteControl) {
+            nextState.cleanRoute = await (try? client.getCleanRoute()) ?? nextState.cleanRoute
+            nextState.supportedCleanRoutes = await (try? client.getCleanRouteControlProperties().supportedRoutes) ?? []
+        }
+        if availableCapabilities.contains(.carpetModeControl) {
+            nextState.carpetModeEnabled = await (try? client.getCarpetModeIsEnabled()) ?? nextState.carpetModeEnabled
+        }
+        if availableCapabilities.contains(.carpetSensorModeControl) {
+            nextState.carpetSensor = await (try? client.getCarpetSensorMode()) ?? nextState.carpetSensor
+            nextState.supportedCarpetSensorModes = await (try? client.getCarpetSensorModeControlProperties().supportedModes) ?? []
+        }
+        if availableCapabilities.contains(.mopTwistControl) {
+            nextState.mopTwistEnabled = await (try? client.getMopTwistIsEnabled()) ?? nextState.mopTwistEnabled
+        }
+        if availableCapabilities.contains(.obstacleAvoidanceControl) {
+            nextState.obstacleAvoidanceEnabled = await (try? client.getObstacleAvoidanceIsEnabled()) ?? nextState.obstacleAvoidanceEnabled
+        }
+        if availableCapabilities.contains(.petObstacleAvoidanceControl) {
+            nextState.petObstacleAvoidanceEnabled = await (try? client.getPetObstacleAvoidanceIsEnabled()) ?? nextState.petObstacleAvoidanceEnabled
+        }
+        if availableCapabilities.contains(.obstacleImages) {
+            nextState.obstacleImagesEnabled = await (try? client.getObstacleImagesCapabilityIsEnabled()) ?? nextState.obstacleImagesEnabled
+        }
+        if availableCapabilities.contains(.autoEmptyDockAutoEmptyIntervalControl) {
+            nextState.dockAutoEmpty = await (try? client.getAutoEmptyDockAutoEmptyInterval()) ?? nextState.dockAutoEmpty
+            nextState.supportedDockAutoEmptyIntervals = await (try? client.getAutoEmptyDockAutoEmptyIntervalProperties().supportedIntervals) ?? []
+        }
+        if availableCapabilities.contains(.mopDockMopAutoDryingControl) {
+            nextState.mopAutoDryingEnabled = await (try? client.getMopDockMopAutoDryingIsEnabled()) ?? nextState.mopAutoDryingEnabled
+        }
+        if availableCapabilities.contains(.mopDockMopDryingTimeControl) {
+            nextState.mopDryingTime = await (try? client.getMopDockMopDryingDuration()) ?? nextState.mopDryingTime
+            nextState.supportedMopDryingTimes = await (try? client.getMopDockMopDryingTimeControlProperties().supportedDurations) ?? []
+        }
+
+        state = nextState
+        applySnapshot(animated: animated, reconfigureItemWithIDs: itemIDs)
     }
 
     private func accessories(for itemID: String) -> [UICellAccessory] {
         switch itemID {
-        case Self.systemOptionsID, Self.quirksID:
-            [.disclosureIndicator()]
-        default:
-            []
+        case kSystemOptionsID, kQuirksID: [.disclosureIndicator()]
+        default: []
         }
     }
 
@@ -574,48 +535,179 @@ final class VTRobotOptionsViewController: VTCollectionViewController {
 
     private func updateToggle(id: String, isOn: Bool) {
         switch id {
-        case Self.lockKeysID:
-            Task { [weak self] in
-                guard let self else { return }
-                do {
-                    if isOn {
-                        try await client.enableKeyLock()
-                    } else {
-                        try await client.disableKeyLock()
-                    }
-
-                    await MainActor.run {
-                        state.lockKeysEnabled = isOn
-                        applySnapshot(animated: false)
-                    }
-                } catch {
-                    await reloadData(animated: false)
+        case kLockKeysID:
+            performUpdate(operationName: "KeyLockCapability toggle", itemID: id) { [client] in
+                if isOn {
+                    try await client.enableKeyLock()
+                } else {
+                    try await client.disableKeyLock()
                 }
+            } onSuccess: { [weak self] in
+                self?.state.lockKeysEnabled = isOn
             }
-        case Self.collisionAvoidantNavigationID:
-            state.collisionAvoidantNavigationEnabled = isOn
-        case Self.materialAlignedNavigationID:
-            state.materialAlignedNavigationEnabled = isOn
-        case Self.carpetModeID:
-            state.carpetModeEnabled = isOn
-        case Self.mopTwistID:
-            state.mopTwistEnabled = isOn
-        case Self.obstacleAvoidanceID:
-            state.obstacleAvoidanceEnabled = isOn
-        case Self.petObstacleAvoidanceID:
-            state.petObstacleAvoidanceEnabled = isOn
-        case Self.obstacleImagesID:
-            state.obstacleImagesEnabled = isOn
-        case Self.mopAutoDryingID:
-            state.mopAutoDryingEnabled = isOn
-        case Self.locateRobotID, Self.cleanRouteID, Self.carpetSensorID, Self.dockAutoEmptyID, Self.mopDryingTimeID, Self.systemOptionsID, Self.quirksID:
-            return
+        case kCollisionAvoidantNavigationID:
+            performUpdate(operationName: "CollisionAvoidantNavigationControlCapability toggle", itemID: id) { [client] in
+                if isOn {
+                    try await client.enableCollisionAvoidantNavigation()
+                } else {
+                    try await client.disableCollisionAvoidantNavigation()
+                }
+            } onSuccess: { [weak self] in
+                self?.state.collisionAvoidantNavigationEnabled = isOn
+            }
+        case kMaterialAlignedNavigationID:
+            performUpdate(operationName: "FloorMaterialDirectionAwareNavigationControlCapability toggle", itemID: id) { [client] in
+                if isOn {
+                    try await client.enableFloorMaterialDirectionAwareNavigation()
+                } else {
+                    try await client.disableFloorMaterialDirectionAwareNavigation()
+                }
+            } onSuccess: { [weak self] in
+                self?.state.materialAlignedNavigationEnabled = isOn
+            }
+        case kCarpetModeID:
+            performUpdate(operationName: "CarpetModeControlCapability toggle", itemID: id) { [client] in
+                if isOn {
+                    try await client.enableCarpetMode()
+                } else {
+                    try await client.disableCarpetMode()
+                }
+            } onSuccess: { [weak self] in
+                self?.state.carpetModeEnabled = isOn
+            }
+        case kMopTwistID:
+            performUpdate(operationName: "MopTwistControlCapability toggle", itemID: id) { [client] in
+                if isOn {
+                    try await client.enableMopTwist()
+                } else {
+                    try await client.disableMopTwist()
+                }
+            } onSuccess: { [weak self] in
+                self?.state.mopTwistEnabled = isOn
+            }
+        case kObstacleAvoidanceID:
+            performUpdate(operationName: "ObstacleAvoidanceControlCapability toggle", itemID: id) { [client] in
+                if isOn {
+                    try await client.enableObstacleAvoidance()
+                } else {
+                    try await client.disableObstacleAvoidance()
+                }
+            } onSuccess: { [weak self] in
+                self?.state.obstacleAvoidanceEnabled = isOn
+            }
+        case kPetObstacleAvoidanceID:
+            performUpdate(operationName: "PetObstacleAvoidanceControlCapability toggle", itemID: id) { [client] in
+                if isOn {
+                    try await client.enablePetObstacleAvoidance()
+                } else {
+                    try await client.disablePetObstacleAvoidance()
+                }
+            } onSuccess: { [weak self] in
+                self?.state.petObstacleAvoidanceEnabled = isOn
+            }
+        case kObstacleImagesID:
+            performUpdate(operationName: "ObstacleImagesCapability toggle", itemID: id) { [client] in
+                if isOn {
+                    try await client.enableObstacleImagesCapability()
+                } else {
+                    try await client.disableObstacleImagesCapability()
+                }
+            } onSuccess: { [weak self] in
+                self?.state.obstacleImagesEnabled = isOn
+            }
+        case kMopAutoDryingID:
+            performUpdate(operationName: "MopDockMopAutoDryingControlCapability toggle", itemID: id) { [client] in
+                if isOn {
+                    try await client.enableMopDockMopAutoDrying()
+                } else {
+                    try await client.disableMopDockMopAutoDrying()
+                }
+            } onSuccess: { [weak self] in
+                self?.state.mopAutoDryingEnabled = isOn
+            }
         default:
             return
         }
     }
 
+    private func updateCleanRoute(_ route: VTCleanRoute) {
+        guard route != state.cleanRoute else { return }
+
+        performUpdate(operationName: "CleanRouteControlCapability update", itemID: kCleanRouteID) { [client] in
+            try await client.setCleanRoute(route)
+        } onSuccess: { [weak self] in
+            self?.state.cleanRoute = route
+        }
+    }
+
+    private func updateCarpetSensor(_ mode: VTCarpetSensorMode) {
+        guard mode != state.carpetSensor else { return }
+
+        performUpdate(operationName: "CarpetSensorModeControlCapability update", itemID: kCarpetSensorID) { [client] in
+            try await client.setCarpetSensorMode(mode)
+        } onSuccess: { [weak self] in
+            self?.state.carpetSensor = mode
+        }
+    }
+
+    private func updateDockAutoEmpty(_ interval: VTAutoEmptyDockAutoEmptyInterval) {
+        guard interval != state.dockAutoEmpty else { return }
+
+        performUpdate(operationName: "AutoEmptyDockAutoEmptyIntervalControlCapability update", itemID: kDockAutoEmptyID) { [client] in
+            try await client.setAutoEmptyDockAutoEmptyInterval(interval)
+        } onSuccess: { [weak self] in
+            self?.state.dockAutoEmpty = interval
+        }
+    }
+
+    private func updateMopDryingTime(_ duration: VTMopDockMopDryingDuration) {
+        guard duration != state.mopDryingTime else { return }
+
+        performUpdate(operationName: "MopDockMopDryingTimeControlCapability update", itemID: kMopDryingTimeID) { [client] in
+            try await client.setMopDockMopDryingDuration(duration)
+        } onSuccess: { [weak self] in
+            self?.state.mopDryingTime = duration
+        }
+    }
+
+    private func performUpdate(
+        operationName: String,
+        itemID: String,
+        operation: @escaping @Sendable () async throws -> Void,
+        onSuccess: (@MainActor () -> Void)? = nil
+    ) {
+        Task { [weak self] in
+            guard let self else { return }
+
+            do {
+                try await operation()
+                await MainActor.run {
+                    onSuccess?()
+                }
+                await reloadData(animated: false, reconfigureItemWithIDs: [itemID])
+            } catch {
+                log(message: "\(operationName) failed: \(error.localizedDescription)", forSubsystem: .robotControl, level: .error)
+                await reconfigureItem(withID: itemID)
+            }
+        }
+    }
+
+    @MainActor
+    private func reconfigureItem(withID id: String) async {
+        var snapshot = dataSource.snapshot()
+        guard let item = snapshot.itemIdentifiers.first(where: { $0.id == id }) else { return }
+        snapshot.reconfigureItems([item])
+        // Wait a little to make the rollback interaction smoother
+        try? await Task.sleep(nanoseconds: 250_000_000)
+        await dataSource.apply(snapshot, animatingDifferences: false)
+    }
+
     override func collectionView(_: UICollectionView, shouldSelectItemAt indexPath: IndexPath) -> Bool {
+        guard let item = dataSource.itemIdentifier(for: indexPath) else { return false }
+        return item.base is VTKeyValueItem
+    }
+
+    override func collectionView(_: UICollectionView, shouldHighlightItemAt indexPath: IndexPath) -> Bool {
         guard let item = dataSource.itemIdentifier(for: indexPath) else { return false }
         return item.base is VTKeyValueItem
     }
@@ -624,6 +716,29 @@ final class VTRobotOptionsViewController: VTCollectionViewController {
         defer { collectionView.deselectItem(at: indexPath, animated: true) }
         guard let item = dataSource.itemIdentifier(for: indexPath) else { return }
         guard item.base is VTKeyValueItem else { return }
+
+        switch item.id {
+        case kLocateRobotID:
+            performUpdate(operationName: "LocateRobotCapability trigger", itemID: item.id) { [client] in
+                try await client.locateRobot()
+            }
+        case kSystemOptionsID:
+            presentSystemOptions()
+        case kQuirksID:
+            presentQuirks()
+        default:
+            return
+        }
+    }
+
+    private func presentSystemOptions() {
+        let systemVC = VTRobotSystemOptionsViewController(client: client, capabilities: availableCapabilities)
+        navigationController?.pushViewController(systemVC, animated: true)
+    }
+
+    private func presentQuirks() {
+        let quirksVC = VTQuirksOptionsViewController(client: client)
+        navigationController?.pushViewController(quirksVC, animated: true)
     }
 
     @MainActor

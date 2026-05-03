@@ -6,7 +6,7 @@
 //
 import UIKit
 
-final class VTLoadingCellView: UIView, UIContentView {
+final class VTLoadingCellView: UIView, VTContentView {
     private let activityIndicator = UIActivityIndicatorView(style: .medium)
     private let messageLabel: UILabel = {
         let label = UILabel()
@@ -18,13 +18,19 @@ final class VTLoadingCellView: UIView, UIContentView {
 
     private lazy var minimumHeightConstraint = heightAnchor.constraint(greaterThanOrEqualToConstant: 50)
 
+    var currentConfiguration: VTLoadingCellContentConfiguration!
+
     var configuration: UIContentConfiguration {
-        didSet { apply(configuration: configuration) }
+        get { currentConfiguration }
+        set {
+            guard let config = newValue as? VTLoadingCellContentConfiguration else { return }
+            apply(configuration: config)
+        }
     }
 
     init(configuration: VTLoadingCellContentConfiguration) {
-        self.configuration = configuration
         super.init(frame: .zero)
+
         setupViews()
         apply(configuration: configuration)
     }
@@ -34,7 +40,7 @@ final class VTLoadingCellView: UIView, UIContentView {
         fatalError("init(coder:) has not been implemented")
     }
 
-    private func setupViews() {
+    func setupViews() {
         let stack = UIStackView(arrangedSubviews: [activityIndicator, messageLabel])
         stack.axis = .vertical
         stack.spacing = 8
@@ -52,9 +58,11 @@ final class VTLoadingCellView: UIView, UIContentView {
         ])
     }
 
-    private func apply(configuration: UIContentConfiguration) {
-        guard let config = configuration as? VTLoadingCellContentConfiguration else { return }
-        messageLabel.text = config.message
+    func apply(configuration: VTLoadingCellContentConfiguration) {
+        guard currentConfiguration != configuration else { return }
+        currentConfiguration = configuration
+
+        messageLabel.text = configuration.message
         activityIndicator.startAnimating()
     }
 }

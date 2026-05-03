@@ -13,7 +13,7 @@ final class VTCheckboxCellContentView: VTStackedCellContentView<VTCheckboxCellCo
         return toggle
     }()
 
-    override init(configuration: VTCheckboxCellContentConfiguration) {
+    required init(configuration: VTCheckboxCellContentConfiguration) {
         super.init(configuration: configuration)
     }
 
@@ -36,13 +36,17 @@ final class VTCheckboxCellContentView: VTStackedCellContentView<VTCheckboxCellCo
         guard currentConfiguration != configuration else { return }
         super.apply(configuration: configuration)
 
-        toggle.isEnabled = true
+        toggle.isEnabled = configuration.isEnabled
         toggle.isOn = configuration.isOn
     }
 
     @objc private func changed() {
-        guard let config = currentConfiguration else { return }
-        toggle.isEnabled = !config.disableSelectionAfterAction
+        guard var config = currentConfiguration else { return }
+        let isEnabled = !config.disableSelectionAfterAction
+        config.isEnabled = isEnabled
+        toggle.isEnabled = isEnabled
+
+        currentConfiguration = config
         currentConfiguration.onChange?(toggle.isOn)
     }
 }

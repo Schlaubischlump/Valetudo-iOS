@@ -8,30 +8,30 @@ import UIKit
 
 private let unknownString = "UNKNOWN".localized()
 
-final class VTSystemInformationViewController: VTSystemInformationViewControllerBase {
-    private static let hostMemoryID = "HOST_MEMORY"
-    private static let hostCPUId = "HOST_CPU"
-    private static let robotManufacturerID = "ROBOT_MANUFACTURER"
-    private static let robotModelID = "ROBOT_MODEL"
-    private static let robotImplementationID = "ROBOT_IMPLEMENTATION"
-    private static let robotFirmwareID = "ROBOT_FIRMWARE"
-    private static let valetudoReleaseID = "VALETUDO_RELEASE"
-    private static let valetudoCommitID = "VALETUDO_COMMIT"
-    private static let valetudoEmbeddedID = "VALETUDO_EMBEDDED"
-    private static let valetudoSystemID = "VALETUDO_SYSTEM_ID"
-    private static let hostHostnameID = "HOST_HOSTNAME"
-    private static let hostArchID = "HOST_ARCH"
-    private static let hostUptimeID = "HOST_UPTIME"
-    private static let runtimeUptimeID = "RUNTIME_UPTIME"
-    private static let runtimeUID = "RUNTIME_UID"
-    private static let runtimeGID = "RUNTIME_GID"
-    private static let runtimePID = "RUNTIME_PID"
-    private static let runtimeArgvID = "RUNTIME_ARGV"
-    private static let runtimeDependenciesID = "RUNTIME_DEPENDENCIES"
-    private static let runtimeEnvironmentID = "RUNTIME_ENVIRONMENT"
-    private static let dependenciesExecPathID = "DEPENDENCIES_EXEC_PATH"
-    private static let dependenciesExecArgvID = "DEPENDENCIES_EXEC_ARGV"
+private let kDependenciesExecPathID = "DEPENDENCIES_EXEC_PATH"
+private let kDependenciesExecArgvID = "DEPENDENCIES_EXEC_ARGV"
+private let kHostHostnameID = "HOST_HOSTNAME"
+private let kHostArchID = "HOST_ARCH"
+private let kHostMemoryID = "HOST_MEMORY"
+private let kHostCPUId = "HOST_CPU"
+private let kHostUptimeID = "HOST_UPTIME"
+private let kRobotManufacturerID = "ROBOT_MANUFACTURER"
+private let kRobotModelID = "ROBOT_MODEL"
+private let kRobotImplementationID = "ROBOT_IMPLEMENTATION"
+private let kRobotFirmwareID = "ROBOT_FIRMWARE"
+private let kRuntimeUptimeID = "RUNTIME_UPTIME"
+private let kRuntimeUID = "RUNTIME_UID"
+private let kRuntimeGID = "RUNTIME_GID"
+private let kRuntimePID = "RUNTIME_PID"
+private let kRuntimeArgvID = "RUNTIME_ARGV"
+private let kRuntimeDependenciesID = "RUNTIME_DEPENDENCIES"
+private let kRuntimeEnvironmentID = "RUNTIME_ENVIRONMENT"
+private let kValetudoReleaseID = "VALETUDO_RELEASE"
+private let kValetudoCommitID = "VALETUDO_COMMIT"
+private let kValetudoEmbeddedID = "VALETUDO_EMBEDDED"
+private let kValetudoSystemID = "VALETUDO_SYSTEM_ID"
 
+final class VTSystemInformationViewController: VTSystemInformationViewControllerBase {
     // Timer to reload the system information
     private var pollingTimer: Timer?
     private let pollingInterval: TimeInterval = 5.0
@@ -81,7 +81,7 @@ final class VTSystemInformationViewController: VTSystemInformationViewController
     }
 
     private func memoryItem(for memory: VTMemory) -> VTAnyItem {
-        .systemInformationSegmentedBar(Self.hostMemoryID, config: .init(
+        .systemInformationSegmentedBar(kHostMemoryID, config: .init(
             title: "SYSTEM_MEMORY".localized(),
             bars: [
                 [
@@ -101,7 +101,7 @@ final class VTSystemInformationViewController: VTSystemInformationViewController
     }
 
     private func cpuItem(for cpus: [VTCPU]) -> VTAnyItem {
-        .systemInformationSegmentedBar(Self.hostCPUId, config: .init(
+        .systemInformationSegmentedBar(kHostCPUId, config: .init(
             title: "CPU_USAGE".localized(),
             bars: cpus.map { cpu in
                 [
@@ -193,43 +193,43 @@ final class VTSystemInformationViewController: VTSystemInformationViewController
             switch section {
             case .robot:
                 snapshot.appendItems([
-                    .keyValue(Self.robotManufacturerID, title: "MANUFACTURER".localized(), value: manufacturer),
-                    .keyValue(Self.robotModelID, title: "MODEL".localized(), value: modelName),
-                    .keyValue(Self.robotImplementationID, title: "VALETUDO_IMPLEMENTATION".localized(), value: implementation),
-                    .keyValue(Self.robotFirmwareID, title: "FIRMWARE".localized(), value: firmwareVersion),
+                    .keyValue(kRobotManufacturerID, title: "MANUFACTURER".localized(), value: manufacturer),
+                    .keyValue(kRobotModelID, title: "MODEL".localized(), value: modelName),
+                    .keyValue(kRobotImplementationID, title: "VALETUDO_IMPLEMENTATION".localized(), value: implementation),
+                    .keyValue(kRobotFirmwareID, title: "FIRMWARE".localized(), value: firmwareVersion),
                 ], toSection: section)
             case .valetudo:
                 snapshot.appendItems([
-                    .keyValue(Self.valetudoReleaseID, title: "RELEASE".localized(), value: release),
-                    .keyValue(Self.valetudoCommitID, title: "COMMIT".localized(), value: commit),
-                    .keyValue(Self.valetudoEmbeddedID, title: "EMBEDDED".localized(), value: embedded ? "true" : "false"),
-                    .keyValue(Self.valetudoSystemID, title: "SYSTEM_ID".localized(), value: systemId),
+                    .keyValue(kValetudoReleaseID, title: "RELEASE".localized(), value: release),
+                    .keyValue(kValetudoCommitID, title: "COMMIT".localized(), value: commit),
+                    .keyValue(kValetudoEmbeddedID, title: "EMBEDDED".localized(), value: embedded ? "true" : "false"),
+                    .keyValue(kValetudoSystemID, title: "SYSTEM_ID".localized(), value: systemId),
                 ], toSection: section)
             case .host:
                 snapshot.appendItems([
-                    .keyValue(Self.hostHostnameID, title: "HOSTNAME".localized(), value: hostname),
-                    .keyValue(Self.hostArchID, title: "ARCH".localized(), value: arch),
-                    .keyValue(Self.hostUptimeID, title: "UPTIME".localized(), value: hostUptime),
+                    .keyValue(kHostHostnameID, title: "HOSTNAME".localized(), value: hostname),
+                    .keyValue(kHostArchID, title: "ARCH".localized(), value: arch),
+                    .keyValue(kHostUptimeID, title: "UPTIME".localized(), value: hostUptime),
                     memoryItem(for: memory),
                     cpuItem(for: cpus),
                 ], toSection: section)
             case .runtime:
                 snapshot.appendItems([
-                    .keyValue(Self.runtimeUptimeID, title: "VALETUDO_UPTIME".localized(), value: valetudoUptime),
-                    .keyValue(Self.runtimeUID, title: "UID".localized(), value: uid),
-                    .keyValue(Self.runtimeGID, title: "GID".localized(), value: gid),
-                    .keyValue(Self.runtimePID, title: "PID".localized(), value: pid),
-                    .keyValue(Self.runtimeArgvID, title: "ARGV".localized(), value: argv),
-                    .systemInformationLink(Self.runtimeDependenciesID, title: "DEPENDENCIES".localized(), children: [
+                    .keyValue(kRuntimeUptimeID, title: "VALETUDO_UPTIME".localized(), value: valetudoUptime),
+                    .keyValue(kRuntimeUID, title: "UID".localized(), value: uid),
+                    .keyValue(kRuntimeGID, title: "GID".localized(), value: gid),
+                    .keyValue(kRuntimePID, title: "PID".localized(), value: pid),
+                    .keyValue(kRuntimeArgvID, title: "ARGV".localized(), value: argv),
+                    .systemInformationLink(kRuntimeDependenciesID, title: "DEPENDENCIES".localized(), children: [
                         .main: [
-                            .keyValue(Self.dependenciesExecPathID, title: "EXEC_PATH".localized(), value: execPath),
-                            .keyValue(Self.dependenciesExecArgvID, title: "EXEC_ARGV".localized(), value: execArgv),
+                            .keyValue(kDependenciesExecPathID, title: "EXEC_PATH".localized(), value: execPath),
+                            .keyValue(kDependenciesExecArgvID, title: "EXEC_ARGV".localized(), value: execArgv),
                         ],
                         .dependencies: versions.sorted(by: { $0.key < $1.key }).map { key, value in
                             .keyValue("DEPENDENCY_\(key)", title: key, value: value)
                         },
                     ]),
-                    .systemInformationLink(Self.runtimeEnvironmentID, title: "ENVIRONMENT".localized(), children: [
+                    .systemInformationLink(kRuntimeEnvironmentID, title: "ENVIRONMENT".localized(), children: [
                         .keys: env.sorted(by: { $0.key < $1.key }).map { key, value in
                             .keyValue("ENV_\(key)", title: key, value: value)
                         },
