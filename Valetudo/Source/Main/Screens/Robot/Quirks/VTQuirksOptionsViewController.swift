@@ -7,7 +7,7 @@
 
 import UIKit
 
-final class VTQuirksOptionsViewController: VTListViewController<VTQuirksOptionsSection> {
+final class VTQuirksOptionsViewController: VTRobotOptionsViewControllerBase<VTQuirksOptionsSection> {
     private let client: any VTAPIClientProtocol
 
     private var quirks: [VTQuirk] = []

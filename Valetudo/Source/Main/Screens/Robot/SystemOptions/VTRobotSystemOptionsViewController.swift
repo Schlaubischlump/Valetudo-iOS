@@ -29,7 +29,7 @@ private enum VTRobotSystemOptionsError: Error, LocalizedError {
 
 // TODO: Support Voice Packs
 
-final class VTRobotSystemOptionsViewController: VTListViewController<VTRobotSystemOptionsSection> {
+final class VTRobotSystemOptionsViewController: VTRobotOptionsViewControllerBase<VTRobotSystemOptionsSection> {
     private struct DoNotDisturbState {
         var enabled: Bool = false
         var localStartTime: (hour: Int, minute: Int) = (0, 0)
@@ -59,11 +59,11 @@ final class VTRobotSystemOptionsViewController: VTListViewController<VTRobotSyst
         }
     }
 
-    /* private struct VoicePackState {
+    /*private struct VoicePackState {
          var url: URL? = nil
          var languageCode: String? = nil
          var hash: String? = nil
-     } */
+     }*/
 
     private struct State {
         var currentVolume: Int = 0
@@ -97,12 +97,53 @@ final class VTRobotSystemOptionsViewController: VTListViewController<VTRobotSyst
     }
 
     override func items(forSection: VTRobotSystemOptionsSection) -> [VTAnyItem] {
+        var items: [VTAnyItem] = []
         switch forSection {
         case .speaker:
-            makeSpeakerItems()
+            if availableCapabilities.contains(.speakerVolumeControl) {
+                items.append(.slider(
+                    kSpeakerVolumeID,
+                    leftImage: .speakerQuite,
+                    rightImage: .speakerLoud,
+                    minValue: 0,
+                    maxValue: 100,
+                    value: Float(state.currentVolume)
+                ))
+            }
+            if availableCapabilities.contains(.speakerTest) {
+                items.append(.button(
+                    kSpeakerTestID,
+                    title: "TEST_SPEAKER".localized()
+                ))
+            }
         case .doNotDisturb:
-            makeDoNotDisturbItems()
+            if availableCapabilities.contains(.doNotDisturb) {
+                items.append(
+                    .checkbox(
+                        kDoNotDisturbEnabledID,
+                        title: "ENABLED".localized(),
+                        enabled: state.doNotDisturb.enabled)
+                )
+                items.append(
+                    .timePicker(
+                        kDoNotDisturbStartID,
+                        title: "START_TIME".localized(),
+                        hours: state.doNotDisturb.localStartTime.hour,
+                        minutes: state.doNotDisturb.localStartTime.minute
+                    )
+                )
+                items.append(
+                    .timePicker(
+                        kDoNotDisturbEndID,
+                        title: "END_TIME".localized(),
+                        hours: state.doNotDisturb.localEndTime.hour,
+                        minutes: state.doNotDisturb.localEndTime.minute
+                    )
+                )
+            }
         }
+        return items
+
     }
 
     override func cellRegistration(forType: any VTItem.Type) -> VTCellRegistration {
@@ -226,29 +267,6 @@ final class VTRobotSystemOptionsViewController: VTListViewController<VTRobotSyst
         ]
     }
 
-    private func makeSpeakerItems() -> [VTAnyItem] {
-        var items: [VTAnyItem] = []
-
-        if availableCapabilities.contains(.speakerVolumeControl) {
-            items.append(.slider(
-                kSpeakerVolumeID,
-                leftImage: .speakerQuite,
-                rightImage: .speakerLoud,
-                minValue: 0,
-                maxValue: 100,
-                value: Float(state.currentVolume)
-            ))
-        }
-        if availableCapabilities.contains(.speakerTest) {
-            items.append(.button(
-                kSpeakerTestID,
-                title: "TEST_SPEAKER".localized()
-            ))
-        }
-
-        return items
-    }
-
     /* private func makeVoicePackItems() -> [VTAnyItem] {
          var items: [VTAnyItem] = []
 
@@ -258,32 +276,6 @@ final class VTRobotSystemOptionsViewController: VTListViewController<VTRobotSyst
 
          return items
      } */
-
-    private func makeDoNotDisturbItems() -> [VTAnyItem] {
-        guard availableCapabilities.contains(.doNotDisturb) else {
-            return []
-        }
-
-        return [
-            .checkbox(
-                kDoNotDisturbEnabledID,
-                title: "ENABLED".localized(),
-                enabled: state.doNotDisturb.enabled
-            ),
-            .timePicker(
-                kDoNotDisturbStartID,
-                title: "START_TIME".localized(),
-                hours: state.doNotDisturb.localStartTime.hour,
-                minutes: state.doNotDisturb.localStartTime.minute
-            ),
-            .timePicker(
-                kDoNotDisturbEndID,
-                title: "END_TIME".localized(),
-                hours: state.doNotDisturb.localEndTime.hour,
-                minutes: state.doNotDisturb.localEndTime.minute
-            ),
-        ]
-    }
 
     override func updateState() async {
         var nextState = state

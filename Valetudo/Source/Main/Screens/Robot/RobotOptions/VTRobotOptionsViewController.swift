@@ -26,7 +26,7 @@ private let kQuirksID = "QUIRKS"
 
 // TODO: Check if we covered all options. For that we need to check the Valetudo source code
 
-final class VTRobotOptionsViewController: VTListViewController<VTRobotOptionsSection> {
+final class VTRobotOptionsViewController: VTRobotOptionsViewControllerBase<VTRobotOptionsSection> {
     private struct State {
         var lockKeysEnabled = false
         var collisionAvoidantNavigationEnabled = false

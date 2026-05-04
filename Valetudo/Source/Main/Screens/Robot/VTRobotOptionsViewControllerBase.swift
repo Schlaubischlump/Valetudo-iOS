@@ -1,12 +1,17 @@
 //
-//  VTListViewController.swift
+//  VTRobotOptionsViewControllerBase.swift
 //  Valetudo
 //
 //  Created by David Klopp on 04.05.26.
 //
 import UIKit
 
-class VTListViewController<SectionType: Hashable & Sendable>: VTCollectionViewController {
+/// A reusable list-based collection view controller backed by a diffable data source.
+///
+/// Subclasses provide the available sections, items, and cell registrations while this base
+/// class handles list layout, snapshot application, and optimistic UI refresh behavior for
+/// item-level updates.
+class VTRobotOptionsViewControllerBase<SectionType: Hashable & Sendable>: VTCollectionViewController {
     typealias DataSource = UICollectionViewDiffableDataSource<SectionType, VTAnyItem>
     typealias Snapshot = NSDiffableDataSourceSnapshot<SectionType, VTAnyItem>
 
@@ -41,26 +46,48 @@ class VTListViewController<SectionType: Hashable & Sendable>: VTCollectionViewCo
 
     // MARK: - Subclass methods
 
+    /// The concrete item types this controller can render.
+    ///
+    /// Subclasses use this to declare the cell registrations that should be installed in the
+    /// diffable data source.
     var supportedCellTypes: [any VTItem.Type] {
         []
     }
 
+    /// Returns the cell registration used to render a specific item type.
+    ///
+    /// - Parameter forType: The concrete item type being requested.
+    /// - Returns: A configured cell registration for the supplied item type.
     func cellRegistration(forType _: any VTItem.Type) -> VTCellRegistration {
         fatalError("Not implemented!")
     }
 
+    /// Returns the display title for a section header.
+    ///
+    /// - Parameter forSection: The section being displayed.
+    /// - Returns: The localized header title for the section.
     func title(forSection _: SectionType) -> String {
         fatalError("Not implemented!")
     }
 
+    /// Returns the sections to display in the list.
+    ///
+    /// Empty sections are automatically omitted when the snapshot is applied.
     func sections() -> [SectionType] {
         fatalError("Not implemented!")
     }
 
+    /// Returns the items to display for a given section.
+    ///
+    /// - Parameter forSection: The section whose items should be shown.
+    /// - Returns: The items for that section in display order.
     func items(forSection _: SectionType) -> [VTAnyItem] {
         fatalError("Not implemented!")
     }
 
+    /// Refreshes any backing state before the current snapshot is rebuilt.
+    ///
+    /// Subclasses can override this to fetch or derive the latest data before the UI is updated.
     func updateState() async {}
 
     // MARK: - Setup CollectionView
@@ -88,6 +115,7 @@ class VTListViewController<SectionType: Hashable & Sendable>: VTCollectionViewCo
     }
 
     private func configureDataSource() {
+        // Build registrations once so the cell provider can cheaply look them up by item type.
         let cellRegistrations = Dictionary(uniqueKeysWithValues: supportedCellTypes.map { ty in
             String(describing: ty) => self.cellRegistration(forType: ty)
         })
@@ -145,6 +173,10 @@ class VTListViewController<SectionType: Hashable & Sendable>: VTCollectionViewCo
         applySnapshot(animated: animated, reconfigureItemWithIDs: itemIDs)
     }
 
+    /// Runs an asynchronous item update and refreshes the affected UI state.
+    ///
+    /// The update is applied optimistically by reloading the data after success. If the
+    /// operation fails, the affected item is reconfigured to roll back any transient UI state.
     func performUpdate(
         operationName: String,
         itemID: String,
