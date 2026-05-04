@@ -59,11 +59,11 @@ final class VTRobotSystemOptionsViewController: VTRobotOptionsViewControllerBase
         }
     }
 
-    /*private struct VoicePackState {
+    /* private struct VoicePackState {
          var url: URL? = nil
          var languageCode: String? = nil
          var hash: String? = nil
-     }*/
+     } */
 
     private struct State {
         var currentVolume: Int = 0
@@ -122,7 +122,8 @@ final class VTRobotSystemOptionsViewController: VTRobotOptionsViewControllerBase
                     .checkbox(
                         kDoNotDisturbEnabledID,
                         title: "ENABLED".localized(),
-                        enabled: state.doNotDisturb.enabled)
+                        enabled: state.doNotDisturb.enabled
+                    )
                 )
                 items.append(
                     .timePicker(
@@ -143,7 +144,6 @@ final class VTRobotSystemOptionsViewController: VTRobotOptionsViewControllerBase
             }
         }
         return items
-
     }
 
     override func cellRegistration(forType: any VTItem.Type) -> VTCellRegistration {
