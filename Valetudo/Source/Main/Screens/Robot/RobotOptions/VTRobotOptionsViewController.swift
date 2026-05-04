@@ -18,13 +18,16 @@ private let kMopTwistID = "MOP_TWIST"
 private let kObstacleAvoidanceID = "OBSTACLE_AVOIDANCE"
 private let kPetObstacleAvoidanceID = "PET_OBSTACLE_AVOIDANCE"
 private let kObstacleImagesID = "OBSTACLE_IMAGES"
+private let kCameraLightID = "CAMERA_LIGHT"
+private let kMopExtensionID = "MOP_EXTENSION"
+private let kMopExtensionFurnitureLegHandlingID = "MOP_EXTENSION_FURNITURE_LEGS"
 private let kDockAutoEmptyID = "DOCK_AUTO_EMPTY"
+private let kAutoEmptyDurationID = "AUTO_EMPTY_DURATION"
 private let kMopAutoDryingID = "MOP_AUTO_DRYING"
 private let kMopDryingTimeID = "MOP_DRYING_TIME"
+private let kMopWashTemperatureID = "MOP_WASH_TEMPERATURE"
 private let kSystemOptionsID = "SYSTEM_OPTIONS"
 private let kQuirksID = "QUIRKS"
-
-// TODO: Check if we covered all options. For that we need to check the Valetudo source code
 
 final class VTRobotOptionsViewController: VTRobotOptionsViewControllerBase<VTRobotOptionsSection> {
     private struct State {
@@ -37,14 +40,21 @@ final class VTRobotOptionsViewController: VTRobotOptionsViewControllerBase<VTRob
         var carpetSensor: VTCarpetSensorMode = .lift
         var supportedCarpetSensorModes: [VTCarpetSensorMode] = []
         var mopTwistEnabled = false
+        var mopExtensionEnabled = false
+        var mopExtensionFurnitureLegHandlingEnabled = false
         var obstacleAvoidanceEnabled = false
         var petObstacleAvoidanceEnabled = false
         var obstacleImagesEnabled = false
+        var cameraLightEnabled = false
         var dockAutoEmpty: VTAutoEmptyDockAutoEmptyInterval = .normal
         var supportedDockAutoEmptyIntervals: [VTAutoEmptyDockAutoEmptyInterval] = []
+        var autoEmptyDuration: VTAutoEmptyDockAutoEmptyDuration = .auto
+        var supportedAutoEmptyDurations: [VTAutoEmptyDockAutoEmptyDuration] = []
         var mopAutoDryingEnabled = false
         var mopDryingTime: VTMopDockMopDryingDuration = .threeHours
         var supportedMopDryingTimes: [VTMopDockMopDryingDuration] = []
+        var mopWashTemperature: VTMopDockMopWashTemperature = .warm
+        var supportedMopWashTemperatures: [VTMopDockMopWashTemperature] = []
     }
 
     private let client: any VTAPIClientProtocol
@@ -143,6 +153,24 @@ final class VTRobotOptionsViewController: VTRobotOptionsViewControllerBase<VTRob
                     image: .mopTwist
                 ))
             }
+            if availableCapabilities.contains(.mopExtensionControl) {
+                items.append(.checkbox(
+                    kMopExtensionID,
+                    title: "MOP_EXTENSION".localized(),
+                    subtitle: "MOP_EXTENSION_DESCRIPTION".localized(),
+                    enabled: state.mopExtensionEnabled,
+                    image: .mopExtension
+                ))
+            }
+            if availableCapabilities.contains(.mopExtensionFurnitureLegHandlingControl) {
+                items.append(.checkbox(
+                    kMopExtensionFurnitureLegHandlingID,
+                    title: "MOP_EXTENSION_FURNITURE_LEGS".localized(),
+                    subtitle: "MOP_EXTENSION_FURNITURE_LEGS_DESCRIPTION".localized(),
+                    enabled: state.mopExtensionFurnitureLegHandlingEnabled,
+                    image: .mopExtensionFurnitureLegHandling
+                ))
+            }
         case .perception:
             if availableCapabilities.contains(.obstacleAvoidanceControl) {
                 items.append(.checkbox(
@@ -171,6 +199,15 @@ final class VTRobotOptionsViewController: VTRobotOptionsViewControllerBase<VTRob
                     image: .obstacleImages
                 ))
             }
+            if availableCapabilities.contains(.cameraLightControl) {
+                items.append(.checkbox(
+                    kCameraLightID,
+                    title: "CAMERA_LIGHT".localized(),
+                    subtitle: "CAMERA_LIGHT_DESCRIPTION".localized(),
+                    enabled: state.cameraLightEnabled,
+                    image: .cameraLight
+                ))
+            }
         case .dock:
             if availableCapabilities.contains(.autoEmptyDockAutoEmptyIntervalControl) {
                 items.append(.dropDown(
@@ -180,6 +217,16 @@ final class VTRobotOptionsViewController: VTRobotOptionsViewControllerBase<VTRob
                     active: state.dockAutoEmpty,
                     options: state.supportedDockAutoEmptyIntervals.isEmpty ? [state.dockAutoEmpty] : state.supportedDockAutoEmptyIntervals,
                     image: .dockAutoEmpty
+                ))
+            }
+            if availableCapabilities.contains(.autoEmptyDockAutoEmptyDurationControl) {
+                items.append(.dropDown(
+                    kAutoEmptyDurationID,
+                    title: "AUTO_EMPTY_DURATION".localized(),
+                    subtitle: "AUTO_EMPTY_DURATION_DESCRIPTION".localized(),
+                    active: state.autoEmptyDuration,
+                    options: state.supportedAutoEmptyDurations.isEmpty ? [state.autoEmptyDuration] : state.supportedAutoEmptyDurations,
+                    image: .autoEmptyDuration
                 ))
             }
             if availableCapabilities.contains(.mopDockMopAutoDryingControl) {
@@ -199,6 +246,16 @@ final class VTRobotOptionsViewController: VTRobotOptionsViewControllerBase<VTRob
                     active: state.mopDryingTime,
                     options: state.supportedMopDryingTimes.isEmpty ? [state.mopDryingTime] : state.supportedMopDryingTimes,
                     image: .mopDryingTime
+                ))
+            }
+            if availableCapabilities.contains(.mopDockMopWashTemperatureControl) {
+                items.append(.dropDown(
+                    kMopWashTemperatureID,
+                    title: "MOP_WASH_TEMPERATURE".localized(),
+                    subtitle: "MOP_WASH_TEMPERATURE_DESCRIPTION".localized(),
+                    active: state.mopWashTemperature,
+                    options: state.supportedMopWashTemperatures.isEmpty ? [state.mopWashTemperature] : state.supportedMopWashTemperatures,
+                    image: .mopWashTemperature
                 ))
             }
         case .misc:
@@ -339,6 +396,46 @@ final class VTRobotOptionsViewController: VTRobotOptionsViewControllerBase<VTRob
                 cell.backgroundConfiguration = .adaptiveListCell()
                 cell.accessories = []
             }
+        case is VTDropDownItem<VTAutoEmptyDockAutoEmptyDuration>.Type:
+            VTCellRegistration { [weak self] cell, _, wrappedItem in
+                guard let item = wrappedItem.base as? VTDropDownItem<VTAutoEmptyDockAutoEmptyDuration> else {
+                    fatalError("Unsupported auto-empty duration item: \(wrappedItem.base)")
+                }
+
+                cell.contentConfiguration = VTDropDownCellContentConfiguration(
+                    id: item.id,
+                    title: item.title,
+                    subtitle: item.subtitle,
+                    options: item.options,
+                    selection: item.active,
+                    image: item.image,
+                    disableSelectionAfterAction: true
+                ) { [weak self] selection in
+                    self?.updateAutoEmptyDuration(selection)
+                }
+                cell.backgroundConfiguration = .adaptiveListCell()
+                cell.accessories = []
+            }
+        case is VTDropDownItem<VTMopDockMopWashTemperature>.Type:
+            VTCellRegistration { [weak self] cell, _, wrappedItem in
+                guard let item = wrappedItem.base as? VTDropDownItem<VTMopDockMopWashTemperature> else {
+                    fatalError("Unsupported mop wash temperature item: \(wrappedItem.base)")
+                }
+
+                cell.contentConfiguration = VTDropDownCellContentConfiguration(
+                    id: item.id,
+                    title: item.title,
+                    subtitle: item.subtitle,
+                    options: item.options,
+                    selection: item.active,
+                    image: item.image,
+                    disableSelectionAfterAction: true
+                ) { [weak self] selection in
+                    self?.updateMopWashTemperature(selection)
+                }
+                cell.backgroundConfiguration = .adaptiveListCell()
+                cell.accessories = []
+            }
         default:
             fatalError("Unsupported cell registration for type \(forType)")
         }
@@ -351,7 +448,9 @@ final class VTRobotOptionsViewController: VTRobotOptionsViewControllerBase<VTRob
             VTDropDownItem<VTCleanRoute>.self,
             VTDropDownItem<VTCarpetSensorMode>.self,
             VTDropDownItem<VTAutoEmptyDockAutoEmptyInterval>.self,
+            VTDropDownItem<VTAutoEmptyDockAutoEmptyDuration>.self,
             VTDropDownItem<VTMopDockMopDryingDuration>.self,
+            VTDropDownItem<VTMopDockMopWashTemperature>.self,
         ]
     }
 
@@ -387,6 +486,12 @@ final class VTRobotOptionsViewController: VTRobotOptionsViewControllerBase<VTRob
         if availableCapabilities.contains(.mopTwistControl) {
             nextState.mopTwistEnabled = await (try? client.getMopTwistIsEnabled()) ?? nextState.mopTwistEnabled
         }
+        if availableCapabilities.contains(.mopExtensionControl) {
+            nextState.mopExtensionEnabled = await (try? client.getMopExtensionIsEnabled()) ?? nextState.mopExtensionEnabled
+        }
+        if availableCapabilities.contains(.mopExtensionFurnitureLegHandlingControl) {
+            nextState.mopExtensionFurnitureLegHandlingEnabled = await (try? client.getMopExtensionFurnitureLegHandlingIsEnabled()) ?? nextState.mopExtensionFurnitureLegHandlingEnabled
+        }
         if availableCapabilities.contains(.obstacleAvoidanceControl) {
             nextState.obstacleAvoidanceEnabled = await (try? client.getObstacleAvoidanceIsEnabled()) ?? nextState.obstacleAvoidanceEnabled
         }
@@ -396,9 +501,16 @@ final class VTRobotOptionsViewController: VTRobotOptionsViewControllerBase<VTRob
         if availableCapabilities.contains(.obstacleImages) {
             nextState.obstacleImagesEnabled = await (try? client.getObstacleImagesCapabilityIsEnabled()) ?? nextState.obstacleImagesEnabled
         }
+        if availableCapabilities.contains(.cameraLightControl) {
+            nextState.cameraLightEnabled = await (try? client.getCameraLightIsEnabled()) ?? nextState.cameraLightEnabled
+        }
         if availableCapabilities.contains(.autoEmptyDockAutoEmptyIntervalControl) {
             nextState.dockAutoEmpty = await (try? client.getAutoEmptyDockAutoEmptyInterval()) ?? nextState.dockAutoEmpty
             nextState.supportedDockAutoEmptyIntervals = await (try? client.getAutoEmptyDockAutoEmptyIntervalProperties().supportedIntervals) ?? []
+        }
+        if availableCapabilities.contains(.autoEmptyDockAutoEmptyDurationControl) {
+            nextState.autoEmptyDuration = await (try? client.getAutoEmptyDockAutoEmptyDuration()) ?? nextState.autoEmptyDuration
+            nextState.supportedAutoEmptyDurations = await (try? client.getAutoEmptyDockAutoEmptyDurationProperties().supportedDurations) ?? []
         }
         if availableCapabilities.contains(.mopDockMopAutoDryingControl) {
             nextState.mopAutoDryingEnabled = await (try? client.getMopDockMopAutoDryingIsEnabled()) ?? nextState.mopAutoDryingEnabled
@@ -406,6 +518,10 @@ final class VTRobotOptionsViewController: VTRobotOptionsViewControllerBase<VTRob
         if availableCapabilities.contains(.mopDockMopDryingTimeControl) {
             nextState.mopDryingTime = await (try? client.getMopDockMopDryingDuration()) ?? nextState.mopDryingTime
             nextState.supportedMopDryingTimes = await (try? client.getMopDockMopDryingTimeControlProperties().supportedDurations) ?? []
+        }
+        if availableCapabilities.contains(.mopDockMopWashTemperatureControl) {
+            nextState.mopWashTemperature = await (try? client.getMopDockMopWashTemperature()) ?? nextState.mopWashTemperature
+            nextState.supportedMopWashTemperatures = await (try? client.getMopDockMopWashTemperatureControlProperties().supportedTemperatures) ?? []
         }
 
         state = nextState
@@ -498,6 +614,26 @@ final class VTRobotOptionsViewController: VTRobotOptionsViewControllerBase<VTRob
             } onSuccess: { [weak self] in
                 self?.state.mopTwistEnabled = isOn
             }
+        case kMopExtensionID:
+            performUpdate(operationName: "MopExtensionControlCapability toggle", itemID: id) { [client] in
+                if isOn {
+                    try await client.enableMopExtension()
+                } else {
+                    try await client.disableMopExtension()
+                }
+            } onSuccess: { [weak self] in
+                self?.state.mopExtensionEnabled = isOn
+            }
+        case kMopExtensionFurnitureLegHandlingID:
+            performUpdate(operationName: "MopExtensionFurnitureLegHandlingControlCapability toggle", itemID: id) { [client] in
+                if isOn {
+                    try await client.enableMopExtensionFurnitureLegHandling()
+                } else {
+                    try await client.disableMopExtensionFurnitureLegHandling()
+                }
+            } onSuccess: { [weak self] in
+                self?.state.mopExtensionFurnitureLegHandlingEnabled = isOn
+            }
         case kObstacleAvoidanceID:
             performUpdate(operationName: "ObstacleAvoidanceControlCapability toggle", itemID: id) { [client] in
                 if isOn {
@@ -527,6 +663,16 @@ final class VTRobotOptionsViewController: VTRobotOptionsViewControllerBase<VTRob
                 }
             } onSuccess: { [weak self] in
                 self?.state.obstacleImagesEnabled = isOn
+            }
+        case kCameraLightID:
+            performUpdate(operationName: "CameraLightControlCapability toggle", itemID: id) { [client] in
+                if isOn {
+                    try await client.enableCameraLight()
+                } else {
+                    try await client.disableCameraLight()
+                }
+            } onSuccess: { [weak self] in
+                self?.state.cameraLightEnabled = isOn
             }
         case kMopAutoDryingID:
             performUpdate(operationName: "MopDockMopAutoDryingControlCapability toggle", itemID: id) { [client] in
@@ -580,6 +726,26 @@ final class VTRobotOptionsViewController: VTRobotOptionsViewControllerBase<VTRob
             try await client.setMopDockMopDryingDuration(duration)
         } onSuccess: { [weak self] in
             self?.state.mopDryingTime = duration
+        }
+    }
+
+    private func updateAutoEmptyDuration(_ duration: VTAutoEmptyDockAutoEmptyDuration) {
+        guard duration != state.autoEmptyDuration else { return }
+
+        performUpdate(operationName: "AutoEmptyDockAutoEmptyDurationControlCapability update", itemID: kAutoEmptyDurationID) { [client] in
+            try await client.setAutoEmptyDockAutoEmptyDuration(duration)
+        } onSuccess: { [weak self] in
+            self?.state.autoEmptyDuration = duration
+        }
+    }
+
+    private func updateMopWashTemperature(_ temperature: VTMopDockMopWashTemperature) {
+        guard temperature != state.mopWashTemperature else { return }
+
+        performUpdate(operationName: "MopDockMopWashTemperatureControlCapability update", itemID: kMopWashTemperatureID) { [client] in
+            try await client.setMopDockMopWashTemperature(temperature)
+        } onSuccess: { [weak self] in
+            self?.state.mopWashTemperature = temperature
         }
     }
 

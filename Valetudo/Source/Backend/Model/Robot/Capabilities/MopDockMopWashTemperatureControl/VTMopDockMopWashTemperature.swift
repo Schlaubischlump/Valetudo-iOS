@@ -12,3 +12,20 @@ public enum VTMopDockMopWashTemperature: String, Codable, Sendable, Hashable {
     case scalding
     case boiling
 }
+
+extension VTMopDockMopWashTemperature: Describable {
+    public var description: String {
+        switch self {
+        case .cold:
+            "MOP_WASH_TEMPERATURE_COLD".localized()
+        case .warm:
+            "MOP_WASH_TEMPERATURE_WARM".localized()
+        case .hot:
+            "MOP_WASH_TEMPERATURE_HOT".localized()
+        case .scalding:
+            "MOP_WASH_TEMPERATURE_SCALDING".localized()
+        case .boiling:
+            "MOP_WASH_TEMPERATURE_BOILING".localized()
+        }
+    }
+}
