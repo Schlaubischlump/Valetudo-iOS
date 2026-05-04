@@ -59,10 +59,17 @@ final class VTLoadingCellView: UIView, VTContentView {
     }
 
     func apply(configuration: VTLoadingCellContentConfiguration) {
-        guard currentConfiguration != configuration else { return }
-        currentConfiguration = configuration
-
-        messageLabel.text = configuration.message
+        if currentConfiguration != configuration {
+            currentConfiguration = configuration
+            messageLabel.text = configuration.message
+        }
         activityIndicator.startAnimating()
     }
+
+    /*override func didMoveToWindow() {
+        super.didMoveToWindow()
+
+        guard window != nil else { return }
+        activityIndicator.startAnimating()
+    }*/
 }
