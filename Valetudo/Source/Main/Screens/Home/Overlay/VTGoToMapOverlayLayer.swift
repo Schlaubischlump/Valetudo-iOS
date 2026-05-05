@@ -9,6 +9,10 @@ import UIKit
 /// Overlay layer responsible for drawing and dragging the home screen's go-to target crosshair.
 @MainActor
 final class VTGoToMapOverlayLayer: VTMapOverlayLayer {
+    private static let outlineZOffset: CGFloat = -1.0
+
+    private let outlineLayer = CAShapeLayer()
+
     private enum Interaction {
         case move(offset: CGPoint)
     }
@@ -21,7 +25,18 @@ final class VTGoToMapOverlayLayer: VTMapOverlayLayer {
     /// Rebuilds the crosshair path and hit region from the current overlay model state.
     func configure(with overlay: VTGoToMapOverlay) {
         overlayModel = overlay
-        isOverlaySelected = overlay.isSelected
+
+        if outlineLayer.superlayer !== superlayer {
+            outlineLayer.fillColor = UIColor.clear.cgColor
+            outlineLayer.strokeColor = UIColor.black.cgColor
+            outlineLayer.lineWidth = 4.0
+            outlineLayer.lineCap = .round
+            if let superlayer {
+                outlineLayer.removeFromSuperlayer()
+                outlineLayer.zPosition = zPosition + Self.outlineZOffset
+                superlayer.addSublayer(outlineLayer)
+            }
+        }
 
         let path = UIBezierPath()
         let radius: CGFloat = 12.0
@@ -31,12 +46,12 @@ final class VTGoToMapOverlayLayer: VTMapOverlayLayer {
         path.move(to: CGPoint(x: overlay.centerPoint.x, y: overlay.centerPoint.y - radius - 6))
         path.addLine(to: CGPoint(x: overlay.centerPoint.x, y: overlay.centerPoint.y + radius + 6))
 
+        outlineLayer.path = path.cgPath
         self.path = path.cgPath
         hitTestPath = UIBezierPath(ovalIn: overlay.hitFrame).cgPath
         fillColor = UIColor.clear.cgColor
         strokeColor = UIColor.white.cgColor
         lineWidth = 2.0
-        lineDashPattern = overlay.isSelected ? [5, 4] : nil
         lineCap = .round
     }
 
@@ -81,5 +96,9 @@ final class VTGoToMapOverlayLayer: VTMapOverlayLayer {
 
     override func endInteraction() {
         interaction = nil
+    }
+
+    override func prepareForRemoval() {
+        outlineLayer.removeFromSuperlayer()
     }
 }
