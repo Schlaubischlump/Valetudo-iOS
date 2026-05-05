@@ -7,44 +7,32 @@
 
 import UIKit
 
-// TODO: Localize all of this
-
 /// Specializes the shared map controller for the home screen's cleaning and navigation modes.
 @MainActor
 final class VTHomeMapViewController: VTMapViewController {
-    /// User-facing map interaction modes available from the home screen.
-    enum Mode: CaseIterable {
-        case segment
-        case zone
-        case goTo
-
-        var menuTitle: String {
-            switch self {
-            case .segment: "SEGMENT".localized()
-            case .zone: "ZONE".localized()
-            case .goTo: "GO_TO".localized()
-            }
-        }
-    }
-
     /// Describes a mode entry for the parent controller's dropdown menu.
     struct ModeOption {
-        let mode: Mode
+        let mode: VTRobotControlMode
         let isEnabled: Bool
     }
 
     /// Notifies the parent when the visible title should reflect a new active mode.
     var onModeTitleChanged: ((String) -> Void)?
     /// Notifies the parent when the dropdown contents or current selection changed.
-    var onModeOptionsChanged: (([ModeOption], Mode) -> Void)?
+    var onModeOptionsChanged: (([ModeOption], VTRobotControlMode) -> Void)?
+    /// Notifies the parent when the active home mode changed.
+    var onModeChanged: ((VTRobotControlMode) -> Void)?
     /// Delegates callout presentation to the host home controller so compact sheet presentation
     /// uses the same popover path as the pre-refactor implementation.
     var onCalloutPresentationRequested: ((VTCalloutViewController, UIView, CGRect) -> Void)?
-
-    /// Shared robot controls whose start action is redirected based on the current home mode.
-    private let robotControlViewController: VTRobotControlViewController
+    /// Emits the currently selected segment ids in segment mode.
+    var onSelectedSegmentIDsChanged: ((Set<String>) -> Void)?
+    /// Emits the currently edited zone payloads in zone mode.
+    var onZonesChanged: (([VTZoneCleaningZone]) -> Void)?
+    /// Emits the current go-to coordinate, or `nil` if no valid target is placed.
+    var onGoToCoordinateChanged: ((VTMapCoordinate?) -> Void)?
     /// Active home-screen mode that determines how map taps and overlays are interpreted.
-    private(set) var mode: Mode = .segment
+    private(set) var mode: VTRobotControlMode = .segment
     /// Whether segment selection should be exposed on the map and legend.
     private var supportsSegmentation = false
     /// Whether zone overlays may be converted into a zone-cleaning request.
@@ -55,10 +43,27 @@ final class VTHomeMapViewController: VTMapViewController {
     private var zoneCountRange = VTZoneCleaningCountRange(min: 1, max: 1)
     /// Cached obstacle-image capability flag used when building obstacle callouts.
     private var obstacleImagesAreEnabled = false
+    /// Locks the home map into a passive live-view state while the robot is running a mapping pass.
+    var isMappingActive = false {
+        didSet {
+            guard isMappingActive != oldValue else { return }
 
-    /// Creates the home map controller and binds it to the shared robot controls.
-    init(client: VTAPIClientProtocol, robotControlViewController: VTRobotControlViewController) {
-        self.robotControlViewController = robotControlViewController
+        if isMappingActive {
+            Task { [weak self] in
+                await self?.clearSegmentSelection()
+                self?.mapView?.clearTransientOverlays()
+                self?.notifyHomeStateChanged()
+                self?.refreshControls()
+            }
+        } else {
+            notifyHomeStateChanged()
+            refreshControls()
+        }
+    }
+    }
+
+    /// Creates the home map controller bound to the provided API client.
+    override init(client: VTAPIClientProtocol) {
         super.init(client: client)
     }
 
@@ -74,11 +79,6 @@ final class VTHomeMapViewController: VTMapViewController {
         super.viewDidLoad()
         view.backgroundColor = .clear
 
-        robotControlViewController.startActionHandler = { [weak self] configuration in
-            guard let self else { return false }
-            return try await handleStartAction(for: configuration)
-        }
-
         Task { [weak self] in
             await self?.loadCapabilities()
         }
@@ -92,28 +92,19 @@ final class VTHomeMapViewController: VTMapViewController {
 
     /// Only segment mode allows direct segment selection on the map or legend.
     override func canChangeSelection(forLayer _: VTLayer, isSelected _: Bool) async -> Bool {
-        mode == .segment && supportsSegmentation
+        !isMappingActive && mode == .segment && supportsSegmentation
     }
 
     /// Mirrors the shared segment selection into the robot control configuration.
     override func didUpdateSelectedSegmentIDs(_ selectedSegmentIDs: Set<String>) async {
         guard mode == .segment else { return }
-
-        if selectedSegmentIDs.isEmpty {
-            robotControlViewController.currentConfiguration = .full
-        } else {
-            robotControlViewController.currentConfiguration = .segments(
-                ids: selectedSegmentIDs.sorted(),
-                customOrder: false,
-                iterations: robotControlViewController.currentIterations
-            )
-        }
-
+        onSelectedSegmentIDsChanged?(selectedSegmentIDs)
         refreshControls()
     }
 
     /// Treats empty-map taps as go-to target placement while go-to mode is active.
     override func didTapMap(at point: CGPoint) async -> Bool {
+        guard !isMappingActive else { return true }
         guard mode == .goTo else { return false }
 
         if let overlay = goToOverlay {
@@ -124,7 +115,7 @@ final class VTHomeMapViewController: VTMapViewController {
             mapView?.setTransientOverlays([overlay], selectedOverlayID: overlay.id)
         }
 
-        updateGoToConfiguration()
+        notifyHomeStateChanged()
         refreshControls()
         return true
     }
@@ -150,10 +141,11 @@ final class VTHomeMapViewController: VTMapViewController {
     }
 
     /// Switches the home map into a new mode and clears any state owned by the previous one.
-    func selectMode(_ mode: Mode) {
-        guard isModeEnabled(mode), self.mode != mode else { return }
+    func selectMode(_ mode: VTRobotControlMode) {
+        guard !isMappingActive, isModeEnabled(mode), self.mode != mode else { return }
 
         self.mode = mode
+        onModeChanged?(mode)
         Task { [weak self] in
             await self?.applyModeTransition()
         }
@@ -199,14 +191,11 @@ final class VTHomeMapViewController: VTMapViewController {
     }
 
     /// Returns whether the requested mode is currently supported by robot capabilities.
-    private func isModeEnabled(_ mode: Mode) -> Bool {
+    private func isModeEnabled(_ mode: VTRobotControlMode) -> Bool {
         switch mode {
-        case .segment:
-            true
-        case .zone:
-            supportsZoneCleaning
-        case .goTo:
-            supportsGoToLocation
+        case .segment: true
+        case .zone: supportsZoneCleaning
+        case .goTo: supportsGoToLocation
         }
     }
 
@@ -221,53 +210,42 @@ final class VTHomeMapViewController: VTMapViewController {
         case .segment:
             setLegendHidden(!supportsSegmentation)
             setLegendInteractionEnabled(supportsSegmentation)
-            robotControlViewController.currentConfiguration = .full
         case .zone:
             setLegendHidden(!supportsSegmentation)
             setLegendInteractionEnabled(false)
             ensureMinimumZoneOverlays()
-            robotControlViewController.currentConfiguration = .zones(currentZones(), iterations: robotControlViewController.currentIterations)
         case .goTo:
             setLegendHidden(!supportsSegmentation)
             setLegendInteractionEnabled(false)
             ensureGoToOverlay()
-            updateGoToConfiguration()
         }
 
+        notifyHomeStateChanged()
         refreshControls()
     }
 
-    /// Rebuilds the robot control configuration from the current mode-specific map state.
+    /// Emits the current raw home-map state so the parent can derive an action configuration.
     private func synchronizeConfigurationWithCurrentMode() {
-        switch mode {
-        case .segment:
-            let selectedSegmentIDs = Set(selectedSegments.compactMap(\.segmentId))
-            if selectedSegmentIDs.isEmpty {
-                robotControlViewController.currentConfiguration = .full
-            } else {
-                robotControlViewController.currentConfiguration = .segments(
-                    ids: selectedSegmentIDs.sorted(),
-                    customOrder: false,
-                    iterations: robotControlViewController.currentIterations
-                )
-            }
-        case .zone:
-            ensureMinimumZoneOverlays()
-            robotControlViewController.currentConfiguration = .zones(
-                currentZones(),
-                iterations: robotControlViewController.currentIterations
-            )
-        case .goTo:
-            updateGoToConfiguration()
-        }
+        notifyHomeStateChanged()
     }
 
-    /// Updates the shared configuration to either the current go-to target or an empty placeholder.
-    private func updateGoToConfiguration() {
-        if let coordinate = currentGoToCoordinate() {
-            robotControlViewController.currentConfiguration = .goTo(coordinate)
-        } else {
-            robotControlViewController.currentConfiguration = .goTo(VTMapCoordinate(x: -1, y: -1))
+    /// Emits the current raw home-map state so the parent can derive an action configuration.
+    private func notifyHomeStateChanged() {
+        guard !isMappingActive else {
+            onSelectedSegmentIDsChanged?([])
+            onZonesChanged?([])
+            onGoToCoordinateChanged?(nil)
+            return
+        }
+
+        switch mode {
+        case .segment:
+            onSelectedSegmentIDsChanged?(Set(selectedSegments.compactMap(\.segmentId)))
+        case .zone:
+            ensureMinimumZoneOverlays()
+            onZonesChanged?(currentZones())
+        case .goTo:
+            onGoToCoordinateChanged?(currentGoToCoordinate())
         }
     }
 
@@ -309,18 +287,26 @@ final class VTHomeMapViewController: VTMapViewController {
     // MARK: - Robot Control Actions
 
     /// Intercepts the shared start action for zone-cleaning and go-to modes.
-    private func handleStartAction(for configuration: VTRobotControlViewController.CleaningConfiguration) async throws -> Bool {
+    func handleStartAction(for configuration: VTCleaningConfiguration) async throws -> Bool {
         switch configuration {
         case let .zones(zones, iterations):
             guard !zones.isEmpty else {
-                showError(title: "Error", message: "Add at least one zone before starting.")
+                showError(
+                    title: "ERROR".localized(),
+                    message: "HOME_ADD_AT_LEAST_ONE_ZONE_BEFORE_STARTING".localized()
+                )
                 return true
             }
             try await client.clean(zones: zones, iterations: iterations)
             return true
         case .goTo:
+            // There is a bug in Valetudo. If you paused a Go-To and restart with a new location the robot is lost.
+            // You should use stop instead and then restart. Not sure if we fix this in our app or just leave it in.
             guard let coordinate = currentGoToCoordinate() else {
-                showError(title: "Error", message: "Place a target before starting.")
+                showError(
+                    title: "ERROR".localized(),
+                    message: "HOME_PLACE_A_TARGET_BEFORE_STARTING".localized()
+                )
                 return true
             }
             try await client.goTo(x: coordinate.x, y: coordinate.y)
@@ -334,18 +320,24 @@ final class VTHomeMapViewController: VTMapViewController {
 
     /// Returns the title displayed by the parent controller for the current mode and selection state.
     private func currentModeTitle() -> String {
+        if isMappingActive {
+            return "MAP_OPTIONS_MAPPING_PASS_TITLE".localized()
+        }
+
         switch mode {
         case .segment:
-            selectedSegments.isEmpty ? "Full Cleanup" : "Segment Cleanup"
+            return selectedSegments.isEmpty ? "FULL_CLEANUP".localized() : "SEGMENT_CLEANUP".localized()
         case .zone:
-            "Zone Cleanup"
+            return "ZONE_CLEANUP".localized()
         case .goTo:
-            "Go-To"
+            return "GO_TO".localized()
         }
     }
 
     /// Builds the transient toolbar model for the currently active home mode.
     override var toolbarActionDefinitions: [ToolbarActionDefinition] {
+        guard !isMappingActive else { return [] }
+
         switch mode {
         case .segment:
             guard !selectedSegments.isEmpty else { return [] }
@@ -388,7 +380,7 @@ final class VTHomeMapViewController: VTMapViewController {
     private func refreshControls() {
         onModeTitleChanged?(currentModeTitle())
         onModeOptionsChanged?(
-            [
+            isMappingActive ? [] : [
                 .init(mode: .segment, isEnabled: true),
                 .init(mode: .zone, isEnabled: supportsZoneCleaning),
                 .init(mode: .goTo, isEnabled: supportsGoToLocation),
@@ -396,7 +388,7 @@ final class VTHomeMapViewController: VTMapViewController {
             mode
         )
 
-        if mode != .segment {
+        if isMappingActive || mode != .segment {
             setLegendInteractionEnabled(false)
         }
         updateToolbarItems()
@@ -447,6 +439,8 @@ final class VTHomeMapViewController: VTMapViewController {
 
     /// Builds and presents the correct callout for supported tappable map entities.
     private func handleEntityTap(_ entity: VTEntity, at point: CGPoint) async -> Bool {
+        guard !isMappingActive else { return false }
+
         switch entity.type {
         case .charger_location:
             let robotInfo = try? await client.getRobotInfo()

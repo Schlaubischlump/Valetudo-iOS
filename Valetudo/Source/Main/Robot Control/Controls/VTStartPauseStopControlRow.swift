@@ -7,6 +7,11 @@
 import UIKit
 
 final class VTStartPauseStopControlRow: UIView {
+    enum StartPausePresentation {
+        case start(badge: UIImage?)
+        case pause
+    }
+
     var onStartPauseCliked: ((_ isStarted: Bool) -> Void)?
     var onStopClicked: (() -> Void)?
     var onHomeClicked: (() -> Void)?
@@ -40,8 +45,19 @@ final class VTStartPauseStopControlRow: UIView {
 
     var isStarted: Bool = false {
         didSet {
-            let imageName = isStarted ? "pause.fill" : "play.fill"
-            startPauseButton.setImage(UIImage(systemName: imageName), for: .normal)
+            updateStartPauseAppearance()
+        }
+    }
+
+    var startPausePresentation: StartPausePresentation = .start(badge: nil) {
+        didSet {
+            switch startPausePresentation {
+            case .start:
+                isStarted = false
+            case .pause:
+                isStarted = true
+            }
+            updateStartPauseAppearance()
         }
     }
 
@@ -49,6 +65,7 @@ final class VTStartPauseStopControlRow: UIView {
     private let startPauseButton = VTControlButton(title: nil, icon: .cleaningStart)
     private let stopButton = VTControlButton(title: nil, icon: .cleaningStop)
     private let homeButton = VTControlButton(title: nil, icon: .returnToDock)
+    private let startPauseBadgeView = UIImageView()
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -71,6 +88,7 @@ final class VTStartPauseStopControlRow: UIView {
         setupButton(startPauseButton)
         setupButton(stopButton)
         setupButton(homeButton)
+        setupStartPauseBadgeView()
 
         startPauseButton.onTap = startPauseTapped
         stopButton.onTap = stopTapped
@@ -79,8 +97,10 @@ final class VTStartPauseStopControlRow: UIView {
         for item in [startPauseButton, stopButton, homeButton] {
             buttonContainerView.addSubview(item)
         }
+        startPauseButton.addSubview(startPauseBadgeView)
 
         disableButtons()
+        updateStartPauseAppearance()
     }
 
     private func setupButton(_ button: UIButton) {
@@ -109,6 +129,7 @@ final class VTStartPauseStopControlRow: UIView {
         startPauseButton.frame = CGRect(x: 0, y: 0, width: buttonWidth, height: height)
         stopButton.frame = CGRect(x: buttonWidth, y: 0, width: buttonWidth, height: height)
         homeButton.frame = CGRect(x: buttonWidth * 2, y: 0, width: buttonWidth, height: height)
+        layoutStartPauseBadge()
 
         // Add a left and right border on the middle button.
         stopButton.updateBorder(edge: [.left, .right], color: .opaqueSeparator.withAlphaComponent(0.5), thickness: 1.0)
@@ -125,6 +146,37 @@ final class VTStartPauseStopControlRow: UIView {
         isStartPauseEnabled = false
         isStopEnabled = false
         isHomeEnabled = false
+    }
+
+    private func setupStartPauseBadgeView() {
+        startPauseBadgeView.contentMode = .scaleAspectFit
+        startPauseBadgeView.tintColor = .secondaryLabel
+        startPauseBadgeView.isUserInteractionEnabled = false
+    }
+
+    private func updateStartPauseAppearance() {
+        let imageName = isStarted ? "pause.fill" : "play.fill"
+        startPauseButton.setImage(UIImage(systemName: imageName), for: .normal)
+
+        switch startPausePresentation {
+        case let .start(badge):
+            startPauseBadgeView.image = badge
+            startPauseBadgeView.isHidden = badge == nil
+        case .pause:
+            startPauseBadgeView.image = nil
+            startPauseBadgeView.isHidden = true
+        }
+    }
+
+    private func layoutStartPauseBadge() {
+        let badgeSize: CGFloat = 14
+        let inset: CGFloat = 8
+        startPauseBadgeView.frame = CGRect(
+            x: startPauseButton.bounds.maxX - badgeSize - inset,
+            y: startPauseButton.bounds.maxY - badgeSize - inset,
+            width: badgeSize,
+            height: badgeSize
+        )
     }
 
     private func startPauseTapped() {

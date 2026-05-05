@@ -12,6 +12,7 @@ enum VTSidebarSection: Int, CaseIterable {
     case robot = 1
     case options = 2
     case misc = 3
+    case app = 4
 
     var title: String? {
         switch self {
@@ -19,6 +20,7 @@ enum VTSidebarSection: Int, CaseIterable {
         case .robot: "ROBOT".localized()
         case .options: "OPTIONS".localized()
         case .misc: "MISC".localized()
+        case .app: "APP".localized()
         }
     }
 }
@@ -34,6 +36,7 @@ enum VTSidebarItem: Hashable {
     case updater
     case manualControl
     case highResolutionManualControl
+    case appSettings
 
     var title: String {
         switch self {
@@ -46,12 +49,13 @@ enum VTSidebarItem: Hashable {
         case .systemInformation: "SYSTEM_INFORMATION".localized()
         case .updater: "UPDATER".localized()
         case .manualControl, .highResolutionManualControl: "MANUAL_CONTROL".localized()
+        case .appSettings: "APP_SETTINGS".localized()
         }
     }
 
     var icon: UIImage? {
         switch self {
-        case .home: .returnToDock
+        case .home: .sidebarHome
         case .map: .sidebarMap
         case .consumables: .sidebarConsumables
         case .robot: .sidebarRobot
@@ -60,6 +64,7 @@ enum VTSidebarItem: Hashable {
         case .systemInformation: .sidebarSystemInformation
         case .updater: .sidebarUpdater
         case .manualControl, .highResolutionManualControl: .sidebarManualControl
+        case .appSettings: .sidebarAppSettings
         }
     }
 }
@@ -174,6 +179,7 @@ class VTSidebarViewController: VTCollectionViewController {
                 case .consumables: capabilities.contains(.consumableMonitoring)
                 case .manualControl: capabilities.contains(.manualControl) && !supportsHighResolutionManualControl
                 case .highResolutionManualControl: supportsHighResolutionManualControl
+                case .appSettings: true
                 }
             }
             return tmpItems.isEmpty ? nil : (sec, tmpItems)

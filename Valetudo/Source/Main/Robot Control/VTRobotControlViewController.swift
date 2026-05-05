@@ -6,6 +6,31 @@
 //
 import UIKit
 
+private enum VTActiveRobotAction {
+    case segment
+    case zone
+    case goTo
+    case mapping
+
+    var badgeImage: UIImage? {
+        switch self {
+        case .segment: .segmentedCleanup
+        case .zone: .zoneCleanup
+        case .goTo: .goToLocation
+        case .mapping: .mappingPass
+        }
+    }
+
+    var controlMode: VTRobotControlMode? {
+        switch self {
+        case .segment: .segment
+        case .zone: .zone
+        case .goTo: .goTo
+        case .mapping: nil
+        }
+    }
+}
+
 struct VTFanItem: VTSegmentedItem {
     let presetValue: VTPresetValue
     var title: String {
@@ -79,68 +104,6 @@ struct VTRepeatItem: VTSegmentedItem {
 
 @MainActor
 class VTRobotControlViewController: VTViewController {
-    enum CleaningConfiguration {
-        case full
-        case segments(ids: [String], customOrder: Bool, iterations: Int)
-        case zones([VTZoneCleaningZone], iterations: Int)
-        case goTo(VTMapCoordinate)
-
-        fileprivate var canChangeIterations: Bool {
-            switch self {
-            case .full, .goTo: false
-            case .segments(ids: _, customOrder: _, iterations: _), .zones(_, iterations: _): true
-            }
-        }
-
-        fileprivate var iterations: Int {
-            switch self {
-            case .full, .goTo: 1
-            case .segments(ids: _, customOrder: _, iterations: let iter), let .zones(_, iterations: iter): iter
-            }
-        }
-
-        func appending(segmentId: String) -> CleaningConfiguration {
-            switch self {
-            case .full:
-                .segments(ids: [segmentId], customOrder: false, iterations: 1)
-            case let .segments(ids: ids, customOrder: order, iterations: iters):
-                .segments(ids: ids + [segmentId], customOrder: order, iterations: iters)
-            case .zones, .goTo:
-                .segments(ids: [segmentId], customOrder: false, iterations: 1)
-            }
-        }
-
-        fileprivate func updated(iterations: Int) -> CleaningConfiguration {
-            switch self {
-            case .full:
-                .full
-            case .segments(ids: let ids, customOrder: let order, iterations: _):
-                .segments(ids: ids, customOrder: order, iterations: iterations)
-            case .zones(let zones, iterations: _):
-                .zones(zones, iterations: iterations)
-            case let .goTo(coordinate):
-                .goTo(coordinate)
-            }
-        }
-
-        func removing(segmentId: String) -> CleaningConfiguration {
-            switch self {
-            case .full:
-                return .full
-            case .segments(ids: var ids, customOrder: let order, iterations: let iters):
-                let idx = ids.firstIndex(of: segmentId)!
-                ids.remove(at: idx)
-                if ids.isEmpty {
-                    return .full
-                } else {
-                    return .segments(ids: ids, customOrder: order, iterations: iters)
-                }
-            case .zones, .goTo:
-                return .full
-            }
-        }
-    }
-
     /// Cleaning configuration to use when the start button is clicked.
     private var supportsSegmentation: Bool = false
     private var supportsZoneCleaning: Bool = false
@@ -148,8 +111,8 @@ class VTRobotControlViewController: VTViewController {
     private var segmentIterationRange: ClosedRange<Int> = 1 ... 1
     private var zoneIterationRange: ClosedRange<Int> = 1 ... 1
     private var availableStatistics: Set<VTValetudoDataPointType> = []
-    private var _currentConfiguration: CleaningConfiguration = .full
-    var currentConfiguration: CleaningConfiguration {
+    private var _currentConfiguration: VTCleaningConfiguration = .full
+    var currentConfiguration: VTCleaningConfiguration {
         get { _currentConfiguration }
         set {
             switch newValue {
@@ -163,6 +126,7 @@ class VTRobotControlViewController: VTViewController {
                 _currentConfiguration = supportsGoToLocation ? newValue : .full
             }
             updateIterations()
+            updateStartPausePresentation()
         }
     }
 
@@ -174,7 +138,9 @@ class VTRobotControlViewController: VTViewController {
     private var observerToken: VTListenerToken?
     private var sseTask: Task<Void, Never>?
     private var hasConnectedStateAttributesStream = false
-    var startActionHandler: ((CleaningConfiguration) async throws -> Bool)?
+    private var latestStateAttributes: VTStateAttributeList?
+    private var lastKnownActiveAction: VTActiveRobotAction?
+    var startActionHandler: ((VTCleaningConfiguration) async throws -> Bool)?
 
     /// Make sure that we process manual UI updates and SSE based UI updates in the right order
     private let serialTaskQueue: SerialTaskQueue = .init()
@@ -499,19 +465,10 @@ class VTRobotControlViewController: VTViewController {
 
     @MainActor
     private func updateButtonStates(_ state: VTStateAttributeList) async {
+        latestStateAttributes = state
         startPauseStopControl.isStopEnabled = state.isStoppable
         startPauseStopControl.isHomeEnabled = state.canReturnHome
-        if state.isStarted {
-            startPauseStopControl.isStarted = true
-            startPauseStopControl.isStartPauseEnabled = true
-        } else if state.isPaused {
-            startPauseStopControl.isStarted = false
-            startPauseStopControl.isStartPauseEnabled = true
-        } else {
-            // Might happen if e.g. robot is manually controlled
-            startPauseStopControl.isStarted = false
-            startPauseStopControl.isStartPauseEnabled = false
-        }
+        updateStartPausePresentation(with: state)
 
         let robotIsDocked = state.isDocked
         let mopPadsAreAttached = state.mopPadsAreAttached
@@ -541,6 +498,55 @@ class VTRobotControlViewController: VTViewController {
     }
 
     @MainActor
+    private func updateStartPausePresentation() {
+        guard let latestStateAttributes else { return }
+        updateStartPausePresentation(with: latestStateAttributes)
+    }
+
+    @MainActor
+    private func updateStartPausePresentation(with state: VTStateAttributeList) {
+        let activeAction = resolvedActiveAction(from: state)
+
+        if let activeAction {
+            lastKnownActiveAction = activeAction
+        } else if !state.isStarted, !state.isResumable {
+            lastKnownActiveAction = nil
+        }
+
+        let canPauseCurrentAction = state.isStarted && (activeAction == .mapping || activeAction?.controlMode == currentConfiguration.controlMode)
+        let startBadge = state.isResumable ? activeAction?.badgeImage : currentConfiguration.badgeImage
+        startPauseStopControl.startPausePresentation = canPauseCurrentAction
+            ? .pause
+            : .start(badge: startBadge)
+
+        if state.isStarted || state.isPaused {
+            startPauseStopControl.isStartPauseEnabled = true
+        } else {
+            // Might happen if e.g. robot is manually controlled
+            startPauseStopControl.isStartPauseEnabled = false
+        }
+    }
+
+    private func resolvedActiveAction(from state: VTStateAttributeList) -> VTActiveRobotAction? {
+        switch state.statusFlag {
+        case .segment:
+            .segment
+        case .zone:
+            .zone
+        case .target:
+            .goTo
+        case .mapping:
+            .mapping
+        case .resumable:
+            lastKnownActiveAction
+        case .some(.none), nil:
+            state.isStarted ? .segment : nil
+        default:
+            nil
+        }
+    }
+
+    @MainActor
     private func updateAttachments(_ state: VTStateAttributeList) async {
         // update all attachments
         attachmentsControls.items = state.attachmendTypes.map { attachmentType in
@@ -559,6 +565,10 @@ class VTRobotControlViewController: VTViewController {
             if isStarted {
                 try await client.pause()
             } else {
+                if latestStateAttributes?.isResumable == true {
+                    try await client.start()
+                    return
+                }
                 if try await startActionHandler?(currentConfiguration) == true {
                     return
                 }

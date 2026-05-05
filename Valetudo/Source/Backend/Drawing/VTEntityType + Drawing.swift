@@ -29,7 +29,7 @@ extension VTEntityType {
         switch self {
         case .charger_location: .blue
         case .robot_position: .white
-        case .active_zone: .white.copy(alpha: 0.18)
+        case .active_zone: .green.copy(alpha: 0.18)
         case .path, .predicted_path: nil
         case .carpet: nil
         case .obstacle: .yellow
@@ -41,7 +41,7 @@ extension VTEntityType {
         switch self {
         case .charger_location: .white
         case .robot_position: .lightGray
-        case .active_zone: .white
+        case .active_zone: .green
         case .path, .predicted_path: .white
         case .carpet: .lightGray.copy(alpha: 0.5)
         case .obstacle: .lightGray.copy(alpha: 0.9)
@@ -110,13 +110,29 @@ extension VTEntityType {
 
             return iconPath
         case .go_to_target:
-            let radius = 10.0
             let iconPath = CGMutablePath()
-            iconPath.addArc(center: center, radius: radius, startAngle: 0, endAngle: .pi * 2, clockwise: false)
-            iconPath.move(to: CGPoint(x: center.x - radius - 4, y: center.y))
-            iconPath.addLine(to: CGPoint(x: center.x + radius + 4, y: center.y))
-            iconPath.move(to: CGPoint(x: center.x, y: center.y - radius - 4))
-            iconPath.addLine(to: CGPoint(x: center.x, y: center.y + radius + 4))
+
+            let headRadius = 4.5
+            let headCenter = CGPoint(x: center.x, y: center.y - 7.0)
+            iconPath.addArc(center: headCenter, radius: headRadius, startAngle: 0, endAngle: .pi * 2, clockwise: false)
+
+            iconPath.move(to: CGPoint(x: headCenter.x - headRadius * 0.75, y: headCenter.y + headRadius * 0.5))
+            iconPath.addQuadCurve(
+                to: center,
+                control: CGPoint(x: headCenter.x - 1.5, y: center.y - 2.0)
+            )
+            iconPath.addQuadCurve(
+                to: CGPoint(x: headCenter.x + headRadius * 0.75, y: headCenter.y + headRadius * 0.5),
+                control: CGPoint(x: headCenter.x + 1.5, y: center.y - 2.0)
+            )
+
+            let innerRadius = 1.5
+            iconPath.addEllipse(in: CGRect(
+                x: headCenter.x - innerRadius,
+                y: headCenter.y - innerRadius,
+                width: innerRadius * 2,
+                height: innerRadius * 2
+            ))
             return iconPath
         case .carpet: return nil
         case .no_go_area: return nil

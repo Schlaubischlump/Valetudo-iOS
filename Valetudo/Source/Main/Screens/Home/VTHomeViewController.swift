@@ -38,16 +38,21 @@ final class VTHomeViewController: VTViewController {
     /// Cached mode menu entries emitted by the home map child.
     private var modeOptions: [VTHomeMapViewController.ModeOption] = []
     /// Currently active home cleaning/navigation mode.
-    private var selectedMode: VTHomeMapViewController.Mode = .segment
+    private var selectedMode: VTRobotControlMode = .segment
+    /// Cached home-map segment selection used to derive the current cleaning configuration.
+    private var selectedSegmentIDs: Set<String> = []
+    /// Cached home-map zones used to derive the current cleaning configuration.
+    private var selectedZones: [VTZoneCleaningZone] = []
+    /// Cached go-to target used to derive the current cleaning configuration.
+    private var selectedGoToCoordinate: VTMapCoordinate?
+    /// Tracks whether the home map is currently locked by an active mapping pass.
+    private var isMappingActive = false
 
     /// Creates the home screen with a shared API client and reusable robot controls.
     init(client: VTAPIClientProtocol, robotControlViewController: VTRobotControlViewController) {
         self.client = client
         self.robotControlViewController = robotControlViewController
-        homeMapViewController = VTHomeMapViewController(
-            client: client,
-            robotControlViewController: robotControlViewController
-        )
+        homeMapViewController = VTHomeMapViewController(client: client)
 
         super.init(nibName: nil, bundle: nil)
     }
@@ -137,6 +142,26 @@ final class VTHomeViewController: VTViewController {
 
     /// Connects the home map controller's mode callbacks to navigation updates.
     private func bindHomeMapController() {
+        robotControlViewController.startActionHandler = { [weak homeMapViewController] configuration in
+            guard let homeMapViewController else { return false }
+            return try await homeMapViewController.handleStartAction(for: configuration)
+        }
+        homeMapViewController.onModeChanged = { [weak self] mode in
+            self?.selectedMode = mode
+            self?.applyHomeCleaningConfiguration()
+        }
+        homeMapViewController.onSelectedSegmentIDsChanged = { [weak self] ids in
+            self?.selectedSegmentIDs = ids
+            self?.applyHomeCleaningConfiguration()
+        }
+        homeMapViewController.onZonesChanged = { [weak self] zones in
+            self?.selectedZones = zones
+            self?.applyHomeCleaningConfiguration()
+        }
+        homeMapViewController.onGoToCoordinateChanged = { [weak self] coordinate in
+            self?.selectedGoToCoordinate = coordinate
+            self?.applyHomeCleaningConfiguration()
+        }
         homeMapViewController.onModeTitleChanged = { [weak self] title in
             self?.navigationItem.title = title
         }
@@ -164,7 +189,7 @@ final class VTHomeViewController: VTViewController {
         let previousModeBarButtonItem = modeBarButtonItem
         let modeButton = UIBarButtonItem(
             title: selectedMode.menuTitle,
-            image: UIImage(systemName: "chevron.down.circle"),
+            image: .modeSelector,
             primaryAction: nil,
             menu: UIMenu(title: "", children: modeActions)
         )
@@ -175,12 +200,9 @@ final class VTHomeViewController: VTViewController {
 
         let eventButton = eventBarButtonItem ?? VTValetudoEventBarButtonItem(client: client, parentViewController: self)
         eventBarButtonItem = eventButton
-        modeBarButtonItem = modeButton
+        modeBarButtonItem = modeOptions.isEmpty ? nil : modeButton
 
-        navigationItem.rightBarButtonItems = preservedItems + [
-            eventButton,
-            modeButton,
-        ]
+        navigationItem.rightBarButtonItems = preservedItems + [eventButton] + (modeOptions.isEmpty ? [] : [modeButton])
     }
 
     // MARK: - State Observation
@@ -236,7 +258,34 @@ final class VTHomeViewController: VTViewController {
 
     /// Updates the status HUD with the latest robot state and battery information.
     private func updateRobotStatus(with state: VTStateAttributeList) async {
+        isMappingActive = state.statusFlag == .mapping
+        homeMapViewController.isMappingActive = isMappingActive
+        applyHomeCleaningConfiguration()
         robotStatusView.update(forStatus: state.statusState.description, batteryLevel: state.batterLevel)
+    }
+
+    /// Derives the robot-control action configuration from the current home-map state.
+    private func applyHomeCleaningConfiguration() {
+        if isMappingActive {
+            robotControlViewController.currentConfiguration = .full
+            return
+        }
+
+        let iterations = robotControlViewController.currentIterations
+        let configuration: VTCleaningConfiguration = switch selectedMode {
+        case .segment:
+            if selectedSegmentIDs.isEmpty {
+                .full
+            } else {
+                .segments(ids: selectedSegmentIDs.sorted(), customOrder: false, iterations: iterations)
+            }
+        case .zone:
+            .zones(selectedZones, iterations: iterations)
+        case .goTo:
+            .goTo(selectedGoToCoordinate ?? VTMapCoordinate(x: -1, y: -1))
+        }
+
+        robotControlViewController.currentConfiguration = configuration
     }
 
     // MARK: - Robot Control Presentation

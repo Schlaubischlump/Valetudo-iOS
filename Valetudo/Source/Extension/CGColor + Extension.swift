@@ -29,6 +29,10 @@ extension CGColor {
         CGColor(red: 1.0, green: 0.58, blue: 0.0, alpha: 1.0)
     }
 
+    static var green: CGColor {
+        CGColor(red: 52.0 / 255.0, green: 199.0 / 255.0, blue: 89.0 / 255.0, alpha: 1.0)
+    }
+
     func inverted() -> CGColor {
         guard let rgbColor = converted(to: CGColorSpace(name: CGColorSpace.sRGB)!,
                                        intent: .defaultIntent,

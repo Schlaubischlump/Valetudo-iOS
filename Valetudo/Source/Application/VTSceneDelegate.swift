@@ -137,7 +137,7 @@ class VTSceneDelegate: UIResponder, UIWindowSceneDelegate {
     }
 
     private func makeRobotsListNavigationController(for windowScene: UIWindowScene) -> UINavigationController {
-        let robotsViewController = VTRobotsListViewController()
+        let robotsViewController = VTRobotsDiscoveryListViewController()
         robotsViewController.onSelectRobot = { [weak self] robot in
             Task { @MainActor in
                 await self?.makePrimaryAndShowMainInterface(robot: robot, in: windowScene, animated: true)

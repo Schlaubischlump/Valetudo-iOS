@@ -45,6 +45,28 @@
         }
       }
     },
+    "APP" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App"
+          }
+        }
+      }
+    },
+    "APP_SETTINGS" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Settings"
+          }
+        }
+      }
+    },
     "APPLY_UPDATE" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1097,6 +1119,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Go-To"
+          }
+        }
+      }
+    },
+    "HOME_ADD_AT_LEAST_ONE_ZONE_BEFORE_STARTING" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add at least one zone before starting."
+          }
+        }
+      }
+    },
+    "HOME_PLACE_A_TARGET_BEFORE_STARTING" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Place a target before starting."
           }
         }
       }
@@ -3297,6 +3341,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Zone"
+          }
+        }
+      }
+    },
+    "ZONE_CLEANUP" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zone Cleanup"
           }
         }
       }

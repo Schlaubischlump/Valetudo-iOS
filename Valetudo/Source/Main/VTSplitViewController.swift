@@ -106,6 +106,7 @@ class VTSplitViewController: UISplitViewController, UISplitViewControllerDelegat
         case .timers: VTTimersViewController(client: client)
         case .map: VTMapOptionsViewController(client: client)
         case .robot: VTRobotOptionsViewController(client: client)
+        case .appSettings: UIViewController()
         }
         vc.title = item.title
         detail.setViewControllers([vc], animated: animated)

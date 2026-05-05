@@ -7,7 +7,7 @@
 import Foundation
 import UIKit
 
-final class VTRobotsListViewController: VTCollectionViewController {
+final class VTRobotsDiscoveryListViewController: VTCollectionViewController {
     private typealias DataSource = UICollectionViewDiffableDataSource<VTRobotsListViewSection, VTRobotsListViewItem>
     private typealias Snapshot = NSDiffableDataSourceSnapshot<VTRobotsListViewSection, VTRobotsListViewItem>
     private static let scanRetryDelay: Duration = .milliseconds(750)
