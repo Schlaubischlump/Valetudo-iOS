@@ -10,6 +10,9 @@ import UIKit
 @MainActor
 final class VTGoToMapOverlayLayer: VTMapOverlayLayer {
     private static let outlineZOffset: CGFloat = -1.0
+    private static let ringRadius: CGFloat = 12.0
+    private static let armExtension: CGFloat = 6.0
+    private static let centerCutoutRadius: CGFloat = 5.0
 
     private let outlineLayer = CAShapeLayer()
 
@@ -39,12 +42,18 @@ final class VTGoToMapOverlayLayer: VTMapOverlayLayer {
         }
 
         let path = UIBezierPath()
-        let radius: CGFloat = 12.0
-        path.addArc(withCenter: overlay.centerPoint, radius: radius, startAngle: 0, endAngle: .pi * 2, clockwise: true)
-        path.move(to: CGPoint(x: overlay.centerPoint.x - radius - 6, y: overlay.centerPoint.y))
-        path.addLine(to: CGPoint(x: overlay.centerPoint.x + radius + 6, y: overlay.centerPoint.y))
-        path.move(to: CGPoint(x: overlay.centerPoint.x, y: overlay.centerPoint.y - radius - 6))
-        path.addLine(to: CGPoint(x: overlay.centerPoint.x, y: overlay.centerPoint.y + radius + 6))
+        let centerPoint = overlay.centerPoint
+        let outerArmRadius = Self.ringRadius + Self.armExtension
+
+        path.addArc(withCenter: centerPoint, radius: Self.ringRadius, startAngle: 0, endAngle: .pi * 2, clockwise: true)
+        path.move(to: CGPoint(x: centerPoint.x - outerArmRadius, y: centerPoint.y))
+        path.addLine(to: CGPoint(x: centerPoint.x - Self.centerCutoutRadius, y: centerPoint.y))
+        path.move(to: CGPoint(x: centerPoint.x + Self.centerCutoutRadius, y: centerPoint.y))
+        path.addLine(to: CGPoint(x: centerPoint.x + outerArmRadius, y: centerPoint.y))
+        path.move(to: CGPoint(x: centerPoint.x, y: centerPoint.y - outerArmRadius))
+        path.addLine(to: CGPoint(x: centerPoint.x, y: centerPoint.y - Self.centerCutoutRadius))
+        path.move(to: CGPoint(x: centerPoint.x, y: centerPoint.y + Self.centerCutoutRadius))
+        path.addLine(to: CGPoint(x: centerPoint.x, y: centerPoint.y + outerArmRadius))
 
         outlineLayer.path = path.cgPath
         self.path = path.cgPath
