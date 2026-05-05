@@ -7,6 +7,7 @@
 import UIKit
 
 @MainActor
+/// Horizontally scrolling legend that displays selectable map overlay categories.
 class VTLegendView: UIView {
     var items: [VTLegendItem] = [] {
         didSet {
@@ -21,16 +22,23 @@ class VTLegendView: UIView {
     private let stackView = UIStackView()
     private var itemViews: [VTLegendItemView] = []
 
+    // MARK: - Init
+
+    /// Creates the legend view programmatically.
     override init(frame: CGRect) {
         super.init(frame: frame)
         setup()
     }
 
+    /// Creates the legend view from an archive.
     required init?(coder: NSCoder) {
         super.init(coder: coder)
         setup()
     }
 
+    // MARK: - Setup
+
+    /// Builds the horizontal scrolling legend layout.
     private func setup() {
         scrollView.translatesAutoresizingMaskIntoConstraints = false
         scrollView.showsHorizontalScrollIndicator = false
@@ -60,6 +68,7 @@ class VTLegendView: UIView {
         ])
     }
 
+    /// Rebuilds the visible legend item views from the current `items` array.
     private func reload() {
         itemViews.forEach { $0.removeFromSuperview() }
         itemViews = []
@@ -79,12 +88,14 @@ class VTLegendView: UIView {
 
     // MARK: - Selection
 
+    /// Bridges the tap gesture callback into the async selection flow.
     @objc private func handleTap(_ gesture: UITapGestureRecognizer) {
         Task { [weak self] in
             await self?.handleTapAsync(gesture)
         }
     }
 
+    /// Applies the selection policy callbacks for the tapped legend item.
     private func handleTapAsync(_ gesture: UITapGestureRecognizer) async {
         guard let tappedView = gesture.view as? VTLegendItemView else { return }
         let index = tappedView.tag
@@ -97,24 +108,29 @@ class VTLegendView: UIView {
         }
     }
 
+    /// Returns the indices of all currently selected legend item views.
     var selectedIndices: [Int] {
         itemViews.enumerated().compactMap { $0.element.isSelected ? $0.offset : nil }
     }
 
+    /// Returns the currently selected legend items.
     var selectedItems: [VTLegendItem] {
         selectedIndices.map { items[$0] }
     }
 
+    /// Selects the legend item at the provided index if it exists.
     func select(at index: Int) async {
         guard index >= 0, index < itemViews.count else { return }
         itemViews[index].isSelected = true
     }
 
+    /// Deselects the legend item at the provided index if it exists.
     func deselect(at index: Int) async {
         guard index >= 0, index < itemViews.count else { return }
         itemViews[index].isSelected = false
     }
 
+    /// Clears selection from every visible legend item.
     func clearSelection() async {
         itemViews.forEach { $0.isSelected = false }
     }

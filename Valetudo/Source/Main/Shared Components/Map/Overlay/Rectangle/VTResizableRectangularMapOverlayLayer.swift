@@ -9,10 +9,12 @@ import QuartzCore
 import UIKit
 
 @MainActor
+/// Backing layer that renders and edits a resizable rectangular map overlay.
 final class VTResizableRectangularMapOverlayLayer: VTMapOverlayLayer {
     private static let controlBackgroundZPosition: CGFloat = 10000
     private static let controlIconZPosition: CGFloat = 10001
 
+    /// Tracks whether the user is moving the full rectangle or resizing it from the handle.
     private enum Interaction {
         case move(offset: CGPoint)
         case resize(origin: CGPoint)
@@ -24,10 +26,14 @@ final class VTResizableRectangularMapOverlayLayer: VTMapOverlayLayer {
     private var overlayModel: VTResizableRectangularMapOverlay?
     private var interaction: Interaction?
 
+    // MARK: - Init
+
+    /// Creates a rectangular overlay layer for the specified overlay identifier.
     override init(overlayID: UUID) {
         super.init(overlayID: overlayID)
     }
 
+    /// Recreates the layer when copied by Core Animation.
     override init(layer: Any) {
         super.init(layer: layer)
     }
@@ -37,6 +43,9 @@ final class VTResizableRectangularMapOverlayLayer: VTMapOverlayLayer {
         fatalError("init(coder:) has not been implemented")
     }
 
+    // MARK: - Configuration
+
+    /// Applies the overlay model's current geometry and selection state to the layer tree.
     func configure(with overlay: VTResizableRectangularMapOverlay) {
         overlayModel = overlay
         isOverlaySelected = overlay.isSelected
@@ -55,16 +64,21 @@ final class VTResizableRectangularMapOverlayLayer: VTMapOverlayLayer {
         selectionStateDidChange()
     }
 
+    /// Shows or hides the resize affordance depending on the current selection state.
     override func selectionStateDidChange() {
         resizeControlLayer.isHidden = !isOverlaySelected
         resizeIconLayer.isHidden = !isOverlaySelected
     }
 
+    // MARK: - Interaction
+
+    /// Selects the overlay when the tap lands inside any interactive region.
     override func tapAction(at point: CGPoint) -> VTMapOverlayTapAction {
         containsInteractivePoint(point) ? .select : .none
     }
 
     @discardableResult
+    /// Starts either a move or resize interaction based on the touched hit target.
     override func beginInteraction(at point: CGPoint) -> Bool {
         guard let overlayModel else { return false }
 
@@ -78,6 +92,7 @@ final class VTResizableRectangularMapOverlayLayer: VTMapOverlayLayer {
         return true
     }
 
+    /// Updates the overlay model from the current drag point and refreshes the rendered rectangle.
     override func updateInteraction(to point: CGPoint) {
         guard let overlayModel, let interaction else { return }
         let containerBounds = superlayer?.bounds
@@ -99,6 +114,8 @@ final class VTResizableRectangularMapOverlayLayer: VTMapOverlayLayer {
             overlayModel.updateRect(
                 origin: origin,
                 size: CGSize(
+                    // Resizing always keeps the original corner fixed and derives the new size from
+                    // the clamped drag point.
                     width: boundedResizePoint.x - origin.x,
                     height: boundedResizePoint.y - origin.y
                 )
@@ -109,6 +126,7 @@ final class VTResizableRectangularMapOverlayLayer: VTMapOverlayLayer {
     }
 
     @discardableResult
+    /// Translates the rectangle by a keyboard or programmatic delta within the provided bounds.
     override func translate(by delta: CGPoint, within bounds: CGRect?) -> Bool {
         guard let overlayModel else { return false }
 
@@ -121,15 +139,20 @@ final class VTResizableRectangularMapOverlayLayer: VTMapOverlayLayer {
         return true
     }
 
+    /// Clears the active drag state when the interaction ends.
     override func endInteraction() {
         interaction = nil
     }
 
+    /// Removes selection controls before the overlay layer is discarded.
     override func prepareForRemoval() {
         resizeControlLayer.removeFromSuperlayer()
         resizeIconLayer.removeFromSuperlayer()
     }
 
+    // MARK: - Control Layers
+
+    /// Styles and positions the floating resize control and its icon.
     private func configureControlLayer(_ shapeLayer: CAShapeLayer, iconLayer: CALayer, frame: CGRect, image: UIImage?) {
         CATransaction.begin()
         CATransaction.setDisableActions(true)
@@ -151,6 +174,7 @@ final class VTResizableRectangularMapOverlayLayer: VTMapOverlayLayer {
         CATransaction.commit()
     }
 
+    /// Ensures the resize affordance layers are attached above the main overlay content.
     private func attachControlsIfNeeded() {
         guard let superlayer else { return }
 
@@ -158,6 +182,7 @@ final class VTResizableRectangularMapOverlayLayer: VTMapOverlayLayer {
         attachControlLayer(resizeIconLayer, to: superlayer, zPosition: Self.controlIconZPosition)
     }
 
+    /// Reparents a control layer onto the overlay container and pins its z-position.
     private func attachControlLayer(_ layer: CALayer, to superlayer: CALayer, zPosition: CGFloat) {
         CATransaction.begin()
         CATransaction.setDisableActions(true)

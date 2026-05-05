@@ -6,6 +6,7 @@
 //
 import UIKit
 
+/// Maps the robot's current activity to UI-specific control state.
 private enum VTActiveRobotAction {
     case segment
     case zone
@@ -31,6 +32,7 @@ private enum VTActiveRobotAction {
     }
 }
 
+/// Segmented-control item used to present fan speed presets.
 struct VTFanItem: VTSegmentedItem {
     let presetValue: VTPresetValue
     var title: String {
@@ -51,6 +53,7 @@ struct VTFanItem: VTSegmentedItem {
     }
 }
 
+/// Segmented-control item used to present water grade presets.
 struct VTWaterGradeItem: VTSegmentedItem {
     let presetValue: VTPresetValue
     var title: String {
@@ -70,6 +73,7 @@ struct VTWaterGradeItem: VTSegmentedItem {
     }
 }
 
+/// Segmented-control item used to present operation mode presets.
 struct VTOperationModeItem: VTSegmentedItem {
     let presetValue: VTPresetValue
     var title: String {
@@ -87,6 +91,7 @@ struct VTOperationModeItem: VTSegmentedItem {
     }
 }
 
+/// Segmented-control item used to present supported cleaning iteration counts.
 struct VTRepeatItem: VTSegmentedItem {
     let iterations: Int
     var title: String {
@@ -103,6 +108,7 @@ struct VTRepeatItem: VTSegmentedItem {
 }
 
 @MainActor
+/// Displays the primary robot controls and keeps them synchronized with live state updates.
 class VTRobotControlViewController: VTViewController {
     /// Cleaning configuration to use when the start button is clicked.
     private var supportsSegmentation: Bool = false
@@ -228,6 +234,9 @@ class VTRobotControlViewController: VTViewController {
         return statisticsControls
     }()
 
+    // MARK: - Init
+
+    /// Creates the robot control screen for the provided API client.
     init(client: VTAPIClientProtocol) {
         self.client = client
         super.init(nibName: nil, bundle: nil)
@@ -238,18 +247,23 @@ class VTRobotControlViewController: VTViewController {
         fatalError("init(coder:) has not been implemented")
     }
 
+    // MARK: - View Life Cycle
+
+    /// Configures the control rows after the view has loaded.
     override func viewDidLoad() {
         super.viewDidLoad()
         // view.backgroundColor = .systemBackground
         setupControls()
     }
 
+    /// Starts observing robot state updates while the screen is visible.
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
 
         startSSEObservation()
     }
 
+    /// Stops live robot observation when the screen leaves the foreground.
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
 
@@ -257,12 +271,16 @@ class VTRobotControlViewController: VTViewController {
     }
 
     @MainActor
+    /// Reconnects the live state stream and reloads the current control state.
     override func reconnectAndRefresh() async {
         // Cancel existing SSE task and reconnect
         stopSSEObservation()
         startSSEObservation()
     }
 
+    // MARK: - State Observation
+
+    /// Starts the state-attribute event stream and wires incoming updates into the UI.
     private func startSSEObservation() {
         guard sseTask == nil else { return }
 
@@ -277,6 +295,8 @@ class VTRobotControlViewController: VTViewController {
                 for await event in stream {
                     switch event {
                     case .didConnect:
+                        // The first connect only confirms the stream is ready. Subsequent reconnects
+                        // trigger a full refresh so the UI catches up with anything missed offline.
                         if hasConnectedStateAttributesStream {
                             await serialTaskQueue.enqueue { [weak self] in
                                 guard let self else { return }
@@ -315,6 +335,7 @@ class VTRobotControlViewController: VTViewController {
         }
     }
 
+    /// Tears down the active state-attribute stream and unregisters its observer.
     private func stopSSEObservation() {
         sseTask?.cancel()
         sseTask = nil
@@ -327,6 +348,9 @@ class VTRobotControlViewController: VTViewController {
         }
     }
 
+    // MARK: - Error Presentation
+
+    /// Presents a localized robot-control error with the supplied failure reason.
     private func showRobotControlError(messageKey: String, reason: String) {
         showError(
             title: "ERROR".localized(),
@@ -338,6 +362,7 @@ class VTRobotControlViewController: VTViewController {
     }
 
     @MainActor
+    /// Loads capabilities, presets, statistics, and the initial robot state for the screen.
     func loadInitialData() async throws {
         try await collecting { [weak self] run in
             guard let self else { return }
@@ -386,6 +411,7 @@ class VTRobotControlViewController: VTViewController {
                 self.emptyButton?.isHidden = !capibilities.contains(.autoEmptyDockManualTrigger)
                 self.cleanButton?.isHidden = !capibilities.contains(.mopDockCleanManualTrigger)
                 self.dryButton?.isHidden = !capibilities.contains(.mopDockDryManualTrigger)
+                // Hide controls that the current robot firmware does not expose.
                 self.fanRow.isHidden = !capibilities.contains(.fanSpeedControl)
                 self.waterRow.isHidden = !capibilities.contains(.waterUsageControl)
                 self.modeRow.isHidden = !capibilities.contains(.operationModeControl)
@@ -410,7 +436,10 @@ class VTRobotControlViewController: VTViewController {
         }
     }
 
+    // MARK: - UI Updates
+
     @MainActor
+    /// Reloads button state from the latest state attributes endpoint.
     private func updateButtons() async {
         await serialTaskQueue.enqueue { [weak self] in
             guard let self else { return }
@@ -421,6 +450,7 @@ class VTRobotControlViewController: VTViewController {
     }
 
     @MainActor
+    /// Rebuilds the iterations row for the currently selected cleaning mode.
     private func updateIterations() {
         let config = currentConfiguration
         let iterationRange: ClosedRange<Int> = switch config {
@@ -440,12 +470,14 @@ class VTRobotControlViewController: VTViewController {
     }
 
     @MainActor
+    /// Fetches the latest statistics payload and applies it to the statistics row.
     private func updateStatistics() async throws {
         let currentStatistics = try await client.getCurrentStatisticsCapability()
         await updateStatistics(currentStatistics)
     }
 
     @MainActor
+    /// Rebuilds the visible statistics controls from the provided datapoints.
     private func updateStatistics(_ statistics: [VTValetudoDataPoint]) async {
         let visibleStatistics = if availableStatistics.isEmpty {
             statistics
@@ -464,6 +496,7 @@ class VTRobotControlViewController: VTViewController {
     }
 
     @MainActor
+    /// Applies state-dependent enablement and selected preset values to all visible controls.
     private func updateButtonStates(_ state: VTStateAttributeList) async {
         latestStateAttributes = state
         startPauseStopControl.isStopEnabled = state.isStoppable
@@ -498,12 +531,14 @@ class VTRobotControlViewController: VTViewController {
     }
 
     @MainActor
+    /// Refreshes the start/pause control using the last cached state attributes.
     private func updateStartPausePresentation() {
         guard let latestStateAttributes else { return }
         updateStartPausePresentation(with: latestStateAttributes)
     }
 
     @MainActor
+    /// Derives the correct start or pause presentation from the current robot state.
     private func updateStartPausePresentation(with state: VTStateAttributeList) {
         let activeAction = resolvedActiveAction(from: state)
 
@@ -522,16 +557,18 @@ class VTRobotControlViewController: VTViewController {
         if state.isStarted || state.isPaused {
             startPauseStopControl.isStartPauseEnabled = true
         } else {
-            // Might happen if e.g. robot is manually controlled
+            // A robot can be busy without exposing a resumable start/pause action, for example
+            // while manual control is active.
             startPauseStopControl.isStartPauseEnabled = false
         }
     }
 
+    /// Resolves the currently active logical action from the robot's raw state flags.
     private func resolvedActiveAction(from state: VTStateAttributeList) -> VTActiveRobotAction? {
         switch state.statusFlag {
         case .segment:
             .segment
-        case .zone:
+        case .zone, .spot: // not sure what to do with spot...
             .zone
         case .target:
             .goTo
@@ -541,14 +578,13 @@ class VTRobotControlViewController: VTViewController {
             lastKnownActiveAction
         case .some(.none), nil:
             state.isStarted ? .segment : nil
-        default:
-            nil
         }
     }
 
     @MainActor
+    /// Rebuilds the attachment row from the currently attached hardware accessories.
     private func updateAttachments(_ state: VTStateAttributeList) async {
-        // update all attachments
+        // Attachment rows are informational only, so they are recreated from scratch on each update.
         attachmentsControls.items = state.attachmendTypes.map { attachmentType in
             let button = VTControlButton(
                 title: attachmentType.description.uppercased(),
@@ -560,6 +596,9 @@ class VTRobotControlViewController: VTViewController {
         }
     }
 
+    // MARK: - Robot Actions
+
+    /// Starts, resumes, or pauses the active cleaning flow depending on the current robot state.
     private func toggleStartPause(isStarted: Bool) async {
         do {
             if isStarted {
@@ -572,6 +611,7 @@ class VTRobotControlViewController: VTViewController {
                 if try await startActionHandler?(currentConfiguration) == true {
                     return
                 }
+                // Fall back to the default API action when no higher-level handler intercepts the request.
                 switch currentConfiguration {
                 case .full:
                     try await client.start()
@@ -593,6 +633,7 @@ class VTRobotControlViewController: VTViewController {
         }
     }
 
+    /// Stops the current robot activity.
     private func stop() async {
         do {
             try await client.stop()
@@ -606,6 +647,7 @@ class VTRobotControlViewController: VTViewController {
         }
     }
 
+    /// Sends the robot back to its dock.
     private func home() async {
         do {
             try await client.home()
@@ -619,6 +661,7 @@ class VTRobotControlViewController: VTViewController {
         }
     }
 
+    /// Applies a newly selected fan speed preset.
     private func changeFanSpeed(old _: VTPresetValue?, new value: VTPresetValue) async {
         do {
             try await client.setPreset(value, forType: .fanSpeed)
@@ -632,6 +675,7 @@ class VTRobotControlViewController: VTViewController {
         }
     }
 
+    /// Applies a newly selected water grade preset.
     private func changeWaterGrade(old _: VTPresetValue?, new value: VTPresetValue) async {
         do {
             try await client.setPreset(value, forType: .waterGrade)
@@ -645,6 +689,7 @@ class VTRobotControlViewController: VTViewController {
         }
     }
 
+    /// Applies a newly selected operation mode preset.
     private func changeOperationMode(old _: VTPresetValue?, new value: VTPresetValue) async {
         do {
             try await client.setPreset(value, forType: .operationMode)
@@ -659,6 +704,7 @@ class VTRobotControlViewController: VTViewController {
     }
 
     @MainActor
+    /// Toggles mop-pad drying on the dock.
     private func dryMopPads() async {
         do {
             let attrs = try await client.getStateAttributes()
@@ -678,6 +724,7 @@ class VTRobotControlViewController: VTViewController {
     }
 
     @MainActor
+    /// Toggles mop-pad cleaning on the dock.
     private func cleanMopPads() async {
         do {
             let attrs = try await client.getStateAttributes()
@@ -697,6 +744,7 @@ class VTRobotControlViewController: VTViewController {
     }
 
     @MainActor
+    /// Triggers a manual auto-empty cycle on the dock.
     private func emptyDock() async {
         do {
             try await client.autoEmptyDock()
@@ -710,6 +758,9 @@ class VTRobotControlViewController: VTViewController {
         }
     }
 
+    // MARK: - Setup
+
+    /// Wires callbacks, lays out the control rows, and assembles the scroll view hierarchy.
     private func setupControls() {
         startPauseStopControl.onStartPauseCliked = { [weak self] isStarted in
             self?.startPauseStopControl.disableButtons()
@@ -760,6 +811,8 @@ class VTRobotControlViewController: VTViewController {
         contentStackView.axis = .vertical
         contentStackView.spacing = 16
 
+        // Keep the content stack pinned to the scroll view's frame width so rows size like a
+        // vertically scrolling form instead of expanding to their intrinsic content width.
         view.addSubview(scrollView)
         scrollView.addSubview(contentStackView)
 

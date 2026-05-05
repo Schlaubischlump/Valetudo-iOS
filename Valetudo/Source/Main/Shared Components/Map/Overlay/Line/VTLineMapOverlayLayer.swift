@@ -9,7 +9,9 @@ import QuartzCore
 import UIKit
 
 @MainActor
+/// Backing layer that renders and manages direct manipulation for a line map overlay.
 final class VTLineMapOverlayLayer: VTMapOverlayLayer {
+    /// Immutable snapshot of the line geometry and styling to render.
     struct Configuration {
         let isSelected: Bool
         let startPoint: CGPoint
@@ -20,6 +22,7 @@ final class VTLineMapOverlayLayer: VTMapOverlayLayer {
         let strokeWidth: CGFloat
     }
 
+    /// Callbacks that push interaction results back into the owning overlay model.
     struct Callbacks {
         let refresh: () -> Configuration
         let move: (_ point: CGPoint, _ offsetToStart: CGPoint, _ offsetToEnd: CGPoint, _ bounds: CGRect?) -> Void
@@ -51,11 +54,15 @@ final class VTLineMapOverlayLayer: VTMapOverlayLayer {
     private var callbacks: Callbacks?
     private var interaction: Interaction?
 
+    // MARK: - Init
+
+    /// Creates a line overlay layer for the specified overlay identifier.
     override init(overlayID: UUID) {
         super.init(overlayID: overlayID)
         configureManagedSublayers()
     }
 
+    /// Recreates the managed sublayers when Core Animation copies the layer.
     override init(layer: Any) {
         super.init(layer: layer)
         MainActor.assumeIsolated { [self] in
@@ -68,6 +75,9 @@ final class VTLineMapOverlayLayer: VTMapOverlayLayer {
         fatalError("init(coder:) has not been implemented")
     }
 
+    // MARK: - Configuration
+
+    /// Applies a new configuration snapshot and interaction callbacks to the layer tree.
     func configure(with configuration: Configuration, callbacks: Callbacks) {
         self.configuration = configuration
         self.callbacks = callbacks
@@ -120,6 +130,7 @@ final class VTLineMapOverlayLayer: VTMapOverlayLayer {
         selectionStateDidChange()
     }
 
+    /// Updates selection-dependent stroke and handle visibility without rebuilding geometry.
     override func selectionStateDidChange() {
         bodyLayer.strokeColor = isOverlaySelected ? configuration?.strokeColor : nil
         bodyLayer.lineWidth = isOverlaySelected ? (configuration?.strokeWidth ?? 0.0) : 0.0
@@ -128,11 +139,15 @@ final class VTLineMapOverlayLayer: VTMapOverlayLayer {
         endHandleLayer.isHidden = !isOverlaySelected
     }
 
+    // MARK: - Interaction
+
+    /// Returns whether the point can interact with the line body or one of its endpoint handles.
     override func containsInteractivePoint(_ point: CGPoint) -> Bool {
         nearestHandle(to: point) != nil || containsOverlayPoint(point)
     }
 
     @discardableResult
+    /// Starts dragging an endpoint handle or the full line, depending on the hit target.
     override func beginInteraction(at point: CGPoint) -> Bool {
         guard let configuration else { return false }
 
@@ -154,6 +169,7 @@ final class VTLineMapOverlayLayer: VTMapOverlayLayer {
         return true
     }
 
+    /// Applies the current interaction to the owning overlay model and refreshes the rendered state.
     override func updateInteraction(to point: CGPoint) {
         guard let callbacks, let interaction else { return }
         let containerBounds = superlayer?.bounds
@@ -171,6 +187,7 @@ final class VTLineMapOverlayLayer: VTMapOverlayLayer {
     }
 
     @discardableResult
+    /// Translates the full line by a keyboard or programmatic delta.
     override func translate(by delta: CGPoint, within bounds: CGRect?) -> Bool {
         guard let callbacks else { return false }
         let changed = callbacks.translate(delta, bounds)
@@ -179,10 +196,14 @@ final class VTLineMapOverlayLayer: VTMapOverlayLayer {
         return true
     }
 
+    /// Clears any active drag state when interaction ends.
     override func endInteraction() {
         interaction = nil
     }
 
+    // MARK: - Layer Helpers
+
+    /// Updates a handle layer to match the supplied endpoint position and styling.
     private func configureHandleLayer(
         _ handleLayer: CAShapeLayer,
         center: CGPoint,
@@ -204,6 +225,7 @@ final class VTLineMapOverlayLayer: VTMapOverlayLayer {
         handleLayer.lineWidth = strokeColor == nil ? 0.0 : lineWidth
     }
 
+    /// Returns the closest endpoint handle that should respond to interaction at the given point.
     private func nearestHandle(to point: CGPoint) -> HandleTarget? {
         guard let configuration else { return nil }
 
@@ -215,12 +237,15 @@ final class VTLineMapOverlayLayer: VTMapOverlayLayer {
         #if os(macOS) || targetEnvironment(macCatalyst)
             let hitRadius = visibleRadius
         #else
+            // Touch interaction needs a larger target than the visible handle so the overlay remains
+            // comfortable to edit on iPhone and iPad.
             let hitRadius = max(visibleRadius + 18.0, Self.minimumHandleHitRadius)
         #endif
         guard minDistance <= hitRadius else { return nil }
         return startDistance <= endDistance ? .start : .end
     }
 
+    /// Builds the rounded rectangle path used to render the visible line body.
     private func roundedBodyPath(start: CGPoint, end: CGPoint, width: CGFloat) -> CGPath {
         let deltaX = end.x - start.x
         let deltaY = end.y - start.y
@@ -239,6 +264,7 @@ final class VTLineMapOverlayLayer: VTMapOverlayLayer {
         return path.cgPath
     }
 
+    /// Builds the wider interaction path used for hit testing the line body.
     private func makeHitTestPath(start: CGPoint, end: CGPoint, bodyWidth: CGFloat, strokeWidth: CGFloat) -> CGPath {
         #if os(macOS) || targetEnvironment(macCatalyst)
             let hitThickness = max(bodyWidth, strokeWidth)
@@ -248,6 +274,7 @@ final class VTLineMapOverlayLayer: VTMapOverlayLayer {
         return roundedBodyPath(start: start, end: end, width: hitThickness)
     }
 
+    /// Installs the managed sublayers used to draw the line body and endpoint handles.
     private func configureManagedSublayers() {
         addSublayer(bodyLayer)
         addSublayer(startHandleLayer)

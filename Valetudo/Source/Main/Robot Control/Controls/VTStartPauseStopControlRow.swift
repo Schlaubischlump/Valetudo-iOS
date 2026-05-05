@@ -6,7 +6,9 @@
 //
 import UIKit
 
+/// Compact three-button control that exposes start/pause, stop, and return-home actions.
 final class VTStartPauseStopControlRow: UIView {
+    /// Describes whether the primary button should show start or pause semantics.
     enum StartPausePresentation {
         case start(badge: UIImage?)
         case pause
@@ -67,16 +69,23 @@ final class VTStartPauseStopControlRow: UIView {
     private let homeButton = VTControlButton(title: nil, icon: .returnToDock)
     private let startPauseBadgeView = UIImageView()
 
+    // MARK: - Init
+
+    /// Creates the control row programmatically.
     override init(frame: CGRect) {
         super.init(frame: frame)
         setup()
     }
 
+    /// Creates the control row from an archive.
     required init?(coder: NSCoder) {
         super.init(coder: coder)
         setup()
     }
 
+    // MARK: - Setup
+
+    /// Builds the button hierarchy and applies the default configuration.
     private func setup() {
         translatesAutoresizingMaskIntoConstraints = false
         heightAnchor.constraint(equalToConstant: 50).isActive = true
@@ -103,6 +112,7 @@ final class VTStartPauseStopControlRow: UIView {
         updateStartPauseAppearance()
     }
 
+    /// Applies the shared visual styling for the three control buttons.
     private func setupButton(_ button: UIButton) {
         guard var config = button.configuration else { return }
         config.imagePadding = 6
@@ -113,6 +123,16 @@ final class VTStartPauseStopControlRow: UIView {
         button.configuration = config
     }
 
+    /// Configures the small badge that indicates which action will start next.
+    private func setupStartPauseBadgeView() {
+        startPauseBadgeView.contentMode = .scaleAspectFit
+        startPauseBadgeView.tintColor = .secondaryLabel
+        startPauseBadgeView.isUserInteractionEnabled = false
+    }
+
+    // MARK: - Layout
+
+    /// Lays out the button strip and keeps all three buttons aligned to whole-pixel thirds.
     override func layoutSubviews() {
         super.layoutSubviews()
 
@@ -135,25 +155,15 @@ final class VTStartPauseStopControlRow: UIView {
         stopButton.updateBorder(edge: [.left, .right], color: .opaqueSeparator.withAlphaComponent(0.5), thickness: 1.0)
     }
 
+    /// Snaps the control width to a multiple of three so each button can share the space evenly.
     private func snappedControlWidth(for availableWidth: CGFloat) -> CGFloat {
         // Round down to the nearest multiple of 3 to keep all three button widths whole.
         max(0, floor(availableWidth / 3) * 3)
     }
 
-    // MARK: - Actions
+    // MARK: - Appearance
 
-    func disableButtons() {
-        isStartPauseEnabled = false
-        isStopEnabled = false
-        isHomeEnabled = false
-    }
-
-    private func setupStartPauseBadgeView() {
-        startPauseBadgeView.contentMode = .scaleAspectFit
-        startPauseBadgeView.tintColor = .secondaryLabel
-        startPauseBadgeView.isUserInteractionEnabled = false
-    }
-
+    /// Updates the primary button icon and badge visibility for the current presentation state.
     private func updateStartPauseAppearance() {
         let imageName = isStarted ? "pause.fill" : "play.fill"
         startPauseButton.setImage(UIImage(systemName: imageName), for: .normal)
@@ -168,6 +178,7 @@ final class VTStartPauseStopControlRow: UIView {
         }
     }
 
+    /// Positions the optional badge near the lower trailing edge of the primary button.
     private func layoutStartPauseBadge() {
         let badgeSize: CGFloat = 14
         let inset: CGFloat = 8
@@ -179,14 +190,26 @@ final class VTStartPauseStopControlRow: UIView {
         )
     }
 
+    // MARK: - Actions
+
+    /// Disables all buttons until fresh robot state has been applied.
+    func disableButtons() {
+        isStartPauseEnabled = false
+        isStopEnabled = false
+        isHomeEnabled = false
+    }
+
+    /// Forwards primary button taps with the current started-state context.
     private func startPauseTapped() {
         onStartPauseCliked?(isStarted)
     }
 
+    /// Forwards stop button taps to the owning controller.
     private func stopTapped() {
         onStopClicked?()
     }
 
+    /// Forwards return-home button taps to the owning controller.
     private func homeTapped() {
         onHomeClicked?()
     }

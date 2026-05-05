@@ -12,6 +12,7 @@ private let imageCalloutPadY = 14.0
 private let imageCalloutSpacing = 10.0
 private let calloutImageLength = 220.0
 
+/// Callout view that displays title and subtitle text above an optional square image.
 final class VTImageCalloutView: VTCalloutView {
     private let closeButton = UIButton(type: .system)
     private let imageContainerView = UIView()
@@ -25,17 +26,24 @@ final class VTImageCalloutView: VTCalloutView {
         calloutImageLength + imageCalloutPadX * 2
     }
 
+    // MARK: - Init
+
+    /// Creates an image callout with optional image and loading state.
     init(title: String, subtitle: String, image: UIImage? = nil, isLoadingImage: Bool = false) {
         super.init(title: title, subtitle: subtitle)
         setupViews()
         configureImage(image: image, isLoadingImage: isLoadingImage)
     }
 
+    /// Creates an image callout from an archive.
     required init?(coder: NSCoder) {
         super.init(coder: coder)
         setupViews()
     }
 
+    // MARK: - Setup
+
+    /// Builds the stacked image callout layout and close affordance.
     private func setupViews() {
         backgroundColor = .clear
 
@@ -105,6 +113,9 @@ final class VTImageCalloutView: VTCalloutView {
         ])
     }
 
+    // MARK: - Content
+
+    /// Updates the displayed image and loading indicator state.
     func configureImage(image: UIImage? = nil, isLoadingImage: Bool = false) {
         imageView.image = image
         imageView.isHidden = image == nil

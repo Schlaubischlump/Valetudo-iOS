@@ -6,6 +6,7 @@
 //
 import UIKit
 
+/// Pill-shaped legend row that shows a color swatch, label, and selection state.
 class VTLegendItemView: UIView {
     private let colorView = UIView()
     private let legendLabel = UILabel()
@@ -17,15 +18,22 @@ class VTLegendItemView: UIView {
         }
     }
 
+    // MARK: - Init
+
+    /// Creates a legend item view for the provided legend item.
     init(item: VTLegendItem) {
         super.init(frame: .zero)
         setup(item: item)
     }
 
+    /// Creates a legend item view from an archive.
     required init?(coder: NSCoder) {
-        super.init(coder: coder)
+        fatalError("init(coder:) has not been implemented")
     }
 
+    // MARK: - Setup
+
+    /// Applies the shared shadow styling used by the legend chip.
     private func setupShadow() {
         layer.shadowColor = UIColor.black.cgColor
         layer.shadowOpacity = 0.2
@@ -34,12 +42,13 @@ class VTLegendItemView: UIView {
         layer.masksToBounds = false
     }
 
+    /// Builds the legend chip content for the supplied item.
     private func setup(item: VTLegendItem) {
         backgroundColor = .systemGray6
 
         setupShadow()
 
-        // Color view
+        // Keep the color swatch a fixed circle so legend colors remain easy to scan.
         colorView.backgroundColor = item.color
         colorView.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
@@ -47,12 +56,10 @@ class VTLegendItemView: UIView {
             colorView.heightAnchor.constraint(equalToConstant: 24),
         ])
 
-        // Label
         legendLabel.text = item.text
         legendLabel.font = .systemFont(ofSize: 14)
         legendLabel.textColor = .label
 
-        // Checkmark
         checkmarkImageView.tintColor = .tintColor
         checkmarkImageView.translatesAutoresizingMaskIntoConstraints = false
         checkmarkImageView.setContentHuggingPriority(.required, for: .horizontal)
@@ -61,9 +68,8 @@ class VTLegendItemView: UIView {
             checkmarkImageView.heightAnchor.constraint(equalToConstant: 20),
         ])
 
-        updateCheckmark() // Initial state
+        updateCheckmark()
 
-        // Stack
         let stack = UIStackView(arrangedSubviews: [colorView, legendLabel, checkmarkImageView])
         stack.axis = .horizontal
         stack.spacing = 6
@@ -81,6 +87,9 @@ class VTLegendItemView: UIView {
         ])
     }
 
+    // MARK: - Layout
+
+    /// Rounds the chip and color swatch after Auto Layout has resolved their final sizes.
     override func layoutSubviews() {
         super.layoutSubviews()
 
@@ -89,11 +98,14 @@ class VTLegendItemView: UIView {
         layer.cornerRadius = bounds.height / 2
     }
 
+    // MARK: - Appearance
+
+    /// Updates the trailing checkmark symbol to match the current selection state.
     private func updateCheckmark() {
         let imageName = isSelected ? "checkmark.circle.fill" : "circle"
         let symbolImage = UIImage(systemName: imageName)
 
-        // Animate the image change with crossfade
+        // Crossfade the symbol so selection changes feel deliberate instead of abrupt.
         UIView.transition(with: checkmarkImageView,
                           duration: 0.3,
                           options: [.transitionCrossDissolve],
