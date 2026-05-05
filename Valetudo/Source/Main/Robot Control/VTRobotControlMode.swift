@@ -2,7 +2,7 @@
 //  VTRobotControlMode.swift
 //  Valetudo
 //
-//  Created by OpenAI on 09.10.25.
+//  Created by David Klopp on 09.10.25.
 //
 
 enum VTRobotControlMode: CaseIterable {

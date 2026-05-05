@@ -2,7 +2,7 @@
 //  VTHomeMapViewController.swift
 //  Valetudo
 //
-//  Created by OpenAI on 08.10.25.
+//  Created by David Klopp on 08.10.25.
 //
 
 import UIKit
@@ -65,6 +65,11 @@ final class VTHomeMapViewController: VTMapViewController {
     /// Creates the home map controller bound to the provided API client.
     override init(client: VTAPIClientProtocol) {
         super.init(client: client)
+    }
+
+    /// Honors the persisted home-map preference for hiding no-go areas.
+    override var hidesNoGoAreas: Bool {
+        VTAppSettingsStore.shared.hideNoGoAreas
     }
 
     @available(*, unavailable)

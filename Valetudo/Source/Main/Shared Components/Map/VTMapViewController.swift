@@ -40,6 +40,9 @@ class VTMapViewController: VTToolbarViewController {
     /// Distinguishes the first socket connect event from later reconnects that require a refetch.
     private var hasConnectedMapStream = false
 
+    /// Controls whether the rendered map should hide no-go areas for this controller.
+    var hidesNoGoAreas: Bool { false }
+
     /// Convenience accessor for the currently hosted map view instance.
     var mapView: VTMapView? {
         mapScrollView.zoomableView as? VTMapView
@@ -271,7 +274,7 @@ class VTMapViewController: VTToolbarViewController {
         let mapRect = CGRect(origin: .zero, size: mapSize)
 
         if let mapView = mapScrollView.zoomableView as? VTMapView {
-            mapView.hideNoGoAreas = false
+            mapView.hideNoGoAreas = hidesNoGoAreas
             mapView.shouldChangeLayerSelection = mapShouldChangedSelection
             mapView.didChangeLayerSelection = mapDidChangeSelection
             mapView.didChangeOverlaySelection = { [weak self] _ in self?.becomeFirstResponder() }
@@ -284,7 +287,7 @@ class VTMapViewController: VTToolbarViewController {
             // The initial view size is capped so very large maps do not create an oversized
             // drawing surface before zooming behavior is established.
             let mapView = VTMapView(frame: mapRect, data: filteredMapData)
-            mapView.hideNoGoAreas = false
+            mapView.hideNoGoAreas = hidesNoGoAreas
             mapView.shouldChangeLayerSelection = mapShouldChangedSelection
             mapView.didChangeLayerSelection = mapDidChangeSelection
             mapView.didChangeOverlaySelection = { [weak self] _ in self?.becomeFirstResponder() }

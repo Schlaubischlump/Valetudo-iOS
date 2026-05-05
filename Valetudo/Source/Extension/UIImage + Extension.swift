@@ -11,7 +11,7 @@ public extension UIImage {
     static let sidebarMap = UIImage(systemName: "map.fill")
     static let sidebarConsumables = UIImage(systemName: "chart.line.text.clipboard.fill")
     static let sidebarRobot = UIImage(systemName: "robotic.vacuum.fill")
-    static let sidebarAppSettings = UIImage(systemName: "a.circle.fill")
+    static let sidebarAppSettings = UIImage(systemName: "gearshape.2.fill")
     static let sidebarTimers = UIImage(systemName: "clock.fill")
     static let sidebarLog = UIImage(systemName: "text.page.fill")
     static let sidebarSystemInformation = UIImage(systemName: "info.circle.fill")
@@ -96,6 +96,7 @@ public extension UIImage {
 
     static let overlayResize = UIImage(systemName: "arrow.up.left.and.arrow.down.right")
     static let overlayRemove = UIImage(systemName: "trash.fill")
+    static let share = UIImage(systemName: "square.and.arrow.up")
 
     static let operationModeVacuumAndMop = UIImage.combine(left: .operationModeMop, right: .operationModeVacuum)
     static let operationModeVacuumThenMop = UIImage.combine(left: .operationModeVacuum, right: .operationModeMop, op: "→")

@@ -8,11 +8,6 @@
 
 import UIKit
 
-private struct VTSelectedRobot: Codable {
-    let id: String
-    let lastURL: URL
-}
-
 class VTSceneDelegate: UIResponder, UIWindowSceneDelegate {
     private enum InitialScreen {
         case robotsList
@@ -24,9 +19,6 @@ class VTSceneDelegate: UIResponder, UIWindowSceneDelegate {
 
     var window: UIWindow?
     private var didEnterBackground = false
-
-    @CodableAppStorage("selectedRobot")
-    private var selectedRobot: VTSelectedRobot? = nil
 
     /// Startup flow:
     /// 1. Install the custom launch screen as the initial root view controller.
@@ -75,6 +67,22 @@ class VTSceneDelegate: UIResponder, UIWindowSceneDelegate {
         }
     }
 
+    /// Pushes the robot discovery screen from the current navigation stack and reuses the normal
+    /// robot-selection flow once the user picks a different robot.
+    @MainActor
+    func showRobotDiscoveryScreen(from parentViewController: UIViewController) {
+        guard let windowScene = window?.windowScene else { return }
+
+        let robotsViewController = VTRobotsDiscoveryListViewController()
+        robotsViewController.onSelectRobot = { [weak self] robot in
+            Task { @MainActor in
+                await self?.makePrimaryAndShowMainInterface(robot: robot, in: windowScene, animated: true)
+            }
+        }
+
+        parentViewController.navigationController?.pushViewController(robotsViewController, animated: true)
+    }
+
     @MainActor
     private func presentUnableToResolveAlert(for robot: VTMDNSRobot) {
         let alert = UIAlertController(
@@ -94,7 +102,7 @@ class VTSceneDelegate: UIResponder, UIWindowSceneDelegate {
             return
         }
 
-        selectedRobot = VTSelectedRobot(id: robot.id, lastURL: robotURL)
+        VTAppSettingsStore.shared.selectedRobot = VTSelectedRobot(id: robot.id, lastURL: robotURL)
         showMainInterface(for: robotURL, in: windowScene, animated: animated)
     }
 
@@ -172,7 +180,7 @@ class VTSceneDelegate: UIResponder, UIWindowSceneDelegate {
 
     @MainActor
     private func makeInitialScreen() async -> InitialScreen {
-        guard let selectedRobot else {
+        guard let selectedRobot = VTAppSettingsStore.shared.selectedRobot else {
             return .robotsList
         }
 
@@ -194,7 +202,7 @@ class VTSceneDelegate: UIResponder, UIWindowSceneDelegate {
             return .robotsList
         }
 
-        self.selectedRobot = VTSelectedRobot(id: robot.id, lastURL: robotURL)
+        VTAppSettingsStore.shared.selectedRobot = VTSelectedRobot(id: robot.id, lastURL: robotURL)
         return .mainInterface(robotURL)
     }
 

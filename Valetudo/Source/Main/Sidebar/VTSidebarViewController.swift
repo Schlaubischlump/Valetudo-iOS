@@ -87,6 +87,7 @@ class VTSidebarViewController: VTCollectionViewController {
         .robot => [.consumables, .manualControl, .highResolutionManualControl],
         .options => [.map, .robot],
         .misc => [.timers, .log, .updater, .systemInformation],
+        .app => [.appSettings],
     ]
 
     var didSelectItem: ((VTSidebarItem) -> Void)?
@@ -103,7 +104,7 @@ class VTSidebarViewController: VTCollectionViewController {
         super.init(collectionViewLayout: layout)
         clearsSelectionOnViewWillAppear = false
 
-        navigationItem.leftBarButtonItem = VTRobotBarButtonItem(parentViewController: self)
+        // navigationItem.leftBarButtonItem = VTRobotBarButtonItem(parentViewController: self)
     }
 
     @available(*, unavailable)

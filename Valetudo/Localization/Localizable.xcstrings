@@ -67,6 +67,72 @@
         }
       }
     },
+    "APP_SETTINGS_HIDE_NO_GO_AREAS_SUBTITLE" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hide restricted areas on the home map."
+          }
+        }
+      }
+    },
+    "APP_SETTINGS_HIDE_NO_GO_AREAS_TITLE" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hide No-Go Areas"
+          }
+        }
+      }
+    },
+    "APP_SETTINGS_ROBOT_DISCOVERY_SUBTITLE" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scan for and switch to another robot."
+          }
+        }
+      }
+    },
+    "APP_SETTINGS_ROBOT_DISCOVERY_TITLE" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Robot Discovery"
+          }
+        }
+      }
+    },
+    "APP_SETTINGS_SHARE_LOG_FILE_SUBTITLE" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Share the persisted app log file."
+          }
+        }
+      }
+    },
+    "APP_SETTINGS_SHARE_LOG_FILE_TITLE" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Share Log File"
+          }
+        }
+      }
+    },
     "APPLY_UPDATE" : {
       "extractionState" : "manual",
       "localizations" : {
