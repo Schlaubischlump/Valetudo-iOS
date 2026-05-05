@@ -41,7 +41,9 @@ class VTMapViewController: VTToolbarViewController {
     private var hasConnectedMapStream = false
 
     /// Controls whether the rendered map should hide no-go areas for this controller.
-    var hidesNoGoAreas: Bool { false }
+    var hidesNoGoAreas: Bool {
+        false
+    }
 
     /// Convenience accessor for the currently hosted map view instance.
     var mapView: VTMapView? {
@@ -219,7 +221,7 @@ class VTMapViewController: VTToolbarViewController {
     private func updateLegend(data _: VTMapData) async {
         legendView.items = segmentLayer.map { layer in
             VTLegendItem(color: layer.fillColor ?? .black, text: layer.name ?? layer.segmentId ?? "")
-        }
+        }.sorted { $0.text < $1.text }
     }
 
     // MARK: - Map

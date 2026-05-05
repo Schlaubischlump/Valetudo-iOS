@@ -260,7 +260,7 @@ public struct VTStateAttributeList: Decodable, Sendable {
     public var statusFlag: VTStatusFlag? {
         statusStateAttributes.first?.flag
     }
-    
+
     public var statusState: VTStatusValue {
         statusStateAttributes.first?.value ?? .docked
     }

@@ -123,7 +123,7 @@ final class VTAppSettingsViewController: VTCollectionViewController {
                 title: "APP_SETTINGS_ROBOT_DISCOVERY_TITLE".localized(),
                 value: "APP_SETTINGS_ROBOT_DISCOVERY_SUBTITLE".localized(),
                 image: .robotNavigationItem
-            )
+            ),
         ], toSection: .robot)
         snapshot.appendItems([
             .checkbox(
@@ -132,7 +132,7 @@ final class VTAppSettingsViewController: VTCollectionViewController {
                 subtitle: "APP_SETTINGS_HIDE_NO_GO_AREAS_SUBTITLE".localized(),
                 enabled: settings.hideNoGoAreas,
                 image: .noGo
-            )
+            ),
         ], toSection: .map)
         snapshot.appendItems([
             .keyValue(
@@ -140,7 +140,7 @@ final class VTAppSettingsViewController: VTCollectionViewController {
                 title: "APP_SETTINGS_SHARE_LOG_FILE_TITLE".localized(),
                 value: "APP_SETTINGS_SHARE_LOG_FILE_SUBTITLE".localized(),
                 image: .share
-            )
+            ),
         ], toSection: .log)
         dataSource.apply(snapshot, animatingDifferences: animated)
     }

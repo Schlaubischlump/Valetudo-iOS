@@ -50,7 +50,7 @@ final class VTAppSettingsStore: @unchecked Sendable {
 
     @CodableAppStorage("appSettings.hideNoGoAreas")
     private var storedHideNoGoAreas = false
-    
+
     @CodableAppStorage("selectedRobot")
     private var storedSelectedRobot: VTSelectedRobot? = nil
 

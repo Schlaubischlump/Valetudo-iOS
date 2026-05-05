@@ -56,13 +56,13 @@ final class VTLogFileStore: @unchecked Sendable {
             guard let self else { return }
 
             do {
-                try self.createDirectoryIfNeeded()
-                var data = (try? Data(contentsOf: self.fileURL)) ?? Data()
+                try createDirectoryIfNeeded()
+                var data = (try? Data(contentsOf: fileURL)) ?? Data()
                 data.append(Data(line.utf8))
                 if data.count > Self.maximumFileSizeInBytes {
-                    data = self.trim(data, toFit: Self.maximumFileSizeInBytes)
+                    data = trim(data, toFit: Self.maximumFileSizeInBytes)
                 }
-                try data.write(to: self.fileURL, options: .atomic)
+                try data.write(to: fileURL, options: .atomic)
             } catch {
                 assertionFailure("Failed to write log file: \(error.localizedDescription)")
             }

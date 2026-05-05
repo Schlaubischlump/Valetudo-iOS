@@ -5,7 +5,6 @@
 //  Created by David Klopp on 06.05.26.
 //
 
-
 /// Defines the sections used by the app settings screen.
 enum VTAppSettingsSection: Int, CaseIterable {
     case robot

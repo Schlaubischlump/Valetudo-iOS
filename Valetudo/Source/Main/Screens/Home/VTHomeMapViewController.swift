@@ -48,18 +48,18 @@ final class VTHomeMapViewController: VTMapViewController {
         didSet {
             guard isMappingActive != oldValue else { return }
 
-        if isMappingActive {
-            Task { [weak self] in
-                await self?.clearSegmentSelection()
-                self?.mapView?.clearTransientOverlays()
-                self?.notifyHomeStateChanged()
-                self?.refreshControls()
+            if isMappingActive {
+                Task { [weak self] in
+                    await self?.clearSegmentSelection()
+                    self?.mapView?.clearTransientOverlays()
+                    self?.notifyHomeStateChanged()
+                    self?.refreshControls()
+                }
+            } else {
+                notifyHomeStateChanged()
+                refreshControls()
             }
-        } else {
-            notifyHomeStateChanged()
-            refreshControls()
         }
-    }
     }
 
     /// Creates the home map controller bound to the provided API client.
