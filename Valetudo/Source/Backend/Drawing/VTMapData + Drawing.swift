@@ -163,6 +163,31 @@ extension VTMapData {
         return shapeLayer
     }
 
+    private func drawActiveZone(for entity: VTEntity, boundedByX x: CGFloat, y: CGFloat, scale: CGFloat) -> VTEntityShapeLayer? {
+        let shapeLayer = VTEntityShapeLayer(data: entity)
+        let points = entity.points
+
+        let zonePoints = stride(from: 0, to: points.count, by: 2).map { index in
+            CGPoint(x: points[index], y: points[index + 1])
+                .downScaledBy(x: scale, y: scale)
+                .offsetBy(dx: -x, dy: -y)
+        }
+
+        guard zonePoints.count >= 4 else { return nil }
+
+        let path = CGMutablePath()
+        path.addLines(between: zonePoints)
+        path.closeSubpath()
+
+        guard !path.isEmpty else { return nil }
+        shapeLayer.path = path
+        shapeLayer.fillColor = entity.type.color
+        shapeLayer.strokeColor = entity.type.borderColor
+        shapeLayer.lineWidth = entity.type.borderWidth
+        shapeLayer.lineJoin = .round
+        return shapeLayer
+    }
+
     private func drawObstacle(for entity: VTEntity, boundedByX x: CGFloat, y: CGFloat, scale: CGFloat) -> VTEntityShapeLayer? {
         let shapeLayer = VTEntityShapeLayer(data: entity)
 
@@ -212,8 +237,9 @@ extension VTMapData {
             let pixelScale = CGFloat(pixelSize)
 
             let shapeLayer: VTEntityShapeLayer? = switch entity.type {
-            case .charger_location, .robot_position: drawIcon(for: entity, boundedByX: x, y: y, scale: pixelScale)
-            case .path: drawPath(for: entity, boundedByX: x, y: y, scale: pixelScale)
+            case .charger_location, .robot_position, .go_to_target: drawIcon(for: entity, boundedByX: x, y: y, scale: pixelScale)
+            case .path, .predicted_path: drawPath(for: entity, boundedByX: x, y: y, scale: pixelScale)
+            case .active_zone: drawActiveZone(for: entity, boundedByX: x, y: y, scale: pixelScale)
             case .carpet: drawCarpet(for: entity, boundedByX: x, y: y, scale: pixelScale)
             case .obstacle: drawObstacle(for: entity, boundedByX: x, y: y, scale: pixelScale)
             default: nil

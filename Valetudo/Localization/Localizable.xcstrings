@@ -23,6 +23,17 @@
         }
       }
     },
+    "ADD_ZONE" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add Zone"
+          }
+        }
+      }
+    },
     "ALL" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -199,17 +210,6 @@
         }
       }
     },
-    "CANCEL" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Cancel"
-          }
-        }
-      }
-    },
     "CAMERA_LIGHT" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -228,6 +228,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Illuminate the dark to improve the AI image recognition obstacle avoidance."
+          }
+        }
+      }
+    },
+    "CANCEL" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancel"
           }
         }
       }
@@ -426,6 +437,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cleaning"
+          }
+        }
+      }
+    },
+    "CLEAR" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clear"
           }
         }
       }
@@ -1064,6 +1086,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Gid"
+          }
+        }
+      }
+    },
+    "GO_TO" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Go-To"
           }
         }
       }
@@ -1926,6 +1959,83 @@
         }
       }
     },
+    "MOP_WASH_TEMPERATURE" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mop Wash Temperature"
+          }
+        }
+      }
+    },
+    "MOP_WASH_TEMPERATURE_BOILING" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Boiling"
+          }
+        }
+      }
+    },
+    "MOP_WASH_TEMPERATURE_COLD" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cold"
+          }
+        }
+      }
+    },
+    "MOP_WASH_TEMPERATURE_DESCRIPTION" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Select if and/or how much the dock should heat the water used to rinse the mop pads."
+          }
+        }
+      }
+    },
+    "MOP_WASH_TEMPERATURE_HOT" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hot"
+          }
+        }
+      }
+    },
+    "MOP_WASH_TEMPERATURE_SCALDING" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scalding"
+          }
+        }
+      }
+    },
+    "MOP_WASH_TEMPERATURE_WARM" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Warm"
+          }
+        }
+      }
+    },
     "MORE_DETAILS" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2021,83 +2131,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Avoid obstacles using sensors such as lasers or cameras. May suffer from false positives."
-          }
-        }
-      }
-    },
-    "MOP_WASH_TEMPERATURE" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mop Wash Temperature"
-          }
-        }
-      }
-    },
-    "MOP_WASH_TEMPERATURE_BOILING" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Boiling"
-          }
-        }
-      }
-    },
-    "MOP_WASH_TEMPERATURE_COLD" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Cold"
-          }
-        }
-      }
-    },
-    "MOP_WASH_TEMPERATURE_DESCRIPTION" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Select if and/or how much the dock should heat the water used to rinse the mop pads."
-          }
-        }
-      }
-    },
-    "MOP_WASH_TEMPERATURE_HOT" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Hot"
-          }
-        }
-      }
-    },
-    "MOP_WASH_TEMPERATURE_SCALDING" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Scalding"
-          }
-        }
-      }
-    },
-    "MOP_WASH_TEMPERATURE_WARM" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Warm"
           }
         }
       }
@@ -2340,6 +2373,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Release"
+          }
+        }
+      }
+    },
+    "REMOVE_ZONE" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remove Zone"
           }
         }
       }
@@ -2604,6 +2648,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Searching for robots…"
+          }
+        }
+      }
+    },
+    "SEGMENT" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Segment"
           }
         }
       }
@@ -3231,6 +3286,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Yes"
+          }
+        }
+      }
+    },
+    "ZONE" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zone"
           }
         }
       }

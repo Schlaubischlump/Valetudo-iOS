@@ -84,6 +84,8 @@ public extension UIImage {
     static let quirks = UIImage(systemName: "star")
     static let speakerQuite = UIImage(systemName: "speaker.fill")
     static let speakerLoud = UIImage(systemName: "speaker.wave.3.fill")
+    static let zoneAdd = UIImage(systemName: "plus.rectangle.on.rectangle")
+    static let zoneRemove = UIImage(systemName: "trash.fill")
 
     static let overlayResize = UIImage(systemName: "arrow.up.left.and.arrow.down.right")
     static let overlayRemove = UIImage(systemName: "trash.fill")

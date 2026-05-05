@@ -29,7 +29,8 @@ extension VTEntityType {
         switch self {
         case .charger_location: .blue
         case .robot_position: .white
-        case .path: nil
+        case .active_zone: .white.copy(alpha: 0.18)
+        case .path, .predicted_path: nil
         case .carpet: nil
         case .obstacle: .yellow
         default: .black
@@ -40,7 +41,8 @@ extension VTEntityType {
         switch self {
         case .charger_location: .white
         case .robot_position: .lightGray
-        case .path: .white
+        case .active_zone: .white
+        case .path, .predicted_path: .white
         case .carpet: .lightGray.copy(alpha: 0.5)
         case .obstacle: .lightGray.copy(alpha: 0.9)
         default: .black
@@ -51,7 +53,8 @@ extension VTEntityType {
         switch self {
         case .charger_location: 1.0
         case .robot_position: 0.5
-        case .path: 0.5
+        case .active_zone: 2.0
+        case .path, .predicted_path: 0.5
         case .carpet: 0.5
         default: 1.0
         }
@@ -59,7 +62,7 @@ extension VTEntityType {
 
     func icon(center: CGPoint) -> CGPath? {
         switch self {
-        case .path: return nil
+        case .path, .predicted_path: return nil
         case .charger_location:
             let radius = 6.0
             let iconPath = CGMutablePath()
@@ -105,6 +108,15 @@ extension VTEntityType {
             // 3. Inner center circle
             iconPath.addEllipse(in: innerCircleFrame)
 
+            return iconPath
+        case .go_to_target:
+            let radius = 10.0
+            let iconPath = CGMutablePath()
+            iconPath.addArc(center: center, radius: radius, startAngle: 0, endAngle: .pi * 2, clockwise: false)
+            iconPath.move(to: CGPoint(x: center.x - radius - 4, y: center.y))
+            iconPath.addLine(to: CGPoint(x: center.x + radius + 4, y: center.y))
+            iconPath.move(to: CGPoint(x: center.x, y: center.y - radius - 4))
+            iconPath.addLine(to: CGPoint(x: center.x, y: center.y + radius + 4))
             return iconPath
         case .carpet: return nil
         case .no_go_area: return nil

@@ -4,131 +4,52 @@
 //
 //  Created by David Klopp on 18.03.25.
 //
-//
 
 import UIKit
 
 private let bottomPad: CGFloat = 20
-private let legendHeight: CGFloat = 45.0
 private let sheetCornerRadius: CGFloat = 39.0
 
-/// Displays the live map and coordinates it with the shared robot control controller.
-///
-/// Segment selection on the map and legend mutates `robotControlViewController.currentConfiguration`.
-/// In compact layouts the shared controller is presented as a sheet; in regular layouts it is
-/// shown by the split view's inspector column.
-class VTHomeViewController: VTViewController {
+/// Hosts the live home map, robot status, and adaptive control presentation for the selected robot.
+@MainActor
+final class VTHomeViewController: VTViewController {
+    /// Shared API client passed through to child controllers and local observers.
     private let client: VTAPIClientProtocol
-    /// Shared controller instance owned by the split view and reused across size classes.
+    /// Reused control surface that moves between compact sheet presentation and regular inspector presentation.
     private let robotControlViewController: VTRobotControlViewController
+    /// Home-specific map child that owns mode switching, overlays, and legend behavior.
+    private let homeMapViewController: VTHomeMapViewController
+    /// Compact status card showing battery and current robot state.
+    private let robotStatusView = VTRobotStatusView()
 
-    private let mapScrollView = VTZoomableScrollView()
-    private let activityIndicator = UIActivityIndicatorView(style: .large)
-    private var mapView: VTMapView? {
-        mapScrollView.zoomableView as? VTMapView
-    }
-
-    private var legendView: VTLegendView!
-    private var robotStatusView: VTRobotStatusView!
-    private var observerToken: VTListenerToken?
+    /// Task that keeps robot status synchronized with the `.stateAttributes` event stream.
     private var eventObservationTask: Task<Void, Never>?
-    private var hasConnectedMapStream = false
+    /// Token used to unregister the active state-attribute observer.
+    private var observerToken: VTListenerToken?
+    /// Tracks whether the state stream has connected once so reconnects can trigger a refresh.
+    private var hasConnectedStateStream = false
 
-    private var legendViewBottomAnchor: NSLayoutConstraint!
-    private var mapScrollViewBottomAnchor: NSLayoutConstraint!
+    /// Currently observed sheet view whose frame drives live legend repositioning in compact layout.
     private weak var observedSheetView: UIView?
-    /// Leaves vertical room for the control sheet only when the shared controller is presented modally.
-    private var mapBottomInset: CGFloat {
-        if isCompact {
-            -bottomPad
-        } else {
-            -UISheetPresentationController.Detent.bottomHeight + sheetCornerRadius
-        }
-    }
+    /// Reused events button so navigation-item updates can preserve split-owned buttons explicitly.
+    private var eventBarButtonItem: VTValetudoEventBarButtonItem?
+    /// Reused mode selector button so navigation-item updates can preserve split-owned buttons explicitly.
+    private var modeBarButtonItem: UIBarButtonItem?
+    /// Cached mode menu entries emitted by the home map child.
+    private var modeOptions: [VTHomeMapViewController.ModeOption] = []
+    /// Currently active home cleaning/navigation mode.
+    private var selectedMode: VTHomeMapViewController.Mode = .segment
 
-    private var legendBottomInset: CGFloat {
-        let safeAreaInset = view.safeAreaInsets.bottom
-        return if isCompact {
-            -bottomPad + safeAreaInset
-        } else {
-            -bottomPad - UISheetPresentationController.Detent.bottomHeight + safeAreaInset
-        }
-    }
-
-    // MARK: - Cached data
-
-    private var robotInfo: VTRobotInfo?
-    private var robotState: VTStateAttributeList?
-    private var obstacleImagesCapabilityIsEnabled = false
-    private var supportsSegmentation = false
-
-    private var segmentLayer: [VTLayer] {
-        mapView?.data.segmentLayer ?? []
-    }
-
+    /// Creates the home screen with a shared API client and reusable robot controls.
     init(client: VTAPIClientProtocol, robotControlViewController: VTRobotControlViewController) {
         self.client = client
         self.robotControlViewController = robotControlViewController
+        homeMapViewController = VTHomeMapViewController(
+            client: client,
+            robotControlViewController: robotControlViewController
+        )
 
         super.init(nibName: nil, bundle: nil)
-        title = "MAP".localized()
-        view.backgroundColor = .systemBackground
-
-        // map
-        mapScrollView.minimumZoomScale = 1.0
-        mapScrollView.maximumZoomScale = 3.0
-
-        view.addSubview(mapScrollView)
-        view.addSubview(activityIndicator)
-
-        mapScrollView.translatesAutoresizingMaskIntoConstraints = false
-        activityIndicator.translatesAutoresizingMaskIntoConstraints = false
-        mapScrollViewBottomAnchor = mapScrollView.bottomAnchor.constraint(
-            equalTo: view.safeAreaLayoutGuide.bottomAnchor,
-            constant: bottomPad
-        )
-        NSLayoutConstraint.activate([
-            mapScrollView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
-            mapScrollView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
-            mapScrollView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
-            mapScrollViewBottomAnchor,
-            activityIndicator.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            activityIndicator.centerYAnchor.constraint(equalTo: view.centerYAnchor),
-        ])
-
-        // legend
-        legendView = VTLegendView()
-        legendView.backgroundColor = .clear
-
-        view.addSubview(legendView)
-
-        legendView.translatesAutoresizingMaskIntoConstraints = false
-        legendViewBottomAnchor = legendView.bottomAnchor.constraint(
-            equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: 0
-        )
-
-        NSLayoutConstraint.activate([
-            legendViewBottomAnchor,
-            legendView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
-            legendView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
-            legendView.heightAnchor.constraint(equalToConstant: legendHeight),
-        ])
-
-        // status
-        robotStatusView = VTRobotStatusView()
-        robotStatusView.backgroundColor = .systemBackground
-
-        view.addSubview(robotStatusView)
-
-        robotStatusView.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
-            robotStatusView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 10),
-            robotStatusView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 10),
-            robotStatusView.heightAnchor.constraint(equalToConstant: 86),
-            robotStatusView.widthAnchor.constraint(equalToConstant: 118),
-        ])
-
-        navigationItem.rightBarButtonItem = VTValetudoEventBarButtonItem(client: client, parentViewController: self)
     }
 
     @available(*, unavailable)
@@ -136,301 +57,191 @@ class VTHomeViewController: VTViewController {
         fatalError("init(coder:) has not been implemented")
     }
 
+    // MARK: - View Life Cycle
+
+    /// Builds the home screen hierarchy and binds child-controller callbacks.
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        view.backgroundColor = .systemBackground
+
+        setupChildController()
+        setupRobotStatusView()
+        bindHomeMapController()
+        configureNavigationItems()
+    }
+
+    /// Starts adaptive control-surface presentation once the controller is visible.
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
 
-        // Rehome the shared robot control controller when the layout switches
-        // between compact sheet presentation and split-view inspector presentation.
         registerForTraitChanges([UITraitHorizontalSizeClass.self]) { (self: Self, _) in
             self.updateRobotControlViewPresentation(animated: false)
-            self.mapScrollViewBottomAnchor.constant = self.mapBottomInset
-            self.legendViewBottomAnchor.constant = self.legendBottomInset
         }
 
         updateRobotControlViewPresentation(animated: true)
     }
 
+    /// Starts observing live robot status updates whenever the home screen becomes active.
     override func viewWillAppear(_ animated: Bool) {
-        mapScrollViewBottomAnchor.constant = mapBottomInset
-        legendViewBottomAnchor.constant = legendBottomInset
-
         super.viewWillAppear(animated)
-
-        startSSEObservation()
+        startStateObservation()
     }
 
+    /// Stops robot status observation when leaving the home screen.
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
-
-        stopSSEObservation()
+        stopStateObservation()
     }
 
-    @MainActor
+    // MARK: - Refresh
+
+    /// Restarts state observation after the shared reconnect flow completes.
     override func reconnectAndRefresh() async {
-        // Cancel existing SSE task and reconnect
-        stopSSEObservation()
-        startSSEObservation()
+        stopStateObservation()
+        startStateObservation()
     }
 
-    private func startSSEObservation() {
+    // MARK: - View Configuration
+
+    /// Embeds the home map controller as the full-screen background child.
+    private func setupChildController() {
+        addChild(homeMapViewController)
+        homeMapViewController.view.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(homeMapViewController.view)
+
+        NSLayoutConstraint.activate([
+            homeMapViewController.view.topAnchor.constraint(equalTo: view.topAnchor),
+            homeMapViewController.view.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            homeMapViewController.view.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            homeMapViewController.view.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+        ])
+
+        homeMapViewController.didMove(toParent: self)
+    }
+
+    /// Installs the compact robot-status card in the upper-left corner.
+    private func setupRobotStatusView() {
+        robotStatusView.translatesAutoresizingMaskIntoConstraints = false
+        robotStatusView.backgroundColor = .systemBackground
+        view.addSubview(robotStatusView)
+
+        NSLayoutConstraint.activate([
+            robotStatusView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 10),
+            robotStatusView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 10),
+            robotStatusView.heightAnchor.constraint(equalToConstant: 86),
+            robotStatusView.widthAnchor.constraint(equalToConstant: 118),
+        ])
+    }
+
+    // MARK: - Child Controller Binding
+
+    /// Connects the home map controller's mode callbacks to navigation updates.
+    private func bindHomeMapController() {
+        homeMapViewController.onModeTitleChanged = { [weak self] title in
+            self?.navigationItem.title = title
+        }
+        homeMapViewController.onModeOptionsChanged = { [weak self] options, selectedMode in
+            self?.modeOptions = options
+            self?.selectedMode = selectedMode
+            self?.configureNavigationItems()
+        }
+    }
+
+    // MARK: - Navigation Items
+
+    /// Rebuilds the mode menu and preserves split-owned navigation buttons when possible.
+    private func configureNavigationItems() {
+        let modeActions = modeOptions.map { option in
+            UIAction(
+                title: option.mode.menuTitle,
+                attributes: option.isEnabled ? [] : [.disabled],
+                state: option.mode == selectedMode ? .on : .off
+            ) { [weak self] _ in
+                self?.homeMapViewController.selectMode(option.mode)
+            }
+        }
+
+        let previousModeBarButtonItem = modeBarButtonItem
+        let modeButton = UIBarButtonItem(
+            title: selectedMode.menuTitle,
+            image: UIImage(systemName: "chevron.down.circle"),
+            primaryAction: nil,
+            menu: UIMenu(title: "", children: modeActions)
+        )
+
+        let preservedItems = (navigationItem.rightBarButtonItems ?? []).filter {
+            $0 !== eventBarButtonItem && $0 !== previousModeBarButtonItem
+        }
+
+        let eventButton = eventBarButtonItem ?? VTValetudoEventBarButtonItem(client: client, parentViewController: self)
+        eventBarButtonItem = eventButton
+        modeBarButtonItem = modeButton
+
+        navigationItem.rightBarButtonItems = preservedItems + [
+            eventButton,
+            modeButton,
+        ]
+    }
+
+    // MARK: - State Observation
+
+    /// Starts observing state-attribute events and applies the latest robot status to the HUD.
+    private func startStateObservation() {
         guard eventObservationTask == nil else { return }
 
-        eventObservationTask = Task {
-            do {
-                try await loadInitialData()
-                hasConnectedMapStream = false
+        eventObservationTask = Task { [weak self] in
+            guard let self else { return }
 
-                let (token, stream) = await client.registerEventObserver(for: .map)
-                observerToken = token
+            if let state = try? await client.getStateAttributes() {
+                await updateRobotStatus(with: state)
+            }
 
-                for await event in stream {
-                    switch event {
-                    case .didConnect:
-                        if hasConnectedMapStream {
-                            if let mapData = try? await client.getMap() {
-                                await self.mapView?.updateData(data: mapData)
-                                await self.updateLegend(data: mapData)
-                            }
-                        } else {
-                            hasConnectedMapStream = true
+            let (token, stream) = await client.registerEventObserver(for: .stateAttributes)
+            observerToken = token
+            hasConnectedStateStream = false
+
+            for await event in stream {
+                switch event {
+                case .didConnect:
+                    if hasConnectedStateStream {
+                        if let state = try? await client.getStateAttributes() {
+                            await updateRobotStatus(with: state)
                         }
-                    case let .didReceiveData(mapData):
-                        await self.mapView?.updateData(data: mapData)
-                        await self.updateLegend(data: mapData)
-                    case let .didReceiveError(message):
-                        log(message: message, forSubsystem: .map, level: .error)
-                    default:
-                        break
+                    } else {
+                        hasConnectedStateStream = true
                     }
+                case let .didReceiveData(state):
+                    await updateRobotStatus(with: state)
+                case let .didReceiveError(message):
+                    log(message: message, forSubsystem: .stateAttribute, level: .error)
+                default:
+                    break
                 }
-            } catch {
-                log(message: error.localizedDescription, forSubsystem: .map, level: .error)
             }
         }
     }
 
-    private func stopSSEObservation() {
+    /// Stops observing state-attribute events and unregisters the active listener token.
+    private func stopStateObservation() {
         eventObservationTask?.cancel()
         eventObservationTask = nil
-        hasConnectedMapStream = false
+        hasConnectedStateStream = false
 
         if let token = observerToken {
             let client = client
-            Task { await client.removeEventObserver(token: token, for: .map) }
+            Task { await client.removeEventObserver(token: token, for: .stateAttributes) }
             observerToken = nil
         }
     }
 
-    private func hideEntityPopup() {
-        guard let vc = calloutPresenter.presentedViewController as? VTCalloutViewController else { return }
-        vc.dismiss(animated: true)
+    /// Updates the status HUD with the latest robot state and battery information.
+    private func updateRobotStatus(with state: VTStateAttributeList) async {
+        robotStatusView.update(forStatus: state.statusState.description, batteryLevel: state.batterLevel)
     }
 
-    /// Entity callouts should appear above the sheet when compact presentation is active.
-    private var calloutPresenter: UIViewController {
-        (presentedViewController as? VTRobotControlViewController) ?? self
-    }
+    // MARK: - Robot Control Presentation
 
-    private func presentCallout(_ vc: VTCalloutViewController, at point: CGPoint) {
-        guard let popover = vc.popoverPresentationController else { return }
-
-        popover.sourceView = mapView
-        popover.sourceRect = CGRect(origin: point, size: .one)
-        popover.permittedArrowDirections = .any
-        popover.delegate = self
-
-        let presenter = calloutPresenter
-        if let presentedCallout = presenter.presentedViewController as? VTCalloutViewController {
-            presentedCallout.dismiss(animated: false) {
-                presenter.present(vc, animated: true)
-            }
-        } else {
-            presenter.present(vc, animated: true)
-        }
-    }
-
-    private func showEntityPopup(entity: VTEntity, at point: CGPoint) async -> Bool {
-        var title = ""
-        var subtitle = ""
-        var image: UIImage?
-        var showsImageCallout = false
-
-        switch entity.type {
-        case .charger_location:
-            title = "CHARGER".localized()
-            subtitle = robotInfo?.description ?? ""
-        case .robot_position:
-            title = robotInfo?.description ?? "ROBOT".localized()
-            if let state = robotState {
-                subtitle = "\(state.statusState.description.localizedUppercase()) - \(state.batterLevel)%"
-            } else {
-                subtitle = ""
-            }
-        case .obstacle:
-            title = "OBSTACLE".localized()
-            subtitle = entity.label ?? ""
-            if let label = entity.label,
-               let range = label.range(of: " (", options: .backwards), label.hasSuffix(")")
-            {
-                title = String(label[..<range.lowerBound])
-                subtitle = String(label[range.upperBound ..< label.index(before: label.endIndex)])
-            }
-            showsImageCallout = obstacleImagesCapabilityIsEnabled
-        default: return false
-        }
-
-        let vc = if showsImageCallout {
-            VTCalloutViewController(
-                title: title,
-                subtitle: subtitle,
-                image: image,
-                isLoadingImage: true
-            )
-        } else {
-            VTCalloutViewController(
-                title: title,
-                subtitle: subtitle
-            )
-        }
-        presentCallout(vc, at: point)
-
-        guard showsImageCallout,
-              entity.type == .obstacle,
-              let id = entity.id,
-              let obstacleImage = try? await client.getObstacleImage(id: id)
-        else {
-            return true
-        }
-
-        image = UIImage(ciImage: obstacleImage)
-        vc.update(
-            title: title,
-            subtitle: subtitle,
-            image: image,
-            isLoadingImage: false
-        )
-        return true
-    }
-
-    private func updateLegend(data _: VTMapData) async {
-        legendView.isHidden = !supportsSegmentation || segmentLayer.isEmpty
-        guard supportsSegmentation else {
-            legendView.items = []
-            return
-        }
-
-        legendView.items = segmentLayer.map { layer in
-            VTLegendItem(color: layer.fillColor ?? .black, text: layer.name ?? layer.segmentId!)
-        }
-    }
-
-    private func mapShouldChangeSelection(forLayer layer: VTLayer, isSelected _: Bool) async -> Bool {
-        guard supportsSegmentation, segmentLayer.contains(layer) else { return false }
-        return true
-    }
-
-    private func mapDidChangeSelection(forLayer layer: VTLayer, isSelected: Bool) async {
-        guard let index = segmentLayer.firstIndex(of: layer) else { return }
-
-        // Keep map-driven selection in sync with the shared control sheet / inspector state.
-        var config = robotControlViewController.currentConfiguration
-
-        if isSelected {
-            await legendView.select(at: index)
-            config = config.appending(segmentId: layer.segmentId!)
-        } else {
-            await legendView.deselect(at: index)
-            config = config.removing(segmentId: layer.segmentId!)
-        }
-        robotControlViewController.currentConfiguration = config
-    }
-
-    private func legendShouldChangedSelection(atIndex index: Int, isSelected _: Bool) async -> Bool {
-        guard supportsSegmentation,
-              segmentLayer.indices.contains(index) else { return false }
-        return true
-    }
-
-    private func legendDidChangeSelection(atIndex index: Int, isSelected: Bool) async {
-        guard segmentLayer.indices.contains(index) else { return }
-
-        // Legend selection mirrors map selection and updates the shared control state directly.
-        var config = robotControlViewController.currentConfiguration
-        let layer = segmentLayer[index]
-
-        if isSelected {
-            await mapView?.select(layer: layer)
-            config = config.appending(segmentId: layer.segmentId!)
-        } else {
-            await mapView?.deselect(layer: layer)
-            config = config.removing(segmentId: layer.segmentId!)
-        }
-        robotControlViewController.currentConfiguration = config
-    }
-
-    @MainActor
-    func loadInitialData() async throws {
-        activityIndicator.startAnimating()
-        defer { activityIndicator.stopAnimating() }
-
-        let mapData = try await client.getMap()
-        robotInfo = try? await client.getRobotInfo()
-        robotState = try? await client.getStateAttributes()
-        let capabilities = await Set((try? client.getCapabilities()) ?? [])
-        supportsSegmentation = capabilities.contains(.mapSegmentation)
-        obstacleImagesCapabilityIsEnabled = await (try? client.getObstacleImagesCapabilityIsEnabled()) ?? false
-
-        if let state = robotState {
-            robotStatusView.update(
-                forStatus: state.statusState.description,
-                batteryLevel: state.batterLevel
-            )
-        }
-
-        let viewSize = view.bounds.size == .zero ? (UIScreen.current?.bounds.size ?? .zero) : view.bounds.size
-        let mapSize = CGSize(width: min(viewSize.width, 500), height: min(viewSize.height, 500))
-        let mapRect = CGRect(origin: .zero, size: mapSize)
-        let mapView = VTMapView(frame: mapRect, data: mapData)
-        mapView.shouldChangeLayerSelection = mapShouldChangeSelection
-        mapView.didChangeLayerSelection = mapDidChangeSelection
-        mapView.onEntityClicked = showEntityPopup
-
-        mapScrollView.zoomableView = mapView
-
-        await updateLegend(data: mapView.data)
-        legendView.shouldChangeSelection = legendShouldChangedSelection
-        legendView.didChangeSelection = legendDidChangeSelection
-    }
-}
-
-extension VTHomeViewController: UIPopoverPresentationControllerDelegate {
-    func adaptivePresentationStyle(for _: UIPresentationController) -> UIModalPresentationStyle {
-        .none
-    }
-}
-
-extension VTHomeViewController: UISheetPresentationControllerDelegate {
-    /// Maps the custom detent identifiers to the sheet heights used for legend positioning.
-    private func proposedHeight(for detentIdentifier: UISheetPresentationController.Detent.Identifier) -> CGFloat? {
-        switch detentIdentifier {
-        case .bottom: UISheetPresentationController.Detent.bottomHeight
-        case .middle: UISheetPresentationController.Detent.middleHeight
-        default: nil
-        }
-    }
-
-    func sheetPresentationControllerDidChangeSelectedDetentIdentifier(_ sheetPresentationController: UISheetPresentationController) {
-        // Animate when the user drags the sheet to a different detent.
-        if let identifier = sheetPresentationController.selectedDetentIdentifier,
-           let height = proposedHeight(for: identifier)
-        {
-            // `updateLegendPosition` already accounts for the safe-area inset. Passing the
-            // raw detent height keeps detent settling aligned with the live frame observer.
-            updateLegendPosition(basedOn: height, animate: true)
-        }
-    }
-
-    /// Moves the shared robot control controller between inspector and sheet presentation.
+    /// Switches between compact sheet presentation and regular inspector presentation.
     fileprivate func updateRobotControlViewPresentation(animated: Bool = false) {
         let splitVC = splitViewController as? VTSplitViewController
 
@@ -441,13 +252,14 @@ extension VTHomeViewController: UISheetPresentationControllerDelegate {
             dismissControlSheet(animated: animated) { [weak splitVC] in
                 splitVC?.setRobotControlViewControllerPresentedInInspector(true)
             }
+            resetLegendPositionForRegularLayout()
         }
     }
 
+    /// Presents or updates the compact control sheet used on narrow layouts.
     private func presentControlSheet(animated: Bool) {
         guard isCompact else { return }
         let sheetVC = robotControlViewController
-
         sheetVC.modalPresentationStyle = .pageSheet
 
         if let sheet = sheetVC.sheetPresentationController {
@@ -455,31 +267,27 @@ extension VTHomeViewController: UISheetPresentationControllerDelegate {
             sheet.prefersGrabberVisible = true
             sheet.preferredCornerRadius = sheetCornerRadius
             sheet.delegate = self
-
-            // Prevent swipe-to-dismiss
             sheet.largestUndimmedDetentIdentifier = .middle
             sheet.prefersEdgeAttachedInCompactHeight = true
-
-            // Prevent full dismissal
             sheetVC.isModalInPresentation = true
         }
 
         guard presentedViewController != sheetVC else {
-            // in case we swipe back and cancel the swipe, just reposition the view
-            let detentHeight = sheetVC.view.frame.height
-            updateLegendPosition(basedOn: detentHeight, animate: animated)
+            updateLegendPosition(basedOn: sheetVC.view.frame.height, animate: animated)
             return
         }
 
-        // Pre-position the legend so the first sheet animation does not jump.
-        let bottomHeight = UISheetPresentationController.Detent.bottomHeight
-        updateLegendPosition(basedOn: bottomHeight, animate: animated)
+        updateLegendPosition(
+            basedOn: UISheetPresentationController.Detent.bottomHeight,
+            animate: animated
+        )
 
-        present(sheetVC, animated: animated) { [weak sheetVC] in
-            self.startObservingSheetFrame(for: sheetVC?.view)
+        present(sheetVC, animated: animated) { [weak self, weak sheetVC] in
+            self?.startObservingSheetFrame(for: sheetVC?.view)
         }
     }
 
+    /// Dismisses the compact control sheet if it is currently presented.
     private func dismissControlSheet(animated: Bool, completion: (() -> Void)? = nil) {
         guard presentedViewController === robotControlViewController else {
             completion?()
@@ -487,11 +295,12 @@ extension VTHomeViewController: UISheetPresentationControllerDelegate {
         }
 
         stopObservingSheetFrame()
-
-        // Reattaching to the inspector must wait until UIKit has fully dismissed the sheet.
         presentedViewController?.dismiss(animated: animated, completion: completion)
     }
 
+    // MARK: - Sheet Observation
+
+    /// Starts observing the presented sheet view so legend placement can track its live height.
     private func startObservingSheetFrame(for view: UIView?) {
         guard let view else { return }
         if observedSheetView === view { return }
@@ -501,48 +310,78 @@ extension VTHomeViewController: UISheetPresentationControllerDelegate {
         observedSheetView = view
     }
 
+    /// Stops observing the currently tracked sheet view.
     private func stopObservingSheetFrame() {
         guard let observedSheetView else { return }
         observedSheetView.removeObserver(self, forKeyPath: "frame")
         self.observedSheetView = nil
     }
 
-    override func observeValue(forKeyPath keyPath: String?,
-                               of _: Any?,
-                               change: [NSKeyValueChangeKey: Any]?,
-                               context _: UnsafeMutableRawPointer?)
-    {
+    /// Responds to sheet frame changes by updating the home map legend position.
+    override func observeValue(
+        forKeyPath keyPath: String?,
+        of _: Any?,
+        change: [NSKeyValueChangeKey: Any]?,
+        context _: UnsafeMutableRawPointer?
+    ) {
         guard keyPath == "frame",
-              let frame = (change?[.newKey] as? NSValue)?.cgRectValue else { return }
+              let frame = (change?[.newKey] as? NSValue)?.cgRectValue
+        else { return }
 
-        Task { @MainActor in
-            guard isCompact,
-                  presentedViewController === robotControlViewController else { return }
+        Task<Void, Never> { @MainActor [weak self] in
+            guard let self,
+                  isCompact,
+                  presentedViewController === robotControlViewController
+            else { return }
+
             updateLegendPosition(basedOn: frame.height, animate: false)
         }
     }
 
-    @MainActor
+    // MARK: - Legend Positioning
+
+    /// Positions the legend above the compact control sheet while respecting safe-area padding.
     private func updateLegendPosition(basedOn sheetHeight: CGFloat, animate: Bool) {
         let bottomInset = view.safeAreaInsets.bottom
         let midHeight = UISheetPresentationController.Detent.middleHeight
-
-        // Keep the legend visible above the compact sheet until the sheet reaches the
-        // middle detent, after which the legend stops moving further upward.
-        legendViewBottomAnchor.constant = max(
+        let inset = max(
             -bottomPad - sheetHeight + bottomInset,
             -bottomPad - midHeight
         )
+
         if animate {
             UIView.animate(withDuration: 0.25) { [weak self] in
-                self?.view.layoutIfNeeded()
+                self?.homeMapViewController.setLegendBottomInset(inset)
             }
         } else {
-            view.layoutIfNeeded()
+            homeMapViewController.setLegendBottomInset(inset)
+        }
+    }
+
+    /// Restores the default legend inset used in regular-width layouts.
+    private func resetLegendPositionForRegularLayout() {
+        homeMapViewController.setLegendBottomInset(-bottomPad)
+    }
+}
+
+// MARK: - UISheetPresentationControllerDelegate
+
+extension VTHomeViewController: UISheetPresentationControllerDelegate {
+    /// Animates the legend when the compact control sheet moves between known detents.
+    func sheetPresentationControllerDidChangeSelectedDetentIdentifier(_ sheetPresentationController: UISheetPresentationController) {
+        guard let identifier = sheetPresentationController.selectedDetentIdentifier else { return }
+
+        let height: CGFloat? = switch identifier {
+        case .bottom:
+            UISheetPresentationController.Detent.bottomHeight
+        case .middle:
+            UISheetPresentationController.Detent.middleHeight
+        default:
+            nil
         }
 
-        // Fade out legend
-        // let progress = (sheetHeight - bottomInset - midHeight) / legendHeight
-        // legendView.alpha = 1 - min(max(progress, 0), 1)
+        if let height {
+            updateLegendPosition(basedOn: height, animate: true)
+        }
     }
 }
