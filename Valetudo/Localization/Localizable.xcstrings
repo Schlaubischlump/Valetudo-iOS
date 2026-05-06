@@ -73,7 +73,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Hide restricted areas on the home map."
+            "value" : "Hide the area inside no-go areas on the home map."
           }
         }
       }
@@ -1189,28 +1189,6 @@
         }
       }
     },
-    "HOME_ADD_AT_LEAST_ONE_ZONE_BEFORE_STARTING" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Add at least one zone before starting."
-          }
-        }
-      }
-    },
-    "HOME_PLACE_A_TARGET_BEFORE_STARTING" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Place a target before starting."
-          }
-        }
-      }
-    },
     "HIGH" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1229,6 +1207,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Home"
+          }
+        }
+      }
+    },
+    "HOME_ADD_AT_LEAST_ONE_ZONE_BEFORE_STARTING" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add at least one zone before starting."
+          }
+        }
+      }
+    },
+    "HOME_PLACE_A_TARGET_BEFORE_STARTING" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Place a target before starting."
           }
         }
       }
