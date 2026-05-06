@@ -68,15 +68,6 @@ enum VTCleaningConfiguration {
         }
     }
 
-    var badgeImage: UIImage? {
-        switch self {
-        case .full: nil
-        case .segments: .segmentedCleanup
-        case .zones: .zoneCleanup
-        case .goTo: .goToLocation
-        }
-    }
-
     var controlMode: VTRobotControlMode {
         switch self {
         case .full, .segments: .segment

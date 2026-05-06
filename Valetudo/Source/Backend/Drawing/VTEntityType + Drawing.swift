@@ -29,7 +29,7 @@ extension VTEntityType {
         switch self {
         case .charger_location: .blue
         case .robot_position: .white
-        case .active_zone: .green.copy(alpha: 0.18)
+        case .active_zone: .white.copy(alpha: 0.18)
         case .path, .predicted_path: nil
         case .carpet: nil
         case .obstacle: .yellow
@@ -41,7 +41,7 @@ extension VTEntityType {
         switch self {
         case .charger_location: .white
         case .robot_position: .lightGray
-        case .active_zone: .green
+        case .active_zone: .white
         case .path, .predicted_path: .white
         case .carpet: .lightGray.copy(alpha: 0.5)
         case .obstacle: .lightGray.copy(alpha: 0.9)

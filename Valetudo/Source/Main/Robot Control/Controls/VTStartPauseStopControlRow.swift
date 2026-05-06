@@ -10,7 +10,7 @@ import UIKit
 final class VTStartPauseStopControlRow: UIView {
     /// Describes whether the primary button should show start or pause semantics.
     enum StartPausePresentation {
-        case start(badge: UIImage?)
+        case start
         case pause
     }
 
@@ -51,7 +51,7 @@ final class VTStartPauseStopControlRow: UIView {
         }
     }
 
-    var startPausePresentation: StartPausePresentation = .start(badge: nil) {
+    var startPausePresentation: StartPausePresentation = .start {
         didSet {
             switch startPausePresentation {
             case .start:
@@ -67,7 +67,6 @@ final class VTStartPauseStopControlRow: UIView {
     private let startPauseButton = VTControlButton(title: nil, icon: .cleaningStart)
     private let stopButton = VTControlButton(title: nil, icon: .cleaningStop)
     private let homeButton = VTControlButton(title: nil, icon: .returnToDock)
-    private let startPauseBadgeView = UIImageView()
 
     // MARK: - Init
 
@@ -97,7 +96,6 @@ final class VTStartPauseStopControlRow: UIView {
         setupButton(startPauseButton)
         setupButton(stopButton)
         setupButton(homeButton)
-        setupStartPauseBadgeView()
 
         startPauseButton.onTap = startPauseTapped
         stopButton.onTap = stopTapped
@@ -106,7 +104,6 @@ final class VTStartPauseStopControlRow: UIView {
         for item in [startPauseButton, stopButton, homeButton] {
             buttonContainerView.addSubview(item)
         }
-        startPauseButton.addSubview(startPauseBadgeView)
 
         disableButtons()
         updateStartPauseAppearance()
@@ -121,13 +118,6 @@ final class VTStartPauseStopControlRow: UIView {
         config.background.backgroundInsets = .zero
         // config.background.visualEffect = UIVibrancyEffect(blurEffect: UIBlurEffect(style: .dark), style: .fill)
         button.configuration = config
-    }
-
-    /// Configures the small badge that indicates which action will start next.
-    private func setupStartPauseBadgeView() {
-        startPauseBadgeView.contentMode = .scaleAspectFit
-        startPauseBadgeView.tintColor = .secondaryLabel
-        startPauseBadgeView.isUserInteractionEnabled = false
     }
 
     // MARK: - Layout
@@ -149,7 +139,6 @@ final class VTStartPauseStopControlRow: UIView {
         startPauseButton.frame = CGRect(x: 0, y: 0, width: buttonWidth, height: height)
         stopButton.frame = CGRect(x: buttonWidth, y: 0, width: buttonWidth, height: height)
         homeButton.frame = CGRect(x: buttonWidth * 2, y: 0, width: buttonWidth, height: height)
-        layoutStartPauseBadge()
 
         // Add a left and right border on the middle button.
         stopButton.updateBorder(edge: [.left, .right], color: .opaqueSeparator.withAlphaComponent(0.5), thickness: 1.0)
@@ -163,31 +152,10 @@ final class VTStartPauseStopControlRow: UIView {
 
     // MARK: - Appearance
 
-    /// Updates the primary button icon and badge visibility for the current presentation state.
+    /// Updates the primary button icon for the current presentation state.
     private func updateStartPauseAppearance() {
         let imageName = isStarted ? "pause.fill" : "play.fill"
         startPauseButton.setImage(UIImage(systemName: imageName), for: .normal)
-
-        switch startPausePresentation {
-        case let .start(badge):
-            startPauseBadgeView.image = badge
-            startPauseBadgeView.isHidden = badge == nil
-        case .pause:
-            startPauseBadgeView.image = nil
-            startPauseBadgeView.isHidden = true
-        }
-    }
-
-    /// Positions the optional badge near the lower trailing edge of the primary button.
-    private func layoutStartPauseBadge() {
-        let badgeSize: CGFloat = 14
-        let inset: CGFloat = 8
-        startPauseBadgeView.frame = CGRect(
-            x: startPauseButton.bounds.maxX - badgeSize - inset,
-            y: startPauseButton.bounds.maxY - badgeSize - inset,
-            width: badgeSize,
-            height: badgeSize
-        )
     }
 
     // MARK: - Actions

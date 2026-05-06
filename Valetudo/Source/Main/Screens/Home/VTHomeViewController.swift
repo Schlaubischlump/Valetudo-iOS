@@ -47,6 +47,8 @@ final class VTHomeViewController: VTViewController {
     private var selectedGoToCoordinate: VTMapCoordinate?
     /// Tracks whether the home map is currently locked by an active mapping pass.
     private var isMappingActive = false
+    /// Latest robot state used to derive home mode, mapping lock, and control configuration.
+    private var latestRobotState: VTStateAttributeList?
 
     /// Creates the home screen with a shared API client and reusable robot controls.
     init(client: VTAPIClientProtocol, robotControlViewController: VTRobotControlViewController) {
@@ -149,6 +151,7 @@ final class VTHomeViewController: VTViewController {
         homeMapViewController.onModeChanged = { [weak self] mode in
             self?.selectedMode = mode
             self?.applyHomeCleaningConfiguration()
+            self?.configureNavigationItems()
         }
         homeMapViewController.onSelectedSegmentIDsChanged = { [weak self] ids in
             self?.selectedSegmentIDs = ids
@@ -166,9 +169,12 @@ final class VTHomeViewController: VTViewController {
             self?.navigationItem.title = title
         }
         homeMapViewController.onModeOptionsChanged = { [weak self] options, selectedMode in
-            self?.modeOptions = options
-            self?.selectedMode = selectedMode
-            self?.configureNavigationItems()
+            guard let self else { return }
+            let menuDidChange = self.modeOptions != options || self.selectedMode != selectedMode
+            self.modeOptions = options
+            self.selectedMode = selectedMode
+            guard menuDidChange else { return }
+            self.configureNavigationItems()
         }
     }
 
@@ -256,15 +262,17 @@ final class VTHomeViewController: VTViewController {
         }
     }
 
-    /// Updates the status HUD with the latest robot state and battery information.
+    /// Updates the status HUD and forwards the latest server state into the home map and controls.
     private func updateRobotStatus(with state: VTStateAttributeList) async {
+        latestRobotState = state
         isMappingActive = state.statusFlag == .mapping
         homeMapViewController.isMappingActive = isMappingActive
+        await homeMapViewController.updateRobotState(state)
         applyHomeCleaningConfiguration()
         robotStatusView.update(forStatus: state.statusState.description, batteryLevel: state.batterLevel)
     }
 
-    /// Derives the robot-control action configuration from the current home-map state.
+    /// Derives the robot-control configuration from current server state plus local home-map draft data.
     private func applyHomeCleaningConfiguration() {
         if isMappingActive {
             robotControlViewController.currentConfiguration = .full
@@ -272,17 +280,43 @@ final class VTHomeViewController: VTViewController {
         }
 
         let iterations = robotControlViewController.currentIterations
-        let configuration: VTCleaningConfiguration = switch selectedMode {
+        let configuration: VTCleaningConfiguration = switch latestRobotState?.statusFlag {
         case .segment:
-            if selectedSegmentIDs.isEmpty {
+            .segments(ids: [], customOrder: false, iterations: iterations)
+        case .zone, .spot:
+            .zones(selectedZones, iterations: iterations)
+        case .target:
+            .goTo(selectedGoToCoordinate ?? VTMapCoordinate(x: -1, y: -1))
+        case .some(.none), nil:
+            if latestRobotState?.statusState == .cleaning {
                 .full
             } else {
-                .segments(ids: selectedSegmentIDs.sorted(), customOrder: false, iterations: iterations)
+                switch selectedMode {
+                case .segment:
+                    if selectedSegmentIDs.isEmpty {
+                        .full
+                    } else {
+                        .segments(ids: selectedSegmentIDs.sorted(), customOrder: false, iterations: iterations)
+                    }
+                case .zone:
+                    .zones(selectedZones, iterations: iterations)
+                case .goTo:
+                    .goTo(selectedGoToCoordinate ?? VTMapCoordinate(x: -1, y: -1))
+                }
             }
-        case .zone:
-            .zones(selectedZones, iterations: iterations)
-        case .goTo:
-            .goTo(selectedGoToCoordinate ?? VTMapCoordinate(x: -1, y: -1))
+        default:
+            switch selectedMode {
+            case .segment:
+                if selectedSegmentIDs.isEmpty {
+                    .full
+                } else {
+                    .segments(ids: selectedSegmentIDs.sorted(), customOrder: false, iterations: iterations)
+                }
+            case .zone:
+                .zones(selectedZones, iterations: iterations)
+            case .goTo:
+                .goTo(selectedGoToCoordinate ?? VTMapCoordinate(x: -1, y: -1))
+            }
         }
 
         robotControlViewController.currentConfiguration = configuration

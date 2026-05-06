@@ -493,6 +493,28 @@ class VTMapViewController: VTToolbarViewController {
         await didUpdateSelectedSegmentIDs(selectedSegmentIDs)
     }
 
+    /// Restores segment selection from stable segment identifiers after the map view redraws.
+    func setSelectedSegmentIDs(_ selectedSegmentIDs: Set<String>) async {
+        await mapView?.clearSelection()
+        await legendView.clearSelection()
+
+        guard !selectedSegmentIDs.isEmpty else {
+            updateToolbarItems()
+            await didUpdateSelectedSegmentIDs([])
+            return
+        }
+
+        for (index, layer) in segmentLayer.enumerated() {
+            guard let segmentID = layer.segmentId, selectedSegmentIDs.contains(segmentID) else { continue }
+            await mapView?.select(layer: layer)
+            await legendView.select(at: index)
+        }
+
+        let restoredSegmentIDs = Set(selectedSegments.compactMap(\.segmentId))
+        updateToolbarItems()
+        await didUpdateSelectedSegmentIDs(restoredSegmentIDs)
+    }
+
     /// Shows or hides the shared legend without changing its contents.
     func setLegendHidden(_ isHidden: Bool) {
         legendView.isHidden = isHidden

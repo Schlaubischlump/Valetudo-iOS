@@ -6,21 +6,12 @@
 //
 import UIKit
 
-/// Maps the robot's current activity to UI-specific control state.
+/// Maps the robot's current activity to start/pause control semantics.
 private enum VTActiveRobotAction {
     case segment
     case zone
     case goTo
     case mapping
-
-    var badgeImage: UIImage? {
-        switch self {
-        case .segment: .segmentedCleanup
-        case .zone: .zoneCleanup
-        case .goTo: .goToLocation
-        case .mapping: .mappingPass
-        }
-    }
 
     var controlMode: VTRobotControlMode? {
         switch self {
@@ -537,7 +528,7 @@ class VTRobotControlViewController: VTViewController {
         updateStartPausePresentation(with: latestStateAttributes)
     }
 
-    /// Derives the correct start or pause presentation from the current robot state.
+    /// Derives whether the primary control should currently behave as start or pause.
     @MainActor
     private func updateStartPausePresentation(with state: VTStateAttributeList) {
         let activeAction = resolvedActiveAction(from: state)
@@ -549,10 +540,9 @@ class VTRobotControlViewController: VTViewController {
         }
 
         let canPauseCurrentAction = state.isStarted && (activeAction == .mapping || activeAction?.controlMode == currentConfiguration.controlMode)
-        let startBadge = state.isResumable ? activeAction?.badgeImage : currentConfiguration.badgeImage
         startPauseStopControl.startPausePresentation = canPauseCurrentAction
             ? .pause
-            : .start(badge: startBadge)
+            : .start
 
         if state.isStarted || state.isPaused {
             startPauseStopControl.isStartPauseEnabled = true
@@ -563,7 +553,7 @@ class VTRobotControlViewController: VTViewController {
         }
     }
 
-    /// Resolves the currently active logical action from the robot's raw state flags.
+    /// Resolves the active action class used for pause handling and resumable fallback.
     private func resolvedActiveAction(from state: VTStateAttributeList) -> VTActiveRobotAction? {
         switch state.statusFlag {
         case .segment:

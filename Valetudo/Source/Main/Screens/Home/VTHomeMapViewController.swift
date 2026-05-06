@@ -16,6 +16,25 @@ final class VTHomeMapViewController: VTMapViewController {
         let isEnabled: Bool
     }
 
+    /// Describes the currently active robot task when the home view is locked to live controls.
+    private enum LockedOperation: Equatable {
+        case fullCleanup
+        case segment
+        case zone
+        case goTo
+
+        var mode: VTRobotControlMode {
+            switch self {
+            case .fullCleanup, .segment:
+                .segment
+            case .zone:
+                .zone
+            case .goTo:
+                .goTo
+            }
+        }
+    }
+
     /// Notifies the parent when the visible title should reflect a new active mode.
     var onModeTitleChanged: ((String) -> Void)?
     /// Notifies the parent when the dropdown contents or current selection changed.
@@ -43,6 +62,14 @@ final class VTHomeMapViewController: VTMapViewController {
     private var zoneCountRange = VTZoneCleaningCountRange(min: 1, max: 1)
     /// Cached obstacle-image capability flag used when building obstacle callouts.
     private var obstacleImagesAreEnabled = false
+    /// Latest raw map snapshot used to rebuild mode-specific rendering and editable overlays.
+    private var latestMapData: VTMapData?
+    /// Latest robot state used to derive server-driven mode and lock state.
+    private var latestRobotState: VTStateAttributeList?
+    /// Tracks whether the current zone-mode session has already been initialized from active zones.
+    private var hasInitializedZoneOverlaysForCurrentModeSession = false
+    /// Current live operation that locks mode switching and local editing while stop/pause controls are active.
+    private var lockedOperation: LockedOperation?
     /// Locks the home map into a passive live-view state while the robot is running a mapping pass.
     var isMappingActive = false {
         didSet {
@@ -50,16 +77,27 @@ final class VTHomeMapViewController: VTMapViewController {
 
             if isMappingActive {
                 Task { [weak self] in
-                    await self?.clearSegmentSelection()
-                    self?.mapView?.clearTransientOverlays()
-                    self?.notifyHomeStateChanged()
-                    self?.refreshControls()
+                    guard let self else { return }
+                    if mode != .segment {
+                        hasInitializedZoneOverlaysForCurrentModeSession = false
+                        mode = .segment
+                        onModeChanged?(mode)
+                    }
+                    await clearSegmentSelection()
+                    mapView?.clearTransientOverlays()
+                    notifyHomeStateChanged()
+                    refreshControls()
                 }
             } else {
                 notifyHomeStateChanged()
                 refreshControls()
             }
         }
+    }
+
+    /// Whether the home view is currently locked to the server-reported active operation.
+    private var isModeLocked: Bool {
+        lockedOperation != nil
     }
 
     /// Creates the home map controller bound to the provided API client.
@@ -97,7 +135,7 @@ final class VTHomeMapViewController: VTMapViewController {
 
     /// Only segment mode allows direct segment selection on the map or legend.
     override func canChangeSelection(forLayer _: VTLayer, isSelected _: Bool) async -> Bool {
-        !isMappingActive && mode == .segment && supportsSegmentation
+        !isMappingActive && !isModeLocked && mode == .segment && supportsSegmentation
     }
 
     /// Mirrors the shared segment selection into the robot control configuration.
@@ -110,7 +148,7 @@ final class VTHomeMapViewController: VTMapViewController {
     /// Treats empty-map taps as go-to target placement while go-to mode is active.
     override func didTapMap(at point: CGPoint) async -> Bool {
         guard !isMappingActive else { return true }
-        guard mode == .goTo else { return false }
+        guard mode == .goTo, !isModeLocked else { return false }
 
         if let overlay = goToOverlay {
             overlay.centerPoint = point
@@ -125,9 +163,14 @@ final class VTHomeMapViewController: VTMapViewController {
         return true
     }
 
-    /// Rebinds overlay callbacks after each map refresh so local overlay changes keep controls in sync.
+    /// Rebinds map callbacks after each refresh so transient overlay edits keep the home controls in sync.
     override func applyMapData(_ data: VTMapData) async {
+        let selectedSegmentIDs = Set(selectedSegments.compactMap(\.segmentId))
+        let selectedZoneRect = selectedZoneOverlayRect
+        latestMapData = data
         await super.applyMapData(data)
+        await setSelectedSegmentIDs(selectedSegmentIDs)
+        synchronizeZonePresentationWithCurrentState()
 
         mapView?.onEntityClicked = { [weak self] entity, point in
             guard let self else { return false }
@@ -142,18 +185,74 @@ final class VTHomeMapViewController: VTMapViewController {
             self?.refreshControls()
         }
 
+        restoreZoneSelection(matching: selectedZoneRect)
         refreshControls()
+    }
+
+    /// Hides server-reported active zones everywhere except locked zone mode, where they remain visible.
+    override func filterMapData(from mapData: VTMapData) -> VTMapData {
+        guard mapData.entities.contains(where: { $0.type == .active_zone }) else {
+            return mapData
+        }
+
+        if mode == .zone, isModeLocked {
+            return mapData
+        }
+
+        return VTMapData(
+            size: mapData.size,
+            pixelSize: mapData.pixelSize,
+            layers: mapData.layers,
+            entities: mapData.entities.filter { $0.type != .active_zone },
+            metaData: mapData.metaData
+        )
     }
 
     /// Switches the home map into a new mode and clears any state owned by the previous one.
     func selectMode(_ mode: VTRobotControlMode) {
-        guard !isMappingActive, isModeEnabled(mode), self.mode != mode else { return }
+        guard !isMappingActive, !isModeLocked, isModeEnabled(mode), self.mode != mode else { return }
 
+        if self.mode != .zone || mode != .zone {
+            hasInitializedZoneOverlaysForCurrentModeSession = false
+        }
         self.mode = mode
         onModeChanged?(mode)
         Task { [weak self] in
             await self?.applyModeTransition()
         }
+    }
+
+    /// Applies the latest server state to home mode selection and lock handling.
+    func updateRobotState(_ state: VTStateAttributeList) async {
+        latestRobotState = state
+        await synchronizeModeWithServerState(state)
+        await synchronizeLockedOperationState()
+    }
+
+    /// Applies the server-reported active mode whenever the current state provides concrete information.
+    private func synchronizeModeWithServerState(_ state: VTStateAttributeList) async {
+        let serverMode: VTRobotControlMode? = switch state.statusFlag {
+        case .segment, .mapping:
+            .segment
+        case .zone, .spot:
+            .zone
+        case .target:
+            .goTo
+        case .some(.none):
+            state.statusState == .cleaning ? .segment : nil
+        case .resumable, nil:
+            nil
+        }
+
+        guard let serverMode, mode != serverMode else { return }
+
+        if mode != .zone || serverMode != .zone {
+            hasInitializedZoneOverlaysForCurrentModeSession = false
+        }
+
+        mode = serverMode
+        onModeChanged?(mode)
+        await applyModeTransition()
     }
 
     // MARK: - Overlay Accessors
@@ -170,6 +269,15 @@ final class VTHomeMapViewController: VTMapViewController {
         else { return nil }
 
         return selectedOverlayID
+    }
+
+    /// Geometry of the currently selected zone overlay, if any.
+    private var selectedZoneOverlayRect: CGRect? {
+        guard let selectedZoneOverlayID,
+              let overlay = mapView?.overlay(withID: selectedZoneOverlayID) as? VTHomeZoneMapOverlay
+        else { return nil }
+
+        return overlay.rect
     }
 
     /// The single go-to target overlay currently present on the map, if any.
@@ -210,6 +318,7 @@ final class VTHomeMapViewController: VTMapViewController {
     private func applyModeTransition() async {
         await clearSegmentSelection()
         mapView?.clearTransientOverlays()
+        await reapplyLatestMapData()
 
         switch mode {
         case .segment:
@@ -218,7 +327,9 @@ final class VTHomeMapViewController: VTMapViewController {
         case .zone:
             setLegendHidden(!supportsSegmentation)
             setLegendInteractionEnabled(false)
-            ensureMinimumZoneOverlays()
+            if !initializeZoneOverlaysFromMapDataIfNeeded() {
+                ensureMinimumZoneOverlays()
+            }
         case .goTo:
             setLegendHidden(!supportsSegmentation)
             setLegendInteractionEnabled(false)
@@ -229,12 +340,122 @@ final class VTHomeMapViewController: VTMapViewController {
         refreshControls()
     }
 
-    /// Emits the current raw home-map state so the parent can derive an action configuration.
+    /// Updates the current lock state to match the active operation reported by the server.
+    private func synchronizeLockedOperationState() async {
+        let previousOperation = lockedOperation
+        let nextOperation = resolvedLockedOperation(from: latestRobotState, previousOperation: previousOperation)
+
+        guard previousOperation != nextOperation else {
+            refreshControls()
+            return
+        }
+
+        lockedOperation = nextOperation
+
+        if let nextOperation {
+            await enterLockedOperation(nextOperation)
+        } else if let previousOperation {
+            await exitLockedOperation(previousOperation)
+        } else {
+            refreshControls()
+        }
+    }
+
+    /// Infers the currently locked operation from the latest robot state.
+    private func resolvedLockedOperation(
+        from state: VTStateAttributeList?,
+        previousOperation: LockedOperation?
+    ) -> LockedOperation? {
+        guard let state else { return nil }
+
+        if state.statusFlag == .resumable {
+            return previousOperation
+        }
+
+        guard state.isStarted, state.isStoppable else { return nil }
+
+        switch state.statusFlag {
+        case .segment:
+            return .segment
+        case .zone, .spot:
+            return .zone
+        case .target:
+            return .goTo
+        case .mapping:
+            return nil
+        case .resumable:
+            return previousOperation
+        case .some(.none), nil:
+            if state.statusState == .cleaning {
+                return .fullCleanup
+            }
+            return previousOperation
+        }
+    }
+
+    /// Switches the map into its locked live-view representation for the running operation.
+    private func enterLockedOperation(_ operation: LockedOperation) async {
+        if mode != operation.mode {
+            hasInitializedZoneOverlaysForCurrentModeSession = false
+            mode = operation.mode
+            onModeChanged?(mode)
+        }
+
+        setLegendHidden(!supportsSegmentation)
+        setLegendInteractionEnabled(false)
+        mapView?.clearOverlaySelection()
+
+        switch operation {
+        case .fullCleanup:
+            mapView?.clearTransientOverlays()
+            await clearSegmentSelection()
+        case .segment:
+            mapView?.clearTransientOverlays()
+        case .zone:
+            mapView?.clearTransientOverlays()
+            await clearSegmentSelection()
+            await reapplyLatestMapData()
+        case .goTo:
+            mapView?.clearTransientOverlays()
+            await clearSegmentSelection()
+        }
+
+        notifyHomeStateChanged()
+        refreshControls()
+    }
+
+    /// Restores local editing behavior after the active operation has fully stopped.
+    private func exitLockedOperation(_ previousOperation: LockedOperation) async {
+
+        switch previousOperation {
+        case .fullCleanup, .segment:
+            setLegendInteractionEnabled(mode == .segment && supportsSegmentation)
+        case .zone:
+            hasInitializedZoneOverlaysForCurrentModeSession = false
+            await reapplyLatestMapData()
+            if !initializeZoneOverlaysFromMapDataIfNeeded() {
+                ensureMinimumZoneOverlays()
+            }
+        case .goTo:
+            ensureGoToOverlay()
+        }
+
+        notifyHomeStateChanged()
+        refreshControls()
+    }
+
+    /// Reapplies the latest raw map snapshot so mode-specific filtering and styling take effect.
+    private func reapplyLatestMapData() async {
+        guard let latestMapData else { return }
+        await applyMapData(latestMapData)
+    }
+
+    /// Re-emits the current home-map state after local overlay or selection changes.
     private func synchronizeConfigurationWithCurrentMode() {
         notifyHomeStateChanged()
     }
 
-    /// Emits the current raw home-map state so the parent can derive an action configuration.
+    /// Emits the current home-map draft state used by the parent to build a cleaning configuration.
     private func notifyHomeStateChanged() {
         guard !isMappingActive else {
             onSelectedSegmentIDsChanged?([])
@@ -247,8 +468,12 @@ final class VTHomeMapViewController: VTMapViewController {
         case .segment:
             onSelectedSegmentIDsChanged?(Set(selectedSegments.compactMap(\.segmentId)))
         case .zone:
-            ensureMinimumZoneOverlays()
-            onZonesChanged?(currentZones())
+            if isModeLocked {
+                onZonesChanged?(serverZones())
+            } else {
+                ensureMinimumZoneOverlays()
+                onZonesChanged?(currentZones())
+            }
         case .goTo:
             onGoToCoordinateChanged?(currentGoToCoordinate())
         }
@@ -256,10 +481,15 @@ final class VTHomeMapViewController: VTMapViewController {
 
     /// Converts the currently placed go-to overlay into backend coordinate space.
     private func currentGoToCoordinate() -> VTMapCoordinate? {
-        guard let mapView, let goToOverlay else { return nil }
+        if !isModeLocked, let mapView, let goToOverlay {
+            let point = mapView.cmCoordinate(fromOverlayPoint: goToOverlay.centerPoint)
+            return VTMapCoordinate(x: Int(point.x.rounded()), y: Int(point.y.rounded()))
+        }
 
-        let point = mapView.cmCoordinate(fromOverlayPoint: goToOverlay.centerPoint)
-        return VTMapCoordinate(x: Int(point.x.rounded()), y: Int(point.y.rounded()))
+        return latestMapData?.entities
+            .first(where: { $0.type == .go_to_target })?
+            .centerPoint
+            .map(coordinate(from:))
     }
 
     /// Serializes the editable zone overlays into the backend's rectangular zone payloads.
@@ -284,9 +514,39 @@ final class VTHomeMapViewController: VTMapViewController {
         }
     }
 
+    /// Serializes server-rendered active zones while the mode is locked to a running zone clean.
+    private func serverZones() -> [VTZoneCleaningZone] {
+        guard let latestMapData else { return [] }
+
+        return latestMapData.entities.compactMap { entity in
+            guard entity.type == .active_zone else { return nil }
+            return zoneCleaningZone(from: entity)
+        }
+    }
+
     /// Converts a floating-point cm-space point into the integer coordinate type used by the API.
     private func coordinate(from point: CGPoint) -> VTMapCoordinate {
         VTMapCoordinate(x: Int(point.x.rounded()), y: Int(point.y.rounded()))
+    }
+
+    /// Converts an `active_zone` entity from server coordinates into a zone-cleaning payload.
+    private func zoneCleaningZone(from entity: VTEntity) -> VTZoneCleaningZone? {
+        guard entity.points.count >= 8 else { return nil }
+
+        let coordinates = stride(from: 0, to: min(entity.points.count, 8), by: 2).map { index in
+            VTMapCoordinate(x: entity.points[index], y: entity.points[index + 1])
+        }
+
+        guard coordinates.count == 4 else { return nil }
+        return VTZoneCleaningZone(
+            points: VTRectangularZonePoints(
+                pA: coordinates[0],
+                pB: coordinates[1],
+                pC: coordinates[2],
+                pD: coordinates[3]
+            ),
+            metaData: nil
+        )
     }
 
     // MARK: - Robot Control Actions
@@ -294,6 +554,12 @@ final class VTHomeMapViewController: VTMapViewController {
     /// Intercepts the shared start action for zone-cleaning and go-to modes.
     func handleStartAction(for configuration: VTCleaningConfiguration) async throws -> Bool {
         switch configuration {
+        case let .segments(ids, customOrder, iterations):
+            try await client.clean(segmentIDs: ids, customOrder: customOrder, iterations: iterations)
+            await clearSegmentSelection()
+            synchronizeConfigurationWithCurrentMode()
+            refreshControls()
+            return true
         case let .zones(zones, iterations):
             guard !zones.isEmpty else {
                 showError(
@@ -303,6 +569,9 @@ final class VTHomeMapViewController: VTMapViewController {
                 return true
             }
             try await client.clean(zones: zones, iterations: iterations)
+            mapView?.clearOverlaySelection()
+            synchronizeConfigurationWithCurrentMode()
+            refreshControls()
             return true
         case .goTo:
             // There is a bug in Valetudo. If you paused a Go-To and restart with a new location the robot is lost.
@@ -316,14 +585,14 @@ final class VTHomeMapViewController: VTMapViewController {
             }
             try await client.goTo(x: coordinate.x, y: coordinate.y)
             return true
-        case .full, .segments:
+        case .full:
             return false
         }
     }
 
     // MARK: - Toolbar
 
-    /// Returns the title displayed by the parent controller for the current mode and selection state.
+    /// Returns the title displayed by the parent controller for the current mode.
     private func currentModeTitle() -> String {
         if isMappingActive {
             return "MAP_OPTIONS_MAPPING_PASS_TITLE".localized()
@@ -331,7 +600,7 @@ final class VTHomeMapViewController: VTMapViewController {
 
         switch mode {
         case .segment:
-            return selectedSegments.isEmpty ? "FULL_CLEANUP".localized() : "SEGMENT_CLEANUP".localized()
+            return "SEGMENT_CLEANUP".localized()
         case .zone:
             return "ZONE_CLEANUP".localized()
         case .goTo:
@@ -341,7 +610,7 @@ final class VTHomeMapViewController: VTMapViewController {
 
     /// Builds the transient toolbar model for the currently active home mode.
     override var toolbarActionDefinitions: [ToolbarActionDefinition] {
-        guard !isMappingActive else { return [] }
+        guard !isMappingActive, !isModeLocked else { return [] }
 
         switch mode {
         case .segment:
@@ -386,15 +655,17 @@ final class VTHomeMapViewController: VTMapViewController {
         onModeTitleChanged?(currentModeTitle())
         onModeOptionsChanged?(
             isMappingActive ? [] : [
-                .init(mode: .segment, isEnabled: true),
-                .init(mode: .zone, isEnabled: supportsZoneCleaning),
-                .init(mode: .goTo, isEnabled: supportsGoToLocation),
+                .init(mode: .segment, isEnabled: !isModeLocked || mode == .segment),
+                .init(mode: .zone, isEnabled: supportsZoneCleaning && (!isModeLocked || mode == .zone)),
+                .init(mode: .goTo, isEnabled: supportsGoToLocation && (!isModeLocked || mode == .goTo)),
             ],
             mode
         )
 
-        if isMappingActive || mode != .segment {
+        if isMappingActive || isModeLocked || mode != .segment {
             setLegendInteractionEnabled(false)
+        } else if mode == .segment {
+            setLegendInteractionEnabled(supportsSegmentation)
         }
         updateToolbarItems()
     }
@@ -403,7 +674,7 @@ final class VTHomeMapViewController: VTMapViewController {
 
     /// Ensures zone mode starts with at least the minimum allowed number of editable zone overlays.
     private func ensureMinimumZoneOverlays() {
-        guard let mapView else { return }
+        guard !isModeLocked, let mapView else { return }
 
         let missingZoneCount = max(0, zoneCountRange.min - zoneOverlays.count)
         guard missingZoneCount > 0 else { return }
@@ -428,9 +699,95 @@ final class VTHomeMapViewController: VTMapViewController {
         }
     }
 
+    /// Keeps zone mode aligned with the current lock state after any map redraw.
+    private func synchronizeZonePresentationWithCurrentState() {
+        guard mode == .zone else { return }
+
+        if isModeLocked {
+            mapView?.clearTransientOverlays()
+            return
+        }
+
+        guard zoneOverlays.isEmpty else { return }
+
+        if !initializeZoneOverlaysFromMapDataIfNeeded() {
+            ensureMinimumZoneOverlays()
+        }
+    }
+
+    /// Seeds zone mode from the robot's current active zones once per mode session.
+    @discardableResult
+    private func initializeZoneOverlaysFromMapDataIfNeeded() -> Bool {
+        guard mode == .zone,
+              !isModeLocked,
+              !hasInitializedZoneOverlaysForCurrentModeSession,
+              let mapData = latestMapData,
+              let mapView
+        else { return false }
+
+        hasInitializedZoneOverlaysForCurrentModeSession = true
+        let overlays = activeZoneOverlays(from: mapData)
+        guard !overlays.isEmpty else { return false }
+        mapView.setTransientOverlays(overlays)
+        synchronizeConfigurationWithCurrentMode()
+        refreshControls()
+        return true
+    }
+
+    /// Converts server-provided active zones into editable overlay-space rectangles.
+    private func activeZoneOverlays(from mapData: VTMapData) -> [VTHomeZoneMapOverlay] {
+        mapData.entities.compactMap { entity in
+            guard entity.type == .active_zone else { return nil }
+            return homeZoneOverlay(from: entity, in: mapData)
+        }
+    }
+
+    /// Builds a rectangular zone overlay from an active-zone entity if its geometry is valid.
+    private func homeZoneOverlay(from entity: VTEntity, in mapData: VTMapData) -> VTHomeZoneMapOverlay? {
+        let zonePoints = stride(from: 0, to: entity.points.count, by: 2).compactMap { index -> CGPoint? in
+            guard entity.points.indices.contains(index + 1) else { return nil }
+            return CGPoint(
+                x: CGFloat(entity.points[index]) / CGFloat(mapData.pixelSize) - mapData.boundingRect.minX,
+                y: CGFloat(entity.points[index + 1]) / CGFloat(mapData.pixelSize) - mapData.boundingRect.minY
+            )
+        }
+
+        guard let firstPoint = zonePoints.first else { return nil }
+
+        let rect = zonePoints.dropFirst().reduce(
+            CGRect(origin: firstPoint, size: .zero)
+        ) { partialResult, point in
+            partialResult.union(CGRect(origin: point, size: .zero))
+        }
+
+        guard !rect.isNull, !rect.isEmpty else { return nil }
+        return VTHomeZoneMapOverlay(rect: rect)
+    }
+
+    /// Re-selects a zone overlay after redraw when its geometry still exists in the refreshed state.
+    private func restoreZoneSelection(matching rect: CGRect?) {
+        guard mode == .zone,
+              !isModeLocked,
+              let rect,
+              let mapView,
+              let overlay = zoneOverlays.first(where: { $0.rect.equalTo(rect) })
+        else { return }
+
+        mapView.setTransientOverlays(mapView.transientOverlays, selectedOverlayID: overlay.id)
+    }
+
     /// Ensures go-to mode always has a target placed at the map center before the user interacts.
     private func ensureGoToOverlay() {
-        guard goToOverlay == nil, let mapView else { return }
+        guard !isModeLocked, goToOverlay == nil, let mapView else { return }
+
+        if let serverCoordinate = latestMapData?.entities
+            .first(where: { $0.type == .go_to_target })?
+            .centerPoint
+        {
+            let overlay = VTGoToMapOverlay(centerPoint: mapView.overlayPoint(fromMapCoordinate: serverCoordinate))
+            mapView.addOverlay(overlay)
+            return
+        }
 
         let center = CGPoint(
             x: mapView.data.boundingRect.width / 2,
@@ -533,3 +890,5 @@ final class VTHomeMapViewController: VTMapViewController {
         calloutPresenter.presentCallout(callout, in: mapView, at: point)
     }
 }
+
+extension VTHomeMapViewController.ModeOption: Equatable {}

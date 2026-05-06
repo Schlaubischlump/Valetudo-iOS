@@ -37,8 +37,10 @@ class VTMapView: UIView, UIGestureRecognizerDelegate {
     /// Handles taps on empty map space using overlay coordinates.
     var onMapTapped: ((CGPoint) async -> Bool)?
 
-    /// Root Core Animation layer containing the rendered map content.
+    /// Stable Core Animation root layer that keeps overlay interactions alive across map redraws.
     private var mapLayer: CALayer
+    /// Rendered map content currently displayed beneath the interactive overlay layer.
+    private var mapContentLayer: CALayer
 
     // MARK: - Overlay
 
@@ -77,16 +79,22 @@ class VTMapView: UIView, UIGestureRecognizerDelegate {
 
         let scale = UIScreen.current?.scale ?? kDefaultScale
         let fittingFrame = frame.size.insetBy(dx: pad, dy: pad)
-        mapLayer = data.toLayer(fitting: fittingFrame, screenScale: scale, hideNoGoAreas: hideNoGoAreas)
+        let initialMapContentLayer = data.toLayer(
+            fitting: fittingFrame,
+            screenScale: scale,
+            hideNoGoAreas: hideNoGoAreas,
+        )
+        mapLayer = CALayer()
+        mapContentLayer = initialMapContentLayer
 
-        // use the size of the mapLayer to get a fitting size for the parent
-        let size = mapLayer.frame.size
+        // Use the scaled content size to determine the initial view size.
+        let size = initialMapContentLayer.frame.size
 
         super.init(frame: CGRect(origin: frame.origin, size: size.insetBy(dx: -pad, dy: -pad)))
 
-        mapLayer.position = CGPoint(x: pad / 2.0, y: pad / 2.0)
+        configureMapRootLayer(using: initialMapContentLayer)
         layer.addSublayer(mapLayer)
-        attachOverlayLayer()
+        attachOverlayLayerIfNeeded()
 
         configureGestures()
         bindOverlayController()
@@ -105,17 +113,25 @@ class VTMapView: UIView, UIGestureRecognizerDelegate {
     /// Rebuilds the rendered map from a fresh snapshot while preserving the current view transform.
     func updateData(data: VTMapData) async {
         self.data = data
+        redrawMapContent()
+        restoreSelectionAppearance(for: selectedLayers)
+    }
+
+    /// Rebuilds the rendered map content from the current snapshot and appearance settings.
+    private func redrawMapContent() {
         let scale = UIScreen.current?.scale ?? kDefaultScale
         let fittingFrame = frame.size.insetBy(dx: pad, dy: pad)
-        let newMapLayer = data.toLayer(fitting: fittingFrame, screenScale: scale, hideNoGoAreas: hideNoGoAreas)
-        newMapLayer.position = mapLayer.position
-        let transform = mapLayer.transform
-        mapLayer.removeFromSuperlayer()
-        mapLayer = newMapLayer
-        mapLayer.transform = transform
-        layer.addSublayer(mapLayer)
-        attachOverlayLayer()
-        selectedLayers = []
+        let newMapLayer = data.toLayer(
+            fitting: fittingFrame,
+            screenScale: scale,
+            hideNoGoAreas: hideNoGoAreas,
+        )
+
+        mapContentLayer.removeFromSuperlayer()
+        mapContentLayer = newMapLayer
+        configureMapRootLayer(using: newMapLayer)
+        mapLayer.insertSublayer(newMapLayer, below: overlayLayer)
+        attachOverlayLayerIfNeeded()
     }
 
     // MARK: - Overlay
@@ -164,16 +180,42 @@ class VTMapView: UIView, UIGestureRecognizerDelegate {
         overlayController.overlay(withID: id)
     }
 
+    /// Keeps the stable map root aligned to the currently rendered content layer.
+    private func configureMapRootLayer(using contentLayer: CALayer) {
+        let existingTransform = mapLayer.transform
+        let existingPosition = mapLayer.position
+        let transform = CATransform3DIsIdentity(existingTransform) ? contentLayer.transform : existingTransform
+        let position = existingPosition == .zero ? CGPoint(x: pad / 2.0, y: pad / 2.0) : existingPosition
+
+        contentLayer.transform = CATransform3DIdentity
+        contentLayer.anchorPoint = .zero
+        contentLayer.position = .zero
+
+        mapLayer.bounds = contentLayer.bounds
+        mapLayer.anchorPoint = .zero
+        mapLayer.position = position
+        mapLayer.transform = transform
+    }
+
     /// Installs the generic overlay container above the map content so transient editing geometry
     /// shares the same scale and pan behavior as the persisted map.
-    private func attachOverlayLayer() {
-        overlayLayer.removeFromSuperlayer()
+    private func attachOverlayLayerIfNeeded() {
         overlayLayer.frame = mapLayer.bounds
         overlayLayer.anchorPoint = .zero
         overlayLayer.position = .zero
         overlayLayer.contentsScale = mapLayer.contentsScale
-        mapLayer.addSublayer(overlayLayer)
-        overlayController.attach(to: overlayLayer)
+        if overlayLayer.superlayer !== mapLayer {
+            mapLayer.addSublayer(overlayLayer)
+            overlayController.attach(to: overlayLayer)
+        }
+    }
+
+    /// Reapplies the selected styling after the rendered map content layer has been rebuilt.
+    private func restoreSelectionAppearance(for layers: Set<VTLayer>) {
+        selectedLayers = layers
+        for layer in layers {
+            shapeLayerForVTLayer(vtLayer: layer)?.fillColor = layer.fillColor?.darker(by: 0.5)
+        }
     }
 
     private func bindOverlayController() {
@@ -215,7 +257,11 @@ class VTMapView: UIView, UIGestureRecognizerDelegate {
     /// Clears the current segment selection without triggering external callbacks.
     func clearSelection() async {
         for layer in selectedLayers {
-            await toggleLayerSelection(for: layer, in: shapeLayerForVTLayer(vtLayer: layer)!, triggerCallback: false)
+            guard let shapeLayer = shapeLayerForVTLayer(vtLayer: layer) else {
+                selectedLayers.remove(layer)
+                continue
+            }
+            await toggleLayerSelection(for: layer, in: shapeLayer, triggerCallback: false)
         }
     }
 
@@ -232,7 +278,7 @@ class VTMapView: UIView, UIGestureRecognizerDelegate {
     }
 
     private func shapeLayerForVTLayer(vtLayer: VTLayer) -> VTLayerShapeLayer? {
-        mapLayer.sublayers?
+        mapContentLayer.sublayers?
             .compactMap { $0 as? VTLayerShapeLayer }
             .first(where: { vtLayer == $0.data })
     }
@@ -306,7 +352,7 @@ class VTMapView: UIView, UIGestureRecognizerDelegate {
 
         overlayController.clearSelection()
 
-        guard let shapeLayers = mapLayer.sublayers?
+        guard let shapeLayers = mapContentLayer.sublayers?
             .compactMap({ $0 as? (any VTShapeLayerProtocol) })
             .reversed() // reverse to make sure we iterate the topmost layer first
         else { return }
