@@ -6,8 +6,8 @@
 //
 import UIKit
 
-@MainActor
 /// Horizontally scrolling legend that displays selectable map overlay categories.
+@MainActor
 class VTLegendView: UIView {
     var items: [VTLegendItem] = [] {
         didSet {

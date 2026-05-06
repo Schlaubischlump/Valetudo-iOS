@@ -8,8 +8,8 @@ import CoreGraphics
 import QuartzCore
 import UIKit
 
-@MainActor
 /// Backing layer that renders and edits a resizable rectangular map overlay.
+@MainActor
 final class VTResizableRectangularMapOverlayLayer: VTMapOverlayLayer {
     private static let controlBackgroundZPosition: CGFloat = 10000
     private static let controlIconZPosition: CGFloat = 10001
@@ -77,8 +77,8 @@ final class VTResizableRectangularMapOverlayLayer: VTMapOverlayLayer {
         containsInteractivePoint(point) ? .select : .none
     }
 
-    @discardableResult
     /// Starts either a move or resize interaction based on the touched hit target.
+    @discardableResult
     override func beginInteraction(at point: CGPoint) -> Bool {
         guard let overlayModel else { return false }
 
@@ -125,8 +125,8 @@ final class VTResizableRectangularMapOverlayLayer: VTMapOverlayLayer {
         configure(with: overlayModel)
     }
 
-    @discardableResult
     /// Translates the rectangle by a keyboard or programmatic delta within the provided bounds.
+    @discardableResult
     override func translate(by delta: CGPoint, within bounds: CGRect?) -> Bool {
         guard let overlayModel else { return false }
 

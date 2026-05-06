@@ -8,8 +8,8 @@ import CoreGraphics
 import QuartzCore
 import UIKit
 
-@MainActor
 /// Backing layer that renders and manages direct manipulation for a line map overlay.
+@MainActor
 final class VTLineMapOverlayLayer: VTMapOverlayLayer {
     /// Immutable snapshot of the line geometry and styling to render.
     struct Configuration {
@@ -146,8 +146,8 @@ final class VTLineMapOverlayLayer: VTMapOverlayLayer {
         nearestHandle(to: point) != nil || containsOverlayPoint(point)
     }
 
-    @discardableResult
     /// Starts dragging an endpoint handle or the full line, depending on the hit target.
+    @discardableResult
     override func beginInteraction(at point: CGPoint) -> Bool {
         guard let configuration else { return false }
 
@@ -186,8 +186,8 @@ final class VTLineMapOverlayLayer: VTMapOverlayLayer {
         configure(with: callbacks.refresh(), callbacks: callbacks)
     }
 
-    @discardableResult
     /// Translates the full line by a keyboard or programmatic delta.
+    @discardableResult
     override func translate(by delta: CGPoint, within bounds: CGRect?) -> Bool {
         guard let callbacks else { return false }
         let changed = callbacks.translate(delta, bounds)

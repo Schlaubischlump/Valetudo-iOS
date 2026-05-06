@@ -107,8 +107,8 @@ struct VTRepeatItem: VTSegmentedItem {
     }
 }
 
-@MainActor
 /// Displays the primary robot controls and keeps them synchronized with live state updates.
+@MainActor
 class VTRobotControlViewController: VTViewController {
     /// Cleaning configuration to use when the start button is clicked.
     private var supportsSegmentation: Bool = false
@@ -270,8 +270,8 @@ class VTRobotControlViewController: VTViewController {
         stopSSEObservation()
     }
 
-    @MainActor
     /// Reconnects the live state stream and reloads the current control state.
+    @MainActor
     override func reconnectAndRefresh() async {
         // Cancel existing SSE task and reconnect
         stopSSEObservation()
@@ -361,8 +361,8 @@ class VTRobotControlViewController: VTViewController {
         )
     }
 
-    @MainActor
     /// Loads capabilities, presets, statistics, and the initial robot state for the screen.
+    @MainActor
     func loadInitialData() async throws {
         try await collecting { [weak self] run in
             guard let self else { return }
@@ -438,8 +438,8 @@ class VTRobotControlViewController: VTViewController {
 
     // MARK: - UI Updates
 
-    @MainActor
     /// Reloads button state from the latest state attributes endpoint.
+    @MainActor
     private func updateButtons() async {
         await serialTaskQueue.enqueue { [weak self] in
             guard let self else { return }
@@ -449,8 +449,8 @@ class VTRobotControlViewController: VTViewController {
         }
     }
 
-    @MainActor
     /// Rebuilds the iterations row for the currently selected cleaning mode.
+    @MainActor
     private func updateIterations() {
         let config = currentConfiguration
         let iterationRange: ClosedRange<Int> = switch config {
@@ -469,15 +469,15 @@ class VTRobotControlViewController: VTViewController {
         iterationsRow.isEnabled = config.canChangeIterations
     }
 
-    @MainActor
     /// Fetches the latest statistics payload and applies it to the statistics row.
+    @MainActor
     private func updateStatistics() async throws {
         let currentStatistics = try await client.getCurrentStatisticsCapability()
         await updateStatistics(currentStatistics)
     }
 
-    @MainActor
     /// Rebuilds the visible statistics controls from the provided datapoints.
+    @MainActor
     private func updateStatistics(_ statistics: [VTValetudoDataPoint]) async {
         let visibleStatistics = if availableStatistics.isEmpty {
             statistics
@@ -495,8 +495,8 @@ class VTRobotControlViewController: VTViewController {
         }
     }
 
-    @MainActor
     /// Applies state-dependent enablement and selected preset values to all visible controls.
+    @MainActor
     private func updateButtonStates(_ state: VTStateAttributeList) async {
         latestStateAttributes = state
         startPauseStopControl.isStopEnabled = state.isStoppable
@@ -530,15 +530,15 @@ class VTRobotControlViewController: VTViewController {
         modeRow.isEnabled = true
     }
 
-    @MainActor
     /// Refreshes the start/pause control using the last cached state attributes.
+    @MainActor
     private func updateStartPausePresentation() {
         guard let latestStateAttributes else { return }
         updateStartPausePresentation(with: latestStateAttributes)
     }
 
-    @MainActor
     /// Derives the correct start or pause presentation from the current robot state.
+    @MainActor
     private func updateStartPausePresentation(with state: VTStateAttributeList) {
         let activeAction = resolvedActiveAction(from: state)
 
@@ -581,8 +581,8 @@ class VTRobotControlViewController: VTViewController {
         }
     }
 
-    @MainActor
     /// Rebuilds the attachment row from the currently attached hardware accessories.
+    @MainActor
     private func updateAttachments(_ state: VTStateAttributeList) async {
         // Attachment rows are informational only, so they are recreated from scratch on each update.
         attachmentsControls.items = state.attachmendTypes.map { attachmentType in
@@ -703,8 +703,8 @@ class VTRobotControlViewController: VTViewController {
         }
     }
 
-    @MainActor
     /// Toggles mop-pad drying on the dock.
+    @MainActor
     private func dryMopPads() async {
         do {
             let attrs = try await client.getStateAttributes()
@@ -723,8 +723,8 @@ class VTRobotControlViewController: VTViewController {
         }
     }
 
-    @MainActor
     /// Toggles mop-pad cleaning on the dock.
+    @MainActor
     private func cleanMopPads() async {
         do {
             let attrs = try await client.getStateAttributes()
@@ -743,8 +743,8 @@ class VTRobotControlViewController: VTViewController {
         }
     }
 
-    @MainActor
     /// Triggers a manual auto-empty cycle on the dock.
+    @MainActor
     private func emptyDock() async {
         do {
             try await client.autoEmptyDock()

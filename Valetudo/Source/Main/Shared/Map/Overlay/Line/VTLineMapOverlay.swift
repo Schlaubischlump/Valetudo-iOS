@@ -7,8 +7,8 @@
 import CoreGraphics
 import UIKit
 
-@MainActor
 /// Editable map overlay that represents a line segment with optional endpoint constraints.
+@MainActor
 class VTLineMapOverlay: VTMapOverlay {
     /// Defines how a freshly inserted line should be positioned around the insertion point.
     enum InsertionBehavior {

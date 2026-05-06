@@ -27,7 +27,8 @@ class VTLegendItemView: UIView {
     }
 
     /// Creates a legend item view from an archive.
-    required init?(coder: NSCoder) {
+    @available(*, unavailable)
+    required init?(coder _: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
 
