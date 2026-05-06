@@ -426,7 +426,6 @@ final class VTHomeMapViewController: VTMapViewController {
 
     /// Restores local editing behavior after the active operation has fully stopped.
     private func exitLockedOperation(_ previousOperation: LockedOperation) async {
-
         switch previousOperation {
         case .fullCleanup, .segment:
             setLegendInteractionEnabled(mode == .segment && supportsSegmentation)

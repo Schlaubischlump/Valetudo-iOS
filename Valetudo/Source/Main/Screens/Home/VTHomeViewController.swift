@@ -170,11 +170,11 @@ final class VTHomeViewController: VTViewController {
         }
         homeMapViewController.onModeOptionsChanged = { [weak self] options, selectedMode in
             guard let self else { return }
-            let menuDidChange = self.modeOptions != options || self.selectedMode != selectedMode
-            self.modeOptions = options
+            let menuDidChange = modeOptions != options || self.selectedMode != selectedMode
+            modeOptions = options
             self.selectedMode = selectedMode
             guard menuDidChange else { return }
-            self.configureNavigationItems()
+            configureNavigationItems()
         }
     }
 

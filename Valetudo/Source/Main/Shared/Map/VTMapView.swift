@@ -82,7 +82,7 @@ class VTMapView: UIView, UIGestureRecognizerDelegate {
         let initialMapContentLayer = data.toLayer(
             fitting: fittingFrame,
             screenScale: scale,
-            hideNoGoAreas: hideNoGoAreas,
+            hideNoGoAreas: hideNoGoAreas
         )
         mapLayer = CALayer()
         mapContentLayer = initialMapContentLayer
@@ -124,7 +124,7 @@ class VTMapView: UIView, UIGestureRecognizerDelegate {
         let newMapLayer = data.toLayer(
             fitting: fittingFrame,
             screenScale: scale,
-            hideNoGoAreas: hideNoGoAreas,
+            hideNoGoAreas: hideNoGoAreas
         )
 
         mapContentLayer.removeFromSuperlayer()
