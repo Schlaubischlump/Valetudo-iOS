@@ -301,6 +301,7 @@ class VTMapViewController: VTToolbarViewController {
             await mapView.updateData(data: filteredMapData)
         }
 
+        await mapView?.clearSelection()
         await legendView.clearSelection()
         await updateLegend(data: filteredMapData)
         let selectedSegmentIDs = Set(selectedSegments.compactMap(\.segmentId))

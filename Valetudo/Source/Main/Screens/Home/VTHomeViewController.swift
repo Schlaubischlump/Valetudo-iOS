@@ -280,6 +280,19 @@ final class VTHomeViewController: VTViewController {
         }
 
         let iterations = robotControlViewController.currentIterations
+        let localConfiguration: VTCleaningConfiguration = switch selectedMode {
+        case .segment:
+            if selectedSegmentIDs.isEmpty {
+                .full
+            } else {
+                .segments(ids: selectedSegmentIDs.sorted(), customOrder: false, iterations: iterations)
+            }
+        case .zone:
+            .zones(selectedZones, iterations: iterations)
+        case .goTo:
+            .goTo(selectedGoToCoordinate ?? VTMapCoordinate(x: -1, y: -1))
+        }
+
         let configuration: VTCleaningConfiguration = switch latestRobotState?.statusFlag {
         case .segment:
             .segments(ids: [], customOrder: false, iterations: iterations)
@@ -288,35 +301,9 @@ final class VTHomeViewController: VTViewController {
         case .target:
             .goTo(selectedGoToCoordinate ?? VTMapCoordinate(x: -1, y: -1))
         case .some(.none), nil:
-            if latestRobotState?.statusState == .cleaning {
-                .full
-            } else {
-                switch selectedMode {
-                case .segment:
-                    if selectedSegmentIDs.isEmpty {
-                        .full
-                    } else {
-                        .segments(ids: selectedSegmentIDs.sorted(), customOrder: false, iterations: iterations)
-                    }
-                case .zone:
-                    .zones(selectedZones, iterations: iterations)
-                case .goTo:
-                    .goTo(selectedGoToCoordinate ?? VTMapCoordinate(x: -1, y: -1))
-                }
-            }
+            latestRobotState?.statusState == .cleaning ? .full : localConfiguration
         default:
-            switch selectedMode {
-            case .segment:
-                if selectedSegmentIDs.isEmpty {
-                    .full
-                } else {
-                    .segments(ids: selectedSegmentIDs.sorted(), customOrder: false, iterations: iterations)
-                }
-            case .zone:
-                .zones(selectedZones, iterations: iterations)
-            case .goTo:
-                .goTo(selectedGoToCoordinate ?? VTMapCoordinate(x: -1, y: -1))
-            }
+            localConfiguration
         }
 
         robotControlViewController.currentConfiguration = configuration
@@ -407,16 +394,10 @@ final class VTHomeViewController: VTViewController {
         change: [NSKeyValueChangeKey: Any]?,
         context _: UnsafeMutableRawPointer?
     ) {
-        guard keyPath == "frame",
-              let frame = (change?[.newKey] as? NSValue)?.cgRectValue
-        else { return }
+        guard keyPath == "frame", let frame = (change?[.newKey] as? NSValue)?.cgRectValue else { return }
 
-        Task<Void, Never> { @MainActor [weak self] in
-            guard let self,
-                  isCompact,
-                  presentedViewController === robotControlViewController
-            else { return }
-
+        Task { @MainActor [weak self] in
+            guard let self, isCompact, presentedViewController === robotControlViewController else { return }
             updateLegendPosition(basedOn: frame.height, animate: false)
         }
     }
