@@ -183,9 +183,8 @@ class VTMapViewController: VTToolbarViewController {
 
     /// Handles confirmed legend selection changes by mirroring them into the map and recalculating
     /// visible toolbar actions.
-    private func legendDidChangeSelection(atIndex index: Int, isSelected: Bool) async {
-        guard segmentLayer.indices.contains(index) else { return }
-        let layer = segmentLayer[index]
+    private func legendDidChangeSelection(for identifier: String?, isSelected: Bool) async {
+        guard let layer = segmentLayer.first(where: { $0.segmentId == identifier }) else { return }
 
         if isSelected {
             await mapView?.select(layer: layer)
@@ -199,9 +198,8 @@ class VTMapViewController: VTToolbarViewController {
     }
 
     /// Validates legend taps against the same selection rules used for direct map interaction.
-    private func legendShouldChangedSelection(atIndex index: Int, isSelected: Bool) async -> Bool {
-        guard segmentLayer.indices.contains(index) else { return false }
-        let layer = segmentLayer[index]
+    private func legendShouldChangeSelection(for identifier: String?, isSelected: Bool) async -> Bool {
+        guard let layer = segmentLayer.first(where: { $0.segmentId == identifier }) else { return false }
         return await canChangeSelection(forLayer: layer, isSelected: isSelected)
     }
 
@@ -210,17 +208,24 @@ class VTMapViewController: VTToolbarViewController {
         legendView.backgroundColor = .clear
         legendView.shouldChangeSelection = { [weak self] index, isSelected in
             guard let self else { return false }
-            return await legendShouldChangedSelection(atIndex: index, isSelected: isSelected)
+            let identifier = self.legendView.items[index].identifier
+            return await legendShouldChangeSelection(for: identifier, isSelected: isSelected)
         }
         legendView.didChangeSelection = { [weak self] index, isSelected in
-            await self?.legendDidChangeSelection(atIndex: index, isSelected: isSelected)
+            guard let self else { return }
+            let identifier = self.legendView.items[index].identifier
+            await legendDidChangeSelection(for: identifier, isSelected: isSelected)
         }
     }
 
     /// Rebuilds the legend items from the current segment layers shown in the editor.
     private func updateLegend(data _: VTMapData) async {
         legendView.items = segmentLayer.map { layer in
-            VTLegendItem(color: layer.fillColor ?? .black, text: layer.name ?? layer.segmentId ?? "")
+            VTLegendItem(
+                color: layer.fillColor ?? .black,
+                text: layer.name ?? layer.segmentId ?? "",
+                identifier: layer.segmentId
+            )
         }.sorted { $0.text < $1.text }
     }
 
@@ -235,7 +240,7 @@ class VTMapViewController: VTToolbarViewController {
     /// Handles confirmed map selection changes by mirroring them into the legend and recalculating
     /// visible toolbar actions.
     private func mapDidChangeSelection(forLayer layer: VTLayer, isSelected: Bool) async {
-        guard let index = segmentLayer.firstIndex(of: layer) else { return }
+        guard let index = legendView.items.firstIndex(where: { layer.segmentId == $0.identifier }) else { return }
 
         if isSelected {
             await legendView.select(at: index)

@@ -8,18 +8,21 @@ import UIKit
 
 /// Immutable presentation model for one entry in the map legend.
 struct VTLegendItem {
+    let identifier: String?
     let color: UIColor
     let text: String
 
     /// Creates a legend item from a UIKit color and display text.
-    init(color: UIColor, text: String) {
+    init(color: UIColor, text: String, identifier: String?) {
         self.color = color
         self.text = text
+        self.identifier = identifier
     }
 
     /// Creates a legend item from a Core Graphics color and display text.
-    init(color: CGColor, text: String) {
+    init(color: CGColor, text: String, identifier: String?) {
         self.color = UIColor(cgColor: color)
         self.text = text
+        self.identifier = identifier
     }
 }
