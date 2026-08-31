@@ -12,10 +12,7 @@ enum VTManualControlDriver {
     case directional(supportedDirections: Set<VTMoveDirection>)
     case highResolution
 
-    static func resolve(
-        capabilities: Set<VTCapability>,
-        client: VTAPIClientProtocol
-    ) async -> VTManualControlDriver? {
+    static func resolve(capabilities: Set<VTCapability>, client: VTAPIClientProtocol) async -> VTManualControlDriver? {
         if capabilities.contains(.highResolutionManualControl) {
             return .highResolution
         }
@@ -36,44 +33,30 @@ enum VTManualControlDriver {
 
     func isEnabled(using client: VTAPIClientProtocol) async throws -> Bool {
         switch self {
-        case .directional:
-            try await client.getManualControlIsEnabled()
-        case .highResolution:
-            try await client.getHighResolutionManualControlIsEnabled()
+        case .directional: try await client.getManualControlIsEnabled()
+        case .highResolution: try await client.getHighResolutionManualControlIsEnabled()
         }
     }
 
     func setEnabled(_ enabled: Bool, using client: VTAPIClientProtocol) async throws {
         switch (self, enabled) {
-        case (.directional, true):
-            try await client.enableManualControl()
-        case (.directional, false):
-            try await client.disableManualControl()
-        case (.highResolution, true):
-            try await client.enableHighResolutionManualControl()
-        case (.highResolution, false):
-            try await client.disableHighResolutionManualControl()
+        case (.directional, true): try await client.enableManualControl()
+        case (.directional, false): try await client.disableManualControl()
+        case (.highResolution, true): try await client.enableHighResolutionManualControl()
+        case (.highResolution, false): try await client.disableHighResolutionManualControl()
         }
     }
 
     func send(_ vector: VTManualControlVector, using client: VTAPIClientProtocol) async throws {
         switch self {
         case let .directional(supportedDirections):
-            let direction: VTMoveDirection? = if vector.velocity > 0.3,
-                                                 supportedDirections.contains(.forward)
-            {
+            let direction: VTMoveDirection? = if vector.velocity > 0.3, supportedDirections.contains(.forward) {
                 .forward
-            } else if vector.velocity < -0.3,
-                      supportedDirections.contains(.backward)
-            {
+            } else if vector.velocity < -0.3, supportedDirections.contains(.backward) {
                 .backward
-            } else if vector.angle > 30,
-                      supportedDirections.contains(.rotateClockwise)
-            {
+            } else if vector.angle > 30, supportedDirections.contains(.rotateClockwise) {
                 .rotateClockwise
-            } else if vector.angle < -30,
-                      supportedDirections.contains(.rotateCounterclockwise)
-            {
+            } else if vector.angle < -30, supportedDirections.contains(.rotateCounterclockwise) {
                 .rotateCounterclockwise
             } else {
                 nil
@@ -84,10 +67,7 @@ enum VTManualControlDriver {
             }
 
         case .highResolution:
-            try await client.highResolutionManualControlMove(
-                angle: vector.angle,
-                velocity: vector.velocity
-            )
+            try await client.highResolutionManualControlMove(angle: vector.angle, velocity: vector.velocity)
         }
     }
 }
