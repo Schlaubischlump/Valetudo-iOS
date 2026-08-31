@@ -136,7 +136,7 @@ final class VTHomeViewController: VTViewController {
             robotStatusView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 10),
             robotStatusView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 10),
             robotStatusView.heightAnchor.constraint(equalToConstant: 86),
-            robotStatusView.widthAnchor.constraint(equalToConstant: 118),
+            robotStatusView.widthAnchor.constraint(equalToConstant: 140),
         ])
     }
 
