@@ -448,6 +448,40 @@ public actor VTAPIClient: VTAPIClientProtocol {
         return try await send(request)
     }
 
+    // MARK: - DuststreamingCapability
+
+    private let duststreamingCapabilityPath = "DuststreamingCapability"
+
+    public func getDuststreamingConfiguration() async throws -> VTDuststreamingConfiguration {
+        let url = valetudoURL
+            .appendingPathComponent("config")
+            .appendingPathComponent("duststreaming")
+        let request = VTRequest<VTDuststreamingConfiguration>(method: .GET, url: url)
+        return try await send(request)
+    }
+
+    public func setDuststreamingConfiguration(_ configuration: VTDuststreamingConfiguration) async throws {
+        let url = valetudoURL
+            .appendingPathComponent("config")
+            .appendingPathComponent("duststreaming")
+        let request = VTRequest<Void>(method: .PUT, url: url, body: configuration)
+        try await send(request)
+    }
+
+    public func getDuststreamingProperties() async throws -> VTDuststreamingProperties {
+        let url = capabilitiesURL
+            .appendingPathComponent(duststreamingCapabilityPath)
+            .appendingPathComponent("properties")
+        let request = VTRequest<VTDuststreamingProperties>(method: .GET, url: url)
+        return try await send(request)
+    }
+
+    public func getDuststreamingStreamURL() -> URL {
+        capabilitiesURL
+            .appendingPathComponent(duststreamingCapabilityPath)
+            .appendingPathComponent("stream")
+    }
+
     // MARK: - 1.2.13 ObstacleImagesCapability
 
     private let obstacleImagesCapabilityPath: String = "ObstacleImagesCapability"

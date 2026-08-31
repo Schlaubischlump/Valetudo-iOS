@@ -7,7 +7,7 @@
 import Foundation
 
 /// Based on: https://github.com/Hypfer/Valetudo/blob/master/backend/lib/core/capabilities/index.js
-/// Valetudo: 2026.07.0
+/// Valetudo: 2026.08.0
 public enum VTCapability: Equatable, Hashable, Sendable, Decodable {
     /// Controls how long auto-emptying runs.
     case autoEmptyDockAutoEmptyDurationControl
@@ -33,6 +33,8 @@ public enum VTCapability: Equatable, Hashable, Sendable, Decodable {
     case consumableMonitoring
     /// Provides statistics for the current or most recent cleanup.
     case currentStatistics
+    /// Provides a local MPEG camera stream from supported robots.
+    case duststreaming
     /// Configures a do-not-disturb timespan with vendor-specific behavior.
     case doNotDisturb
     /// Lets the user adjust the robot's suction power.
@@ -131,6 +133,7 @@ public enum VTCapability: Equatable, Hashable, Sendable, Decodable {
         case .combinedVirtualRestrictions: "CombinedVirtualRestrictionsCapability"
         case .consumableMonitoring: "ConsumableMonitoringCapability"
         case .currentStatistics: "CurrentStatisticsCapability"
+        case .duststreaming: "DuststreamingCapability"
         case .doNotDisturb: "DoNotDisturbCapability"
         case .fanSpeedControl: "FanSpeedControlCapability"
         case .floorMaterialDirectionAwareNavigationControl: "FloorMaterialDirectionAwareNavigationControlCapability"
@@ -189,6 +192,7 @@ public enum VTCapability: Equatable, Hashable, Sendable, Decodable {
         case "CombinedVirtualRestrictionsCapability": self = .combinedVirtualRestrictions
         case "ConsumableMonitoringCapability": self = .consumableMonitoring
         case "CurrentStatisticsCapability": self = .currentStatistics
+        case "DuststreamingCapability": self = .duststreaming
         case "DoNotDisturbCapability": self = .doNotDisturb
         case "FanSpeedControlCapability": self = .fanSpeedControl
         case "FloorMaterialDirectionAwareNavigationControlCapability": self = .floorMaterialDirectionAwareNavigationControl

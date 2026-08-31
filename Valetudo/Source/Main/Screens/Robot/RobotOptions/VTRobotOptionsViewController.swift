@@ -18,6 +18,7 @@ private let kMopTwistID = "MOP_TWIST"
 private let kObstacleAvoidanceID = "OBSTACLE_AVOIDANCE"
 private let kPetObstacleAvoidanceID = "PET_OBSTACLE_AVOIDANCE"
 private let kObstacleImagesID = "OBSTACLE_IMAGES"
+private let kCameraStreamingID = "CAMERA_STREAMING"
 private let kCameraLightID = "CAMERA_LIGHT"
 private let kMopExtensionID = "MOP_EXTENSION"
 private let kMopExtensionFurnitureLegHandlingID = "MOP_EXTENSION_FURNITURE_LEGS"
@@ -45,6 +46,8 @@ final class VTRobotOptionsViewController: VTRobotOptionsViewControllerBase<VTRob
         var obstacleAvoidanceEnabled = false
         var petObstacleAvoidanceEnabled = false
         var obstacleImagesEnabled = false
+        var cameraStreamingEnabled = false
+        var duststreamerInstalled = false
         var cameraLightEnabled = false
         var dockAutoEmpty: VTAutoEmptyDockAutoEmptyInterval = .normal
         var supportedDockAutoEmptyIntervals: [VTAutoEmptyDockAutoEmptyInterval] = []
@@ -199,6 +202,18 @@ final class VTRobotOptionsViewController: VTRobotOptionsViewControllerBase<VTRob
                     image: .obstacleImages
                 ))
             }
+            if availableCapabilities.contains(.duststreaming) {
+                items.append(.checkbox(
+                    kCameraStreamingID,
+                    title: "CAMERA_STREAMING".localized(),
+                    subtitle: state.cameraStreamingEnabled && !state.duststreamerInstalled
+                        ? "CAMERA_STREAMING_SETUP_INCOMPLETE".localized()
+                        : "CAMERA_STREAMING_DESCRIPTION".localized(),
+                    subtitleStyle: state.cameraStreamingEnabled && !state.duststreamerInstalled ? .warning : .standard,
+                    enabled: state.cameraStreamingEnabled,
+                    image: .cameraStreaming
+                ))
+            }
             if availableCapabilities.contains(.cameraLightControl) {
                 items.append(.checkbox(
                     kCameraLightID,
@@ -307,6 +322,7 @@ final class VTRobotOptionsViewController: VTRobotOptionsViewControllerBase<VTRob
                     id: item.id,
                     title: item.title,
                     subtitle: item.subtitle,
+                    subtitleStyle: item.subtitleStyle,
                     isOn: item.isOn,
                     image: item.image,
                     disableSelectionAfterAction: true
@@ -501,6 +517,10 @@ final class VTRobotOptionsViewController: VTRobotOptionsViewControllerBase<VTRob
         if availableCapabilities.contains(.obstacleImages) {
             nextState.obstacleImagesEnabled = await (try? client.getObstacleImagesCapabilityIsEnabled()) ?? nextState.obstacleImagesEnabled
         }
+        if availableCapabilities.contains(.duststreaming) {
+            nextState.cameraStreamingEnabled = await (try? client.getDuststreamingConfiguration().enabled) ?? nextState.cameraStreamingEnabled
+            nextState.duststreamerInstalled = await (try? client.getDuststreamingProperties().duststreamerInstalled) ?? false
+        }
         if availableCapabilities.contains(.cameraLightControl) {
             nextState.cameraLightEnabled = await (try? client.getCameraLightIsEnabled()) ?? nextState.cameraLightEnabled
         }
@@ -664,6 +684,8 @@ final class VTRobotOptionsViewController: VTRobotOptionsViewControllerBase<VTRob
             } onSuccess: { [weak self] in
                 self?.state.obstacleImagesEnabled = isOn
             }
+        case kCameraStreamingID:
+            confirmDuststreamingUpdate(enabled: isOn)
         case kCameraLightID:
             performUpdate(operationName: "CameraLightControlCapability toggle", itemID: id) { [client] in
                 if isOn {
@@ -687,6 +709,34 @@ final class VTRobotOptionsViewController: VTRobotOptionsViewControllerBase<VTRob
         default:
             return
         }
+    }
+
+    private func confirmDuststreamingUpdate(enabled: Bool) {
+        let alert = UIAlertController(
+            title: "CAMERA_STREAMING".localized(),
+            message: enabled
+                ? "CAMERA_STREAMING_ENABLE_WARNING".localized()
+                : "CAMERA_STREAMING_DISABLE_WARNING".localized(),
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "CANCEL".localized(), style: .cancel) { [weak self] _ in
+            Task { await self?.reloadItem(withID: kCameraStreamingID) }
+        })
+        alert.addAction(UIAlertAction(
+            title: (enabled ? "ENABLE" : "DISABLE").localized(),
+            style: enabled ? .default : .destructive
+        ) { [weak self] _ in
+            guard let self else { return }
+            performUpdate(operationName: "Duststreaming configuration update", itemID: kCameraStreamingID) { [client] in
+                try await client.setDuststreamingConfiguration(.init(enabled: enabled))
+            } onSuccess: { [weak self] in
+                self?.state.cameraStreamingEnabled = enabled
+                if !enabled {
+                    self?.state.duststreamerInstalled = false
+                }
+            }
+        })
+        present(alert, animated: true)
     }
 
     private func updateCleanRoute(_ route: VTCleanRoute) {

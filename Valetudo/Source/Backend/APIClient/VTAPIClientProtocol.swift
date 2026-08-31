@@ -109,6 +109,13 @@ public protocol VTAPIClientProtocol: Actor {
     func highResolutionManualControlMove(angle: CGFloat, velocity: CGFloat) async throws
     func getHighResolutionManualControlCapabilityProperties() async throws -> VTHighResolutionManualControlCapabilityProperties
 
+    // MARK: - DuststreamingCapability
+
+    func getDuststreamingConfiguration() async throws -> VTDuststreamingConfiguration
+    func setDuststreamingConfiguration(_ configuration: VTDuststreamingConfiguration) async throws
+    func getDuststreamingProperties() async throws -> VTDuststreamingProperties
+    func getDuststreamingStreamURL() -> URL
+
     // MARK: - 1.2.13 ObstacleImagesCapability
 
     func getObstacleImagesCapabilityIsEnabled() async throws -> Bool

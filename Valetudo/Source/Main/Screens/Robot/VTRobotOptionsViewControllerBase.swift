@@ -209,6 +209,11 @@ class VTRobotOptionsViewControllerBase<SectionType: Hashable & Sendable>: VTColl
         await dataSource.apply(snapshot, animatingDifferences: false)
     }
 
+    @MainActor
+    func reloadItem(withID id: String) async {
+        await reloadData(animated: false, reconfigureItemWithIDs: [id])
+    }
+
     override func collectionView(_: UICollectionView, shouldSelectItemAt indexPath: IndexPath) -> Bool {
         guard let item = dataSource.itemIdentifier(for: indexPath) else { return false }
         return item.base is VTKeyValueItem

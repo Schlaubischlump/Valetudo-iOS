@@ -81,6 +81,7 @@ public extension UIImage {
     static let obstacleAvoidance = UIImage(systemName: "exclamationmark.triangle.fill")
     static let petObstacleAvoidance = UIImage(systemName: "pawprint.fill")
     static let obstacleImages = UIImage(systemName: "photo.trianglebadge.exclamationmark")
+    static let cameraStreaming = UIImage(systemName: "video.fill")
     static let cameraLight = UIImage(systemName: "flashlight.on.fill")
     static let dockAutoEmpty = UIImage(systemName: "dock.arrow.down.rectangle")
     static let autoEmptyDuration = UIImage(systemName: "square.and.arrow.down.badge.clock.fill")

@@ -10,8 +10,17 @@ import UIKit
 
 @main
 class VTAppDelegate: UIResponder, UIApplicationDelegate {
+    static var orientationOverride: UIInterfaceOrientationMask?
+
     func application(_: UIApplication, didFinishLaunchingWithOptions _: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         true
+    }
+
+    func application(_: UIApplication, supportedInterfaceOrientationsFor _: UIWindow?) -> UIInterfaceOrientationMask {
+        if let orientationOverride = Self.orientationOverride {
+            return orientationOverride
+        }
+        return UIDevice.current.userInterfaceIdiom == .phone ? .portrait : .all
     }
 
     override func buildMenu(with builder: UIMenuBuilder) {

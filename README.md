@@ -31,7 +31,7 @@ The long-term goal is to support all features available in the official Valetudo
 
 ## Testing status
 
-Support for map annotations (thresholds, curtains and ramps), carpet material variants and dock component states has been implemented using Valetudo's API definitions and mock data. These features have not yet been tested on a physical robot because the robot currently available for development does not support them.
+Support for map annotations (thresholds, curtains and ramps), carpet material variants, dock component states and camera streaming has been implemented using Valetudo's API definitions and mock data. These features have not yet been tested on a physical robot because the robot currently available for development does not support them.
 
 ## Screenshots
 

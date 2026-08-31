@@ -1,0 +1,4 @@
+JSMpeg is bundled from Hypfer/jsmpeg tag 2026.08.0
+(commit f0c1639301595b521ea608b69c6f88a373bee847).
+
+Source: https://github.com/Hypfer/jsmpeg/tree/2026.08.0

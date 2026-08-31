@@ -11,7 +11,7 @@ enum VTManualControlActionType: String, Encodable {
     case move
 }
 
-public enum VTMoveDirection: String, Codable, Sendable {
+public enum VTMoveDirection: String, Codable, Sendable, Hashable {
     case forward
     case backward
     case rotateClockwise = "rotate_clockwise"

@@ -47,6 +47,7 @@ actor VTMockAPIClient: VTAPIClientProtocol {
     private var updaterConfig = VTUpdaterConfig(updateProvider: .github)
     private var manualControlEnabled = false
     private var highResolutionManualControlEnabled = false
+    private var duststreamingEnabled = true
     private var keyLockEnabled = false
     private var obstacleImagesEnabled = true
     private var toggleCapabilityStates: [String: Bool] = [
@@ -224,6 +225,7 @@ actor VTMockAPIClient: VTAPIClientProtocol {
             .manualControl,
             .mapAnnotations,
             .highResolutionManualControl,
+            .duststreaming,
             .autoEmptyDockManualTrigger,
             .mopDockCleanManualTrigger,
             .mopDockDryManualTrigger,
@@ -409,6 +411,24 @@ actor VTMockAPIClient: VTAPIClientProtocol {
 
     func getHighResolutionManualControlCapabilityProperties() async throws -> VTHighResolutionManualControlCapabilityProperties {
         emptyProperties
+    }
+
+    // MARK: - DuststreamingCapability
+
+    func getDuststreamingConfiguration() async throws -> VTDuststreamingConfiguration {
+        VTDuststreamingConfiguration(enabled: duststreamingEnabled)
+    }
+
+    func setDuststreamingConfiguration(_ configuration: VTDuststreamingConfiguration) async throws {
+        duststreamingEnabled = configuration.enabled
+    }
+
+    func getDuststreamingProperties() async throws -> VTDuststreamingProperties {
+        VTDuststreamingProperties(width: 1280, height: 720, duststreamerInstalled: true)
+    }
+
+    func getDuststreamingStreamURL() -> URL {
+        URL(string: "http://127.0.0.1/api/v2/robot/capabilities/DuststreamingCapability/stream")!
     }
 
     // MARK: - 1.2.13 ObstacleImagesCapability

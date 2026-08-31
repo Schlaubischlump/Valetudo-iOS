@@ -100,7 +100,6 @@ class VTSplitViewController: UISplitViewController, UISplitViewControllerDelegat
         case .consumables: VTConsumablesViewController(client: client)
         case .systemInformation: VTSystemInformationViewController(client: client)
         case .manualControl: VTManualControlViewController(client: client)
-        case .highResolutionManualControl: VTHighResolutionManualControlViewController(client: client)
         case .updater: VTUpdaterViewController(client: client)
         case .log: VTLogViewController(client: client)
         case .timers: VTTimersViewController(client: client)

@@ -116,6 +116,7 @@ class VTStackedCellContentView<Configuration: VTStackedCellContentConfiguration>
         let hasImage = configuration.image != nil
         titleLabel.text = configuration.title
         subtitleLabel.text = configuration.subtitle
+        subtitleLabel.textColor = configuration.subtitleStyle == .warning ? .systemRed : .secondaryLabel
         subtitleLabel.isHidden = !hasValue
         iconImageView.image = configuration.image?.withRenderingMode(.alwaysTemplate)
         iconImageView.isHidden = !hasImage

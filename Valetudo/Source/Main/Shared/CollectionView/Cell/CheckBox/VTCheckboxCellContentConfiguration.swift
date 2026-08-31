@@ -10,6 +10,7 @@ struct VTCheckboxCellContentConfiguration: VTStackedCellContentConfiguration {
     let id: String
     let title: String
     let subtitle: String?
+    let subtitleStyle: VTStackedCellSubtitleStyle
     let isOn: Bool
     let image: UIImage?
     var disableSelectionAfterAction: Bool = true
@@ -21,6 +22,7 @@ struct VTCheckboxCellContentConfiguration: VTStackedCellContentConfiguration {
         id: String,
         title: String,
         subtitle: String? = nil,
+        subtitleStyle: VTStackedCellSubtitleStyle = .standard,
         isOn: Bool,
         image: UIImage? = nil,
         disableSelectionAfterAction: Bool = true,
@@ -29,6 +31,7 @@ struct VTCheckboxCellContentConfiguration: VTStackedCellContentConfiguration {
         self.id = id
         self.title = title
         self.subtitle = subtitle
+        self.subtitleStyle = subtitleStyle
         self.isOn = isOn
         self.image = image
         self.disableSelectionAfterAction = disableSelectionAfterAction
@@ -47,6 +50,7 @@ struct VTCheckboxCellContentConfiguration: VTStackedCellContentConfiguration {
         lhs.id == rhs.id &&
             lhs.title == rhs.title &&
             lhs.subtitle == rhs.subtitle &&
+            lhs.subtitleStyle == rhs.subtitleStyle &&
             lhs.isOn == rhs.isOn &&
             lhs.image == rhs.image &&
             lhs.disableSelectionAfterAction == rhs.disableSelectionAfterAction &&
@@ -57,6 +61,7 @@ struct VTCheckboxCellContentConfiguration: VTStackedCellContentConfiguration {
         hasher.combine(id)
         hasher.combine(title)
         hasher.combine(subtitle)
+        hasher.combine(subtitleStyle)
         hasher.combine(isOn)
         hasher.combine(image)
         hasher.combine(disableSelectionAfterAction)

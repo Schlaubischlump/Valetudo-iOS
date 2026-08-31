@@ -298,6 +298,28 @@
         }
       }
     },
+    "CAMERA" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Camera"
+          }
+        }
+      }
+    },
+    "CAMERA_CONNECTING" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Connecting to camera…"
+          }
+        }
+      }
+    },
     "CAMERA_LIGHT" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -316,6 +338,83 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Illuminate the dark to improve the AI image recognition obstacle avoidance."
+          }
+        }
+      }
+    },
+    "CAMERA_STREAMING" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Camera Streaming"
+          }
+        }
+      }
+    },
+    "CAMERA_STREAMING_DESCRIPTION" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "See what your robot sees. Only enable this with the knowledge and consent of everyone affected."
+          }
+        }
+      }
+    },
+    "CAMERA_STREAMING_DISABLE_WARNING" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Disabling camera streaming also deletes the duststreamer executable from the robot. Re-enabling it will require reinstalling the binary."
+          }
+        }
+      }
+    },
+    "CAMERA_STREAMING_ENABLE_WARNING" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Camera streaming can expose private spaces and people. Only use it with the knowledge and consent of everyone affected."
+          }
+        }
+      }
+    },
+    "CAMERA_STREAMING_SETUP_INCOMPLETE" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Setup incomplete: Camera streaming is enabled, but the duststreamer executable is not installed."
+          }
+        }
+      }
+    },
+    "CAMERA_RECONNECTING" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reconnecting camera…"
+          }
+        }
+      }
+    },
+    "CAMERA_UNAVAILABLE" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Camera unavailable"
           }
         }
       }
@@ -760,6 +859,17 @@
         }
       }
     },
+    "DISABLE" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Disable"
+          }
+        }
+      }
+    },
     "DISABLED" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1031,6 +1141,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Emptying"
+          }
+        }
+      }
+    },
+    "ENABLE" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enable"
           }
         }
       }
@@ -1321,6 +1442,17 @@
         }
       }
     },
+    "CLOSE" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Close"
+          }
+        }
+      }
+    },
     "INSTALL" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1376,6 +1508,17 @@
         }
       }
     },
+    "D_PAD" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "D-pad"
+          }
+        }
+      }
+    },
     "KEYS" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1383,6 +1526,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Keys"
+          }
+        }
+      }
+    },
+    "JOYSTICK" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Joystick"
           }
         }
       }
@@ -1526,6 +1680,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Manually control your robot"
+          }
+        }
+      }
+    },
+    "MANUAL_CONTROLS_OFF" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Manual controls are off"
           }
         }
       }
@@ -2384,6 +2549,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Open"
+          }
+        }
+      }
+    },
+    "OPEN_CAMERA" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open Camera"
           }
         }
       }

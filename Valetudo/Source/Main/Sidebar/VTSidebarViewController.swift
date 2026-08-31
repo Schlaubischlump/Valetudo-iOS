@@ -35,7 +35,6 @@ enum VTSidebarItem: Hashable {
     case systemInformation
     case updater
     case manualControl
-    case highResolutionManualControl
     case appSettings
 
     var title: String {
@@ -48,7 +47,7 @@ enum VTSidebarItem: Hashable {
         case .log: "LOG".localized()
         case .systemInformation: "SYSTEM_INFORMATION".localized()
         case .updater: "UPDATER".localized()
-        case .manualControl, .highResolutionManualControl: "MANUAL_CONTROL".localized()
+        case .manualControl: "MANUAL_CONTROL".localized()
         case .appSettings: "APP_SETTINGS".localized()
         }
     }
@@ -63,7 +62,7 @@ enum VTSidebarItem: Hashable {
         case .log: .sidebarLog
         case .systemInformation: .sidebarSystemInformation
         case .updater: .sidebarUpdater
-        case .manualControl, .highResolutionManualControl: .sidebarManualControl
+        case .manualControl: .sidebarManualControl
         case .appSettings: .sidebarAppSettings
         }
     }
@@ -84,7 +83,7 @@ class VTSidebarViewController: VTCollectionViewController {
     private var dataSource: VTSidebarDataSource!
     private var data: VTSidebarData = [
         .main => [.home],
-        .robot => [.consumables, .manualControl, .highResolutionManualControl],
+        .robot => [.consumables, .manualControl],
         .options => [.map, .robot],
         .misc => [.timers, .log, .updater, .systemInformation],
         .app => [.appSettings],
@@ -171,15 +170,14 @@ class VTSidebarViewController: VTCollectionViewController {
     @MainActor
     private func loadInitialData() async {
         let capabilities = await Set((try? client.getCapabilities()) ?? [])
-        let supportsHighResolutionManualControl = capabilities.contains(.highResolutionManualControl)
         // filter the data, such that all unavailable features are remove
         data = data.compactMap { sec, its in
             let tmpItems = its.filter { item in
                 switch item {
                 case .home, .log, .robot, .map, .systemInformation, .timers, .updater: true
                 case .consumables: capabilities.contains(.consumableMonitoring)
-                case .manualControl: capabilities.contains(.manualControl) && !supportsHighResolutionManualControl
-                case .highResolutionManualControl: supportsHighResolutionManualControl
+                case .manualControl:
+                    capabilities.contains(.manualControl) || capabilities.contains(.highResolutionManualControl)
                 case .appSettings: true
                 }
             }
