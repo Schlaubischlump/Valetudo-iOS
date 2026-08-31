@@ -268,9 +268,14 @@ private final class VTDuststreamView: UIView, WKNavigationDelegate {
             return
         }
 
-        let bootstrapURL = streamURL
-            .deletingLastPathComponent()
-            .appendingPathComponent("properties")
+        var bootstrapComponents = URLComponents(url: streamURL, resolvingAgainstBaseURL: false)
+        bootstrapComponents?.path = "/index.html"
+        bootstrapComponents?.query = nil
+        bootstrapComponents?.fragment = nil
+        guard let bootstrapURL = bootstrapComponents?.url else {
+            didChangeState?("error")
+            return
+        }
         webView.load(URLRequest(url: bootstrapURL, cachePolicy: .reloadIgnoringLocalCacheData))
     }
 
@@ -281,7 +286,7 @@ private final class VTDuststreamView: UIView, WKNavigationDelegate {
         webView.stopLoading()
     }
 
-    func webView(_: WKWebView, didFinish _: WKNavigation?) {
+    func webView(_: WKWebView, didCommit _: WKNavigation?) {
         guard started else { return }
         webView.evaluateJavaScript(playerJavaScript) { [weak self] _, error in
             if error != nil {
@@ -309,7 +314,8 @@ private final class VTDuststreamView: UIView, WKNavigationDelegate {
         return """
         (() => {
           window.stopDuststream?.();
-          document.documentElement.innerHTML = `
+          document.open();
+          document.write(`
             <head>
               <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
               <style>
@@ -318,13 +324,17 @@ private final class VTDuststreamView: UIView, WKNavigationDelegate {
                 canvas { width: 100%; height: 100%; display: block; object-fit: contain; }
               </style>
             </head>
-            <body><canvas id="video"></canvas></body>`;
+            <body><canvas id="video"></canvas></body>`);
+          document.close();
 
           const sendState = state => window.webkit.messageHandlers.streamState.postMessage(state);
           const player = new JSMpeg.Player(\(streamURLLiteral), {
             source: JSMpeg.FetchSource,
             canvas: document.getElementById('video'),
             autoplay: true,
+            audio: false,
+            pauseWhenHidden: false,
+            videoBufferSize: 2 * 1024 * 1024,
             reconnectInterval: 3,
             decodeFirstFrame: false,
             videoWidth: \(Int(dimensions.width)),
@@ -332,6 +342,18 @@ private final class VTDuststreamView: UIView, WKNavigationDelegate {
             createRenderer: options => new JSMpeg.CRTCompositor(options, {label: 'VALETUDO'}),
             onStreamStateChange: status => sendState(status.state)
           });
+
+          player.updateForStreaming = () => {
+            const deadline = performance.now() + 12;
+            let decodedFrames = 0;
+            while (
+              decodedFrames < 3 &&
+              performance.now() < deadline &&
+              player.video?.decode()
+            ) {
+              decodedFrames++;
+            }
+          };
           window.stopDuststream = () => player.destroy();
         })();
         """

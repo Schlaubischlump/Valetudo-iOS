@@ -241,6 +241,10 @@ private final class VTJoystickControlView: UIView {
     private var knobCenterXConstraint: NSLayoutConstraint!
     private var knobCenterYConstraint: NSLayoutConstraint!
     private let size: CGFloat = 160
+    private let vectorEmissionInterval: TimeInterval = 0.1
+    private var lastVectorEmissionTime: TimeInterval = -.infinity
+    private var pendingVector: VTManualControlVector?
+    private var vectorEmissionTimer: Timer?
 
     init() {
         super.init(frame: .zero)
@@ -276,8 +280,11 @@ private final class VTJoystickControlView: UIView {
     func reset(animated: Bool, notify: Bool) {
         knobCenterXConstraint.constant = 0
         knobCenterYConstraint.constant = 0
+        vectorEmissionTimer?.invalidate()
+        vectorEmissionTimer = nil
+        pendingVector = nil
         if notify {
-            didChangeVector?(.zero)
+            emitVector(.zero, immediately: true)
         }
 
         guard animated else { return }
@@ -298,7 +305,7 @@ private final class VTJoystickControlView: UIView {
         knobCenterXConstraint.constant = x
         knobCenterYConstraint.constant = y
 
-        didChangeVector?(
+        emitVector(
             VTManualControlVector(
                 angle: max(-120, min(120, x / limit * 120)),
                 velocity: max(-1, min(1, -y / limit))
@@ -308,6 +315,44 @@ private final class VTJoystickControlView: UIView {
         if sender.state == .ended || sender.state == .cancelled || sender.state == .failed {
             reset(animated: true, notify: true)
         }
+    }
+
+    private func emitVector(_ vector: VTManualControlVector, immediately: Bool = false) {
+        let now = ProcessInfo.processInfo.systemUptime
+        if immediately {
+            vectorEmissionTimer?.invalidate()
+            vectorEmissionTimer = nil
+            pendingVector = nil
+            lastVectorEmissionTime = now
+            didChangeVector?(vector)
+            return
+        }
+
+        pendingVector = vector
+        guard vectorEmissionTimer == nil else { return }
+
+        let delay = max(0, vectorEmissionInterval - (now - lastVectorEmissionTime))
+        if delay == 0 {
+            flushPendingVector()
+            return
+        }
+
+        let timer = Timer(timeInterval: delay, repeats: false) { [weak self] _ in
+            MainActor.assumeIsolated {
+                self?.flushPendingVector()
+            }
+        }
+        vectorEmissionTimer = timer
+        RunLoop.main.add(timer, forMode: .common)
+    }
+
+    private func flushPendingVector() {
+        vectorEmissionTimer?.invalidate()
+        vectorEmissionTimer = nil
+        guard let pendingVector else { return }
+        self.pendingVector = nil
+        lastVectorEmissionTime = ProcessInfo.processInfo.systemUptime
+        didChangeVector?(pendingVector)
     }
 }
 
