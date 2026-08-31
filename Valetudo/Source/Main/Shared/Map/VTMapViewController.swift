@@ -208,12 +208,12 @@ class VTMapViewController: VTToolbarViewController {
         legendView.backgroundColor = .clear
         legendView.shouldChangeSelection = { [weak self] index, isSelected in
             guard let self else { return false }
-            let identifier = self.legendView.items[index].identifier
+            let identifier = legendView.items[index].identifier
             return await legendShouldChangeSelection(for: identifier, isSelected: isSelected)
         }
         legendView.didChangeSelection = { [weak self] index, isSelected in
             guard let self else { return }
-            let identifier = self.legendView.items[index].identifier
+            let identifier = legendView.items[index].identifier
             await legendDidChangeSelection(for: identifier, isSelected: isSelected)
         }
     }
