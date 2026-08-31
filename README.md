@@ -29,6 +29,10 @@ It is currently a work in progress, but many features are already supported, inc
 
 The long-term goal is to support all features available in the official Valetudo web interface and also support iPadOS, MacOS and maybe watchOS. 
 
+## Testing status
+
+Support for map annotations (thresholds, curtains and ramps), carpet material variants and dock component states has been implemented using Valetudo's API definitions and mock data. These features have not yet been tested on a physical robot because the robot currently available for development does not support them.
+
 ## Screenshots
 
 | | | |

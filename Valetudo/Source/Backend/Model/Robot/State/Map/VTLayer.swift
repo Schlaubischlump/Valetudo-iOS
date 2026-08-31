@@ -16,7 +16,7 @@ public struct VTLayer: Decodable, Sendable {
 
     public var material: VTMaterial {
         guard let materialString = metaData["material"]?.stringValue else { return .generic }
-        return VTMaterial(rawValue: materialString) ?? .generic
+        return VTMaterial(rawValue: materialString)
     }
 
     public var active: Bool? {

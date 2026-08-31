@@ -22,6 +22,10 @@ extension VTEntityType {
         case .path: 8
         case .predicted_path: 9
         case .carpet: 10
+        case .threshold: 1
+        case .curtain: 1
+        case .ramp: 1
+        case .unknown: 99
         }
     }
 
@@ -33,6 +37,9 @@ extension VTEntityType {
         case .path, .predicted_path: nil
         case .carpet: nil
         case .obstacle: .yellow
+        case .threshold: .orange.copy(alpha: 0.2)
+        case .curtain: .purple.copy(alpha: 0.18)
+        case .ramp: .cyan.copy(alpha: 0.16)
         default: .black
         }
     }
@@ -45,6 +52,9 @@ extension VTEntityType {
         case .path, .predicted_path: .white
         case .carpet: .lightGray.copy(alpha: 0.5)
         case .obstacle: .lightGray.copy(alpha: 0.9)
+        case .threshold: .orange
+        case .curtain: .purple
+        case .ramp: .cyan
         default: .black
         }
     }
@@ -56,6 +66,7 @@ extension VTEntityType {
         case .active_zone: 2.0
         case .path, .predicted_path: 0.5
         case .carpet: 0.5
+        case .threshold, .curtain, .ramp: 2.0
         default: 1.0
         }
     }

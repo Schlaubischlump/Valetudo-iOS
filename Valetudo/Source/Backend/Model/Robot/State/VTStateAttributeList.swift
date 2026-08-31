@@ -64,6 +64,97 @@ public enum VTDockStatusValue: String, Codable, Sendable, Describable {
     }
 }
 
+public enum VTDockComponentType: Codable, Sendable, Hashable, Describable {
+    case cleanWaterTank
+    case dirtyWaterTank
+    case dustbag
+    case detergent
+    case unknown(String)
+
+    private init(rawValue: String) {
+        self = switch rawValue {
+        case "water_tank_clean": .cleanWaterTank
+        case "water_tank_dirty": .dirtyWaterTank
+        case "dustbag": .dustbag
+        case "detergent": .detergent
+        default: .unknown(rawValue)
+        }
+    }
+
+    public var description: String {
+        switch self {
+        case .cleanWaterTank: "DOCK_COMPONENT_CLEAN_WATER_TANK".localized()
+        case .dirtyWaterTank: "DOCK_COMPONENT_DIRTY_WATER_TANK".localized()
+        case .dustbag: "DUSTBAG".localized()
+        case .detergent: "DETERGENT".localized()
+        case let .unknown(value): value
+        }
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        try self.init(rawValue: container.decode(String.self))
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.singleValueContainer()
+        let value = switch self {
+        case .cleanWaterTank: "water_tank_clean"
+        case .dirtyWaterTank: "water_tank_dirty"
+        case .dustbag: "dustbag"
+        case .detergent: "detergent"
+        case let .unknown(value): value
+        }
+        try container.encode(value)
+    }
+}
+
+public enum VTDockComponentValue: Codable, Sendable, Hashable, Describable {
+    case ok
+    case missing
+    case empty
+    case full
+    case unknown(String)
+
+    private init(rawValue: String) {
+        self = switch rawValue {
+        case "ok": .ok
+        case "missing": .missing
+        case "empty": .empty
+        case "full": .full
+        case "unknown": .unknown(rawValue)
+        default: .unknown(rawValue)
+        }
+    }
+
+    public var description: String {
+        switch self {
+        case .ok: "OK".localized()
+        case .missing: "MISSING".localized()
+        case .empty: "EMPTY".localized()
+        case .full: "FULL".localized()
+        case .unknown: "UNKNOWN".localized()
+        }
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        try self.init(rawValue: container.decode(String.self))
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.singleValueContainer()
+        let value = switch self {
+        case .ok: "ok"
+        case .missing: "missing"
+        case .empty: "empty"
+        case .full: "full"
+        case let .unknown(value): value
+        }
+        try container.encode(value)
+    }
+}
+
 public enum VTAttachmentType: String, Codable, Sendable, Describable {
     case dustbin, watertank, mop
 
@@ -109,6 +200,15 @@ public struct VTDockStatusStateAttribute: VTStateAttribute {
 
 extension VTDockStatusStateAttribute: Equatable {}
 
+public struct VTDockComponentStateAttribute: VTStateAttribute {
+    public let __class: String
+    public let metaData: [String: VTAnyCodable]
+    public let type: VTDockComponentType
+    public let value: VTDockComponentValue
+}
+
+extension VTDockComponentStateAttribute: Equatable {}
+
 public struct VTPresetSelectionStateAttribute: VTStateAttribute {
     public let __class: String
     public let metaData: [String: VTAnyCodable]
@@ -140,6 +240,7 @@ extension VTStatusStateAttribute: Equatable {}
 extension VTAnyCodable {
     static let attachmentStateAttribute: VTAnyCodable = .string("AttachmentStateAttribute")
     static let dockStatusStateAttribute: VTAnyCodable = .string("DockStatusStateAttribute")
+    static let dockComponentStateAttribute: VTAnyCodable = .string("DockComponentStateAttribute")
     static let presetSelectionStateAttribute: VTAnyCodable = .string("PresetSelectionStateAttribute")
     static let batteryStateAttribute: VTAnyCodable = .string("BatteryStateAttribute")
     static let statusStateAttribute: VTAnyCodable = .string("StatusStateAttribute")
@@ -161,6 +262,16 @@ public struct VTStateAttributeList: Decodable, Sendable {
         attributes.compactMap {
             if $0.__class == "DockStatusStateAttribute" {
                 $0 as? VTDockStatusStateAttribute
+            } else {
+                nil
+            }
+        }
+    }
+
+    public var dockComponentStateAttributes: [VTDockComponentStateAttribute] {
+        attributes.compactMap {
+            if $0.__class == "DockComponentStateAttribute" {
+                $0 as? VTDockComponentStateAttribute
             } else {
                 nil
             }
@@ -329,6 +440,8 @@ public struct VTStateAttributeList: Decodable, Sendable {
                 try decodedAttributes.append(jsonDecoder.decode(VTAttachmentStateAttribute.self, from: jsonData))
             case .dockStatusStateAttribute:
                 try decodedAttributes.append(jsonDecoder.decode(VTDockStatusStateAttribute.self, from: jsonData))
+            case .dockComponentStateAttribute:
+                try decodedAttributes.append(jsonDecoder.decode(VTDockComponentStateAttribute.self, from: jsonData))
             case .presetSelectionStateAttribute:
                 try decodedAttributes.append(jsonDecoder.decode(VTPresetSelectionStateAttribute.self, from: jsonData))
             case .batteryStateAttribute:

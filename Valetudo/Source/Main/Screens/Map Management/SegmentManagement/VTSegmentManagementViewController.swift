@@ -127,7 +127,7 @@ final class VTSegmentManagementViewController: VTMapViewController {
     override func filterMapData(from mapData: VTMapData) -> VTMapData {
         let filteredEntities = mapData.entities.filter {
             switch $0.type {
-            case .charger_location, .obstacle, .carpet: true
+            case .charger_location, .obstacle, .carpet, .threshold, .curtain, .ramp: true
             default: false
             }
         }

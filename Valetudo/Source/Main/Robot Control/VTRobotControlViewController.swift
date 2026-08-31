@@ -215,6 +215,17 @@ class VTRobotControlViewController: VTViewController {
         return attachmentsControls
     }()
 
+    private let dockComponentsControls = {
+        let controls = VTStackedControlRow<VTControlLabel>(
+            title: "DOCK_COMPONENTS".localized(),
+            titleIcon: .dockControls
+        )
+        controls.axis = .vertical
+        controls.isHidden = true
+        controls.translatesAutoresizingMaskIntoConstraints = false
+        return controls
+    }()
+
     private let statisticsControls = {
         let statisticsControls = VTStackedControlRow<VTControlLabel>(
             title: "CURRENT_STATISTICS".localized(),
@@ -294,6 +305,7 @@ class VTRobotControlViewController: VTViewController {
                                 guard let attrs = try? await client.getStateAttributes() else { return }
                                 await updateButtonStates(attrs)
                                 await updateAttachments(attrs)
+                                await updateDockComponents(attrs)
                                 try? await updateStatistics()
                             }
                         } else {
@@ -304,6 +316,7 @@ class VTRobotControlViewController: VTViewController {
                             guard let self else { return }
                             await updateButtonStates(attrs)
                             await updateAttachments(attrs)
+                            await updateDockComponents(attrs)
                             try? await updateStatistics()
                         }
                     case let .didReceiveError(msg):
@@ -423,6 +436,7 @@ class VTRobotControlViewController: VTViewController {
                 let initialAttrs = try await self.client.getStateAttributes()
                 await self.updateButtonStates(initialAttrs)
                 await self.updateAttachments(initialAttrs)
+                await self.updateDockComponents(initialAttrs)
             }
         }
     }
@@ -584,6 +598,20 @@ class VTRobotControlViewController: VTViewController {
             button.heightAnchor.constraint(equalToConstant: 50).isActive = true
             return button
         }
+    }
+
+    /// Rebuilds the informational status rows for water tanks, dustbag, and detergent.
+    @MainActor
+    private func updateDockComponents(_ state: VTStateAttributeList) async {
+        dockComponentsControls.items = state.dockComponentStateAttributes.map { component in
+            let label = VTControlLabel(
+                title: component.type.description.uppercased(),
+                subtitle: component.value.description.uppercased()
+            )
+            label.heightAnchor.constraint(equalToConstant: 50).isActive = true
+            return label
+        }
+        dockComponentsControls.isHidden = state.dockComponentStateAttributes.isEmpty
     }
 
     // MARK: - Robot Actions
@@ -835,6 +863,7 @@ class VTRobotControlViewController: VTViewController {
         contentStackView.addArrangedSubview(waterRow)
         contentStackView.addArrangedSubview(iterationsRow)
         contentStackView.addArrangedSubview(dockControls)
+        contentStackView.addArrangedSubview(dockComponentsControls)
         contentStackView.addArrangedSubview(attachmentsControls)
         contentStackView.addArrangedSubview(statisticsControls)
     }

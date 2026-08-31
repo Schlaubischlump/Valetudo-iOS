@@ -29,7 +29,7 @@ enum VTMockMapData {
             "active": false,
             "source": "regular",
             "name": "G\\u00e4stebad",
-            "material": "wood_horizontal",
+            "material": "carpet_low",
             "area": 20775
           },
           "type": "segment",
@@ -463,6 +463,24 @@ enum VTMockMapData {
           "metaData": { "id": "3" },
           "points": [3059, 2925, 3269, 2925, 3269, 3225, 3059, 3225],
           "type": "carpet"
+        },
+        {
+          "__class": "LineMapEntity",
+          "metaData": {},
+          "points": [3200, 3450, 3310, 3450],
+          "type": "threshold"
+        },
+        {
+          "__class": "LineMapEntity",
+          "metaData": {},
+          "points": [3490, 3260, 3490, 3390],
+          "type": "curtain"
+        },
+        {
+          "__class": "PolygonMapEntity",
+          "metaData": {},
+          "points": [3650, 3440, 3740, 3440, 3740, 3530, 3650, 3530],
+          "type": "ramp"
         },
         {
           "__class": "PathMapEntity",

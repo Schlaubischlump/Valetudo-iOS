@@ -80,6 +80,10 @@ extension VTMapData {
             case .wood: VTPatternFactory.makeChevronPattern(withPoints: pixels)
             case .woodHorizontal: VTPatternFactory.makeHorizontalWoodPattern(withPoints: pixels)
             case .woodVertical: VTPatternFactory.makeVerticalWoodPattern(withPoints: pixels)
+            case .carpet: VTPatternFactory.makeCarpetMaterialPattern(withPoints: pixels)
+            case .carpetLow: VTPatternFactory.makeLowPileCarpetPattern(withPoints: pixels)
+            case .carpetHigh: VTPatternFactory.makeHighPileCarpetPattern(withPoints: pixels)
+            case .unknown: nil
             }
 
             if let patternPath {
@@ -232,6 +236,71 @@ extension VTMapData {
         return shapeLayer
     }
 
+    /// Draws line-based map annotations such as thresholds and curtains.
+    private func drawLineAnnotation(for entity: VTEntity, boundedByX x: CGFloat, y: CGFloat, scale: CGFloat) -> VTEntityShapeLayer? {
+        guard entity.points.count >= 4 else { return nil }
+
+        let start = CGPoint(x: entity.points[0], y: entity.points[1])
+            .downScaledBy(x: scale, y: scale)
+            .offsetBy(dx: -x, dy: -y)
+        let end = CGPoint(x: entity.points[2], y: entity.points[3])
+            .downScaledBy(x: scale, y: scale)
+            .offsetBy(dx: -x, dy: -y)
+        let path = CGMutablePath()
+
+        if entity.type == .curtain {
+            let dx = end.x - start.x
+            let dy = end.y - start.y
+            let length = max(hypot(dx, dy), 1)
+            let normal = CGPoint(x: -dy / length, y: dx / length)
+            let segments = max(Int(length / 3), 8)
+            path.move(to: start)
+            for index in 1 ... segments {
+                let progress = CGFloat(index) / CGFloat(segments)
+                let base = CGPoint(x: start.x + dx * progress, y: start.y + dy * progress)
+                let wave = sin(progress * .pi * 8) * 1.25
+                path.addLine(to: base.offsetBy(dx: normal.x * wave, dy: normal.y * wave))
+            }
+        } else {
+            path.move(to: start)
+            path.addLine(to: end)
+        }
+
+        let shapeLayer = VTEntityShapeLayer(data: entity)
+        shapeLayer.path = path
+        shapeLayer.fillColor = nil
+        shapeLayer.strokeColor = entity.type.borderColor
+        shapeLayer.lineWidth = entity.type.borderWidth
+        shapeLayer.lineCap = .round
+        if entity.type == .threshold {
+            shapeLayer.lineDashPattern = [4, 3]
+        }
+        return shapeLayer
+    }
+
+    /// Draws the directed quadrilateral used to describe a ramp annotation.
+    private func drawRampAnnotation(for entity: VTEntity, boundedByX x: CGFloat, y: CGFloat, scale: CGFloat) -> VTEntityShapeLayer? {
+        guard entity.points.count >= 8 else { return nil }
+
+        let points = stride(from: 0, to: 8, by: 2).map { index in
+            CGPoint(x: entity.points[index], y: entity.points[index + 1])
+                .downScaledBy(x: scale, y: scale)
+                .offsetBy(dx: -x, dy: -y)
+        }
+        let path = CGMutablePath()
+        path.addLines(between: points)
+        path.closeSubpath()
+
+        let shapeLayer = VTEntityShapeLayer(data: entity)
+        shapeLayer.path = path
+        shapeLayer.fillColor = entity.type.color
+        shapeLayer.strokeColor = entity.type.borderColor
+        shapeLayer.lineWidth = entity.type.borderWidth
+        shapeLayer.lineDashPattern = [4, 3]
+        shapeLayer.lineJoin = .round
+        return shapeLayer
+    }
+
     private func drawEntities(in container: CALayer, boundedByX x: CGFloat, y: CGFloat) {
         for entity in entities.sorted().reversed() {
             let pixelScale = CGFloat(pixelSize)
@@ -242,6 +311,8 @@ extension VTMapData {
             case .active_zone: drawActiveZone(for: entity, boundedByX: x, y: y, scale: pixelScale)
             case .carpet: drawCarpet(for: entity, boundedByX: x, y: y, scale: pixelScale)
             case .obstacle: drawObstacle(for: entity, boundedByX: x, y: y, scale: pixelScale)
+            case .threshold, .curtain: drawLineAnnotation(for: entity, boundedByX: x, y: y, scale: pixelScale)
+            case .ramp: drawRampAnnotation(for: entity, boundedByX: x, y: y, scale: pixelScale)
             default: nil
             }
 

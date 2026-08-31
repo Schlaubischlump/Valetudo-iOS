@@ -815,6 +815,39 @@
         }
       }
     },
+    "DOCK_COMPONENT_CLEAN_WATER_TANK" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clean Water Tank"
+          }
+        }
+      }
+    },
+    "DOCK_COMPONENT_DIRTY_WATER_TANK" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dirty Water Tank"
+          }
+        }
+      }
+    },
+    "DOCK_COMPONENTS" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dock Components"
+          }
+        }
+      }
+    },
     "DOCK_AUTO_EMPTY" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1141,6 +1174,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Free"
+          }
+        }
+      }
+    },
+    "FULL" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Full"
           }
         }
       }
@@ -1783,6 +1827,39 @@
         }
       }
     },
+    "MATERIAL_CARPET" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Carpet"
+          }
+        }
+      }
+    },
+    "MATERIAL_CARPET_HIGH" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "High-Pile Carpet"
+          }
+        }
+      }
+    },
+    "MATERIAL_CARPET_LOW" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Low-Pile Carpet"
+          }
+        }
+      }
+    },
     "MATERIAL_GENERIC" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1867,6 +1944,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Min"
+          }
+        }
+      }
+    },
+    "MISSING" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Missing"
           }
         }
       }

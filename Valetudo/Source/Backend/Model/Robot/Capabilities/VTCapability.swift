@@ -7,7 +7,7 @@
 import Foundation
 
 /// Based on: https://github.com/Hypfer/Valetudo/blob/master/backend/lib/core/capabilities/index.js
-/// Valetudo: 2026.02.0
+/// Valetudo: 2026.07.0
 public enum VTCapability: Equatable, Hashable, Sendable, Decodable {
     /// Controls how long auto-emptying runs.
     case autoEmptyDockAutoEmptyDurationControl
@@ -49,6 +49,8 @@ public enum VTCapability: Equatable, Hashable, Sendable, Decodable {
     case locate
     /// Lets the user drive the robot manually like an RC vehicle.
     case manualControl
+    /// Configures firmware-aware thresholds, curtains, ramps, and future map annotations.
+    case mapAnnotations
     /// Resets the current map.
     case mapReset
     /// Allows joining and splitting detected map segments.
@@ -137,6 +139,7 @@ public enum VTCapability: Equatable, Hashable, Sendable, Decodable {
         case .keyLock: "KeyLockCapability"
         case .locate: "LocateCapability"
         case .manualControl: "ManualControlCapability"
+        case .mapAnnotations: "MapAnnotationsCapability"
         case .mapReset: "MapResetCapability"
         case .mapSegmentEdit: "MapSegmentEditCapability"
         case .mapSegmentMaterialControl: "MapSegmentMaterialControlCapability"
@@ -194,6 +197,7 @@ public enum VTCapability: Equatable, Hashable, Sendable, Decodable {
         case "KeyLockCapability": self = .keyLock
         case "LocateCapability": self = .locate
         case "ManualControlCapability": self = .manualControl
+        case "MapAnnotationsCapability": self = .mapAnnotations
         case "MapResetCapability": self = .mapReset
         case "MapSegmentEditCapability": self = .mapSegmentEdit
         case "MapSegmentMaterialControlCapability": self = .mapSegmentMaterialControl

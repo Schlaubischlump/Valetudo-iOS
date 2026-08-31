@@ -44,6 +44,56 @@ enum VTPatternFactory {
         return path
     }
 
+    /// Dense staggered checker used for rooms whose carpet pile is unspecified.
+    static func makeCarpetMaterialPattern(withPoints pts: [CGPoint]) -> CGPath {
+        let path = CGMutablePath()
+        guard let bounds = getBounds(from: pts) else { return path }
+
+        for y in stride(from: bounds.minY, through: bounds.maxY, by: 2) {
+            for x in stride(from: bounds.minX, through: bounds.maxX, by: 4) {
+                let offset = ((y - bounds.minY) / 2).isMultiple(of: 2) ? 0 : 2
+                path.addRect(CGRect(x: x + offset, y: y, width: 2, height: 1))
+            }
+        }
+        return path
+    }
+
+    /// Sparse dot pattern matching the low-pile material's lighter visual weight.
+    static func makeLowPileCarpetPattern(withPoints pts: [CGPoint]) -> CGPath {
+        let path = CGMutablePath()
+        guard let bounds = getBounds(from: pts) else { return path }
+
+        for y in stride(from: bounds.minY, through: bounds.maxY, by: 4) {
+            for x in stride(from: bounds.minX, through: bounds.maxX, by: 4) {
+                path.addEllipse(in: CGRect(x: CGFloat(x), y: CGFloat(y), width: 0.8, height: 0.8))
+                path.addEllipse(in: CGRect(x: CGFloat(x + 2), y: CGFloat(y + 2), width: 0.8, height: 0.8))
+            }
+        }
+        return path
+    }
+
+    /// Repeating tufts used to distinguish high-pile carpet at any zoom level.
+    static func makeHighPileCarpetPattern(withPoints pts: [CGPoint]) -> CGPath {
+        let path = CGMutablePath()
+        guard let bounds = getBounds(from: pts) else { return path }
+
+        for y in stride(from: bounds.minY, through: bounds.maxY, by: 8) {
+            for x in stride(from: bounds.minX, through: bounds.maxX, by: 8) {
+                path.move(to: CGPoint(x: x, y: y))
+                path.addLine(to: CGPoint(x: x + 2, y: y + 2))
+                path.move(to: CGPoint(x: x + 6, y: y))
+                path.addLine(to: CGPoint(x: x + 4, y: y + 2))
+                path.move(to: CGPoint(x: x + 3, y: y + 3))
+                path.addLine(to: CGPoint(x: x + 5, y: y + 3))
+                path.move(to: CGPoint(x: x + 2, y: y + 5))
+                path.addLine(to: CGPoint(x: x, y: y + 7))
+                path.move(to: CGPoint(x: x + 6, y: y + 5))
+                path.addLine(to: CGPoint(x: x + 4, y: y + 7))
+            }
+        }
+        return path
+    }
+
     // MARK: - Tile
 
     static func makeTilePattern(withPoints pts: [CGPoint], tileSize: Int = 6) -> CGPath {

@@ -24,8 +24,11 @@ actor VTMockAPIClient: VTAPIClientProtocol {
             .generic,
             .tile,
             .wood,
+            .woodHorizontal,
             .woodVertical,
-            .woodVertical,
+            .carpet,
+            .carpetLow,
+            .carpetHigh,
         ]
     }
 
@@ -219,6 +222,7 @@ actor VTMockAPIClient: VTAPIClientProtocol {
             .operationModeControl,
             .consumableMonitoring,
             .manualControl,
+            .mapAnnotations,
             .highResolutionManualControl,
             .autoEmptyDockManualTrigger,
             .mopDockCleanManualTrigger,
@@ -1277,6 +1281,10 @@ actor VTMockAPIClient: VTAPIClientProtocol {
             VTStatusStateAttribute(__class: "StatusStateAttribute", metaData: [:], value: .docked, flag: VTStatusFlag.none),
             VTBatteryStateAttribute(__class: "BatteryStateAttribute", metaData: [:], level: 88, flag: .charged),
             VTDockStatusStateAttribute(__class: "DockStatusStateAttribute", metaData: [:], value: .idle),
+            VTDockComponentStateAttribute(__class: "DockComponentStateAttribute", metaData: [:], type: .cleanWaterTank, value: .ok),
+            VTDockComponentStateAttribute(__class: "DockComponentStateAttribute", metaData: [:], type: .dirtyWaterTank, value: .empty),
+            VTDockComponentStateAttribute(__class: "DockComponentStateAttribute", metaData: [:], type: .dustbag, value: .ok),
+            VTDockComponentStateAttribute(__class: "DockComponentStateAttribute", metaData: [:], type: .detergent, value: .empty),
             VTAttachmentStateAttribute(__class: "AttachmentStateAttribute", metaData: [:], type: .dustbin, attached: true),
             VTAttachmentStateAttribute(__class: "AttachmentStateAttribute", metaData: [:], type: .mop, attached: true),
             VTPresetSelectionStateAttribute(__class: "PresetSelectionStateAttribute", metaData: [:], type: .fanSpeed, value: presetSelections[.fanSpeed] ?? .medium, customValue: nil),
