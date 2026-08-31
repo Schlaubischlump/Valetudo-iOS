@@ -77,9 +77,10 @@ final class VTManualControlViewController: VTViewController {
 
         let isEnabled = await (try? driver?.isEnabled(using: client)) ?? false
         let preferredMode = driver?.preferredMode ?? .keys
-        applyMode(isEnabled ? (activeMode == .off ? preferredMode : activeMode) : .off, animated: false)
+        let mode = isEnabled ? (activeMode == .off ? preferredMode : activeMode) : .off
 
         await refreshCameraAvailability(capabilities: capabilities)
+        applyMode(mode, animated: false)
         setPanelsTransitioning(false)
     }
 
