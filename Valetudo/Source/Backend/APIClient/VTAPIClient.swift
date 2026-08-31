@@ -26,6 +26,7 @@ private struct VTRequest<Response> {
 
 enum VTAPIError: Error, LocalizedError {
     case clientUnavailable
+    case httpResponse(statusCode: Int, body: String?)
     case unknown(Error)
     case missingID(String)
     case manualControlStateUnavailable
@@ -34,6 +35,12 @@ enum VTAPIError: Error, LocalizedError {
     var errorDescription: String? {
         switch self {
         case .clientUnavailable: "The API client is not available."
+        case let .httpResponse(statusCode, body):
+            if let body {
+                "HTTP \(statusCode): \(body)"
+            } else {
+                "The server returned HTTP \(statusCode) (\(HTTPURLResponse.localizedString(forStatusCode: statusCode)))."
+            }
         case .manualControlStateUnavailable: "Could not read the manual control state."
         case let .missingID(domain): "Missing id for \(domain)."
         case let .unknown(error): error.localizedDescription
@@ -1696,11 +1703,18 @@ public actor VTAPIClient: VTAPIClientProtocol {
         return try decoder.decode(T.self, from: data)
     }
 
-    private func validate(response: URLResponse, data _: Data) throws {
-        guard let httpResponse = response as? HTTPURLResponse,
-              (200 ..< 300).contains(httpResponse.statusCode)
-        else {
+    private func validate(response: URLResponse, data: Data) throws {
+        guard let httpResponse = response as? HTTPURLResponse else {
             throw URLError(.badServerResponse)
         }
+
+        guard !(200 ..< 300).contains(httpResponse.statusCode) else { return }
+
+        let responseBody = String(data: data, encoding: .utf8)?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        throw VTAPIError.httpResponse(
+            statusCode: httpResponse.statusCode,
+            body: responseBody?.isEmpty == false ? responseBody : nil
+        )
     }
 }
