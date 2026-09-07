@@ -510,10 +510,12 @@ class VTMapViewController: VTToolbarViewController {
             return
         }
 
-        for (index, layer) in segmentLayer.enumerated() {
+        for layer in segmentLayer {
             guard let segmentID = layer.segmentId, selectedSegmentIDs.contains(segmentID) else { continue }
             await mapView?.select(layer: layer)
-            await legendView.select(at: index)
+            if let index = legendView.items.firstIndex(where: { $0.identifier == segmentID }) {
+                await legendView.select(at: index)
+            }
         }
 
         let restoredSegmentIDs = Set(selectedSegments.compactMap(\.segmentId))
