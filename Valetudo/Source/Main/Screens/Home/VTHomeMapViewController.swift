@@ -783,7 +783,9 @@ final class VTHomeMapViewController: VTMapViewController {
             .first(where: { $0.type == .go_to_target })?
             .centerPoint
         {
-            let overlay = VTGoToMapOverlay(centerPoint: mapView.overlayPoint(fromMapCoordinate: serverCoordinate))
+            let pixelSize = CGFloat(mapView.data.pixelSize)
+            let mapCoordinate = serverCoordinate.downScaledBy(x: pixelSize, y: pixelSize)
+            let overlay = VTGoToMapOverlay(centerPoint: mapView.overlayPoint(fromMapCoordinate: mapCoordinate))
             mapView.addOverlay(overlay)
             return
         }
