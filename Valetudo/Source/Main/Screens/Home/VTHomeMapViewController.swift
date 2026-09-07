@@ -615,7 +615,7 @@ final class VTHomeMapViewController: VTMapViewController {
         case .segment:
             guard !selectedSegments.isEmpty else { return [] }
             return [
-                .init(title: "CLEAR".localized(), image: .xmark) {
+                .init(title: "CLEAR".localized(), image: .xmark) { [weak self] in
                     Task { [weak self] in
                         await self?.clearSegmentSelection()
                         self?.refreshControls()

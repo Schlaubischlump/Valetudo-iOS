@@ -343,7 +343,7 @@ extension VTTimersViewController {
               case let .timer(timer) = item,
               let id = timer.id else { return nil }
 
-        return UIContextMenuConfiguration(identifier: id as NSString, previewProvider: nil) { _ in
+        return UIContextMenuConfiguration(identifier: id as NSString, previewProvider: nil) { [weak self] _ in
             let delete = UIAction(title: "DELETE".localized(), image: .timerDelete, attributes: .destructive) { [weak self] _ in
                 Task {
                     await self?.deleteTimer(timer)

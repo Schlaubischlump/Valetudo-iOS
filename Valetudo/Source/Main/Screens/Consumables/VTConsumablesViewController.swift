@@ -72,7 +72,7 @@ class VTConsumablesViewController: VTCollectionViewController {
     private func configureDataSource() {
         let client = client
 
-        let cellRegistration = UICollectionView.CellRegistration<UICollectionViewListCell, VTConsumableItem> { cell, _, item in
+        let cellRegistration = UICollectionView.CellRegistration<UICollectionViewListCell, VTConsumableItem> { [weak self] cell, _, item in
             cell.contentConfiguration = VTConsumablesCellContentConfiguration(
                 title: item.title,
                 remaining: item.subtitle,

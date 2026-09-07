@@ -286,7 +286,7 @@ class VTRobotControlViewController: VTViewController {
     private func startSSEObservation() {
         guard sseTask == nil else { return }
 
-        sseTask = Task {
+        sseTask = Task { [self] in
             do {
                 try await loadInitialData()
                 hasConnectedStateAttributesStream = false

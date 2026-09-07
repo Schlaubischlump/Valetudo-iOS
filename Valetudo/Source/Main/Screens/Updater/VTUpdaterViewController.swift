@@ -205,7 +205,7 @@ class VTUpdaterViewController: VTCollectionViewController {
             }
         }
 
-        let updateDetailCellRegistration = VTCellRegistration { cell, _, wrappedItem in
+        let updateDetailCellRegistration = VTCellRegistration { [weak self] cell, _, wrappedItem in
             switch wrappedItem.base {
             case let item as VTUpdateAvailableItem:
                 let markdownString = if let range = item.changelog.range(of: "</div>") {

@@ -309,7 +309,7 @@ final class VTManualControlViewController: VTViewController {
     @objc private func openCamera() {
         guard let cameraProperties else { return }
 
-        Task {
+        Task { [self] in
             let streamURL = await client.getDuststreamingStreamURL()
             let camera = VTDuststreamViewController(
                 streamURL: streamURL,
