@@ -9,9 +9,8 @@ import UIKit
 
 class VTValetudoEventBarButtonItem: UIBarButtonItem {
     private let client: any VTAPIClientProtocol
-    private var observerToken: VTListenerToken?
+    private var eventObservationTask: Task<Void, Never>?
     private weak var parentViewController: UIViewController?
-    private var hasConnectedEventStream = false
 
     init(client: any VTAPIClientProtocol, parentViewController: UIViewController) {
         self.client = client
@@ -21,7 +20,7 @@ class VTValetudoEventBarButtonItem: UIBarButtonItem {
         image = .eventsNavigationItem
         target = self
         action = #selector(showEventsPopup(_:))
-        Task { await startEventObservation() }
+        startEventObservation()
     }
 
     @available(*, unavailable)
@@ -30,10 +29,7 @@ class VTValetudoEventBarButtonItem: UIBarButtonItem {
     }
 
     deinit {
-        if let observerToken {
-            let client = self.client
-            Task { await client.removeEventObserver(token: observerToken, for: .valetudoEvent) }
-        }
+        eventObservationTask?.cancel()
     }
 
     @objc func showEventsPopup(_ sender: UIBarButtonItem) {
@@ -57,42 +53,50 @@ class VTValetudoEventBarButtonItem: UIBarButtonItem {
     }
 
     @MainActor
-    private func startEventObservation() async {
-        do {
-            let events = try await client.getValetudoEvents()
-            updateBadge(events: events)
-        } catch {
-            updateBadge(events: [])
-            log(message: error.localizedDescription, forSubsystem: .valetudoEvent, level: .error)
-        }
-
-        let (token, stream) = await client.registerEventObserver(for: .valetudoEvent)
-        observerToken = token
-        hasConnectedEventStream = false
-
-        for await event in stream {
-            guard !Task.isCancelled else { break }
-
-            switch event {
-            case .didConnect:
-                if hasConnectedEventStream {
-                    do {
-                        let events = try await client.getValetudoEvents()
-                        updateBadge(events: events)
-                    } catch {
-                        updateBadge(events: [])
-                        log(message: error.localizedDescription, forSubsystem: .valetudoEvent, level: .error)
-                    }
-                } else {
-                    hasConnectedEventStream = true
-                }
-            case let .didReceiveData(events):
-                updateBadge(events: events)
-            case let .didReceiveError(message):
-                log(message: message, forSubsystem: .valetudoEvent, level: .error)
-            default:
-                break
+    private func startEventObservation() {
+        let client = client
+        eventObservationTask = Task { @MainActor [weak self] in
+            do {
+                let events = try await client.getValetudoEvents()
+                self?.updateBadge(events: events)
+            } catch {
+                guard !Task.isCancelled else { return }
+                self?.updateBadge(events: [])
+                log(message: error.localizedDescription, forSubsystem: .valetudoEvent, level: .error)
             }
+
+            guard !Task.isCancelled else { return }
+            let (token, stream) = await client.registerEventObserver(for: .valetudoEvent)
+            var hasConnectedEventStream = false
+
+            for await event in stream {
+                guard !Task.isCancelled else { break }
+
+                switch event {
+                case .didConnect:
+                    if hasConnectedEventStream {
+                        do {
+                            let events = try await client.getValetudoEvents()
+                            self?.updateBadge(events: events)
+                        } catch {
+                            guard !Task.isCancelled else { break }
+                            self?.updateBadge(events: [])
+                            log(message: error.localizedDescription, forSubsystem: .valetudoEvent, level: .error)
+                        }
+                    } else {
+                        hasConnectedEventStream = true
+                    }
+                case let .didReceiveData(events):
+                    self?.updateBadge(events: events)
+                case let .didReceiveError(message):
+                    log(message: message, forSubsystem: .valetudoEvent, level: .error)
+                default:
+                    break
+                }
+            }
+
+            // Registration can finish after cancellation, so the task owns token cleanup.
+            await client.removeEventObserver(token: token, for: .valetudoEvent)
         }
     }
 
