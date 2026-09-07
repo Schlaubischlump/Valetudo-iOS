@@ -184,15 +184,61 @@ public extension VTTimer {
         )
     }
 
-    func isActiveWeekday(_ weekday: VTWeekday) -> Bool {
-        dow.contains(weekday.index)
+    /// Presents the UTC schedule using the timezone's offset at the supplied date.
+    func localSchedule(in timeZone: TimeZone = .current, at date: Date = Date()) -> (weekdays: [VTWeekday], hour: Int, minute: Int) {
+        Self.shiftSchedule(
+            weekdays: weekdays,
+            hour: hour,
+            minute: minute,
+            byMinutes: timeZone.secondsFromGMT(for: date) / 60
+        )
     }
 
-    func update(weekday: VTWeekday, enabled: Bool) -> VTTimer {
+    /// Updates local wall-clock fields together, preserving the selected local weekdays when the time changes.
+    func updatingLocalSchedule(
+        weekdays: [VTWeekday]? = nil,
+        hour: Int? = nil,
+        minute: Int? = nil,
+        in timeZone: TimeZone = .current,
+        at date: Date = Date()
+    ) -> VTTimer {
+        let local = localSchedule(in: timeZone, at: date)
+        let utc = Self.shiftSchedule(
+            weekdays: weekdays ?? local.weekdays,
+            hour: hour ?? local.hour,
+            minute: minute ?? local.minute,
+            byMinutes: -timeZone.secondsFromGMT(for: date) / 60
+        )
+        return copy(dow: utc.weekdays.map(\.index), hour: utc.hour, minute: utc.minute)
+    }
+
+    func updatingLocalWeekday(
+        _ weekday: VTWeekday,
+        enabled: Bool,
+        in timeZone: TimeZone = .current,
+        at date: Date = Date()
+    ) -> VTTimer {
+        var selected = Set(localSchedule(in: timeZone, at: date).weekdays)
         if enabled {
-            copy(dow: (dow + [weekday.index]).sorted())
+            selected.insert(weekday)
         } else {
-            copy(dow: dow.filter { $0 != weekday.index })
+            selected.remove(weekday)
         }
+        return updatingLocalSchedule(weekdays: Array(selected), in: timeZone, at: date)
+    }
+
+    private static func shiftSchedule(
+        weekdays: [VTWeekday],
+        hour: Int,
+        minute: Int,
+        byMinutes offset: Int
+    ) -> (weekdays: [VTWeekday], hour: Int, minute: Int) {
+        let totalMinutes = hour * 60 + minute + offset
+        let minuteOfDay = (totalMinutes % 1440 + 1440) % 1440
+        let dayOffset = (totalMinutes - minuteOfDay) / 1440
+        let shiftedWeekdays = Set(weekdays.compactMap {
+            VTWeekday(rawValue: (($0.index + dayOffset) % 7 + 7) % 7)
+        }).sorted { $0.index < $1.index }
+        return (shiftedWeekdays, minuteOfDay / 60, minuteOfDay % 60)
     }
 }

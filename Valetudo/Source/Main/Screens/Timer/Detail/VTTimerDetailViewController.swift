@@ -220,9 +220,7 @@ final class VTTimerDetailViewController: VTCollectionViewController {
 
                 switch item.id {
                 case kTime:
-                    guard let date = Date.fromLocal(hour: localHour, minute: localMin) else { return }
-                    let (hour, minute) = date.toUTCHourMinute()
-                    timer = timer.copy(hour: hour, minute: minute)
+                    timer = timer.updatingLocalSchedule(hour: localHour, minute: localMin)
                 default:
                     fatalError("Unexpected id: \(item.id)")
                 }
@@ -243,7 +241,7 @@ final class VTTimerDetailViewController: VTCollectionViewController {
 
                 timer = switch item.id {
                 case kDow:
-                    timer.copy(dow: newActive.map(\.index))
+                    timer.updatingLocalSchedule(weekdays: Array(newActive))
                 default:
                     fatalError("Unexpected id: \(item.id)")
                 }
@@ -444,19 +442,13 @@ final class VTTimerDetailViewController: VTCollectionViewController {
 
         // schedule
         snapshot.appendSections([.schedule])
-        let activeWeekdays = Set(timer.dow.map { VTWeekday(rawValue: $0)! })
+        let schedule = timer.localSchedule()
+        let activeWeekdays = Set(schedule.weekdays)
         let weekdays = VTWeekday.allNormalizedCases
-
-        // Convert to local time
-        var hour = timer.hour
-        var minute = timer.minute
-        if let date = Date.fromUTC(hour: timer.hour, minute: timer.minute) {
-            (hour, minute) = date.toLocalHourMinute()
-        }
 
         snapshot.appendItems([
             .segment(kDow, active: activeWeekdays, options: weekdays),
-            .timePicker(kTime, title: "TIME".localized(), hours: hour, minutes: minute),
+            .timePicker(kTime, title: "TIME".localized(), hours: schedule.hour, minutes: schedule.minute),
         ], toSection: .schedule)
 
         // pre-actions

@@ -39,14 +39,16 @@ extension [VTWeekday] {
 
 extension VTTimer {
     var formattedTime: String {
-        guard let utcDate = Date.fromUTC(hour: hour, minute: minute) else { return "-" }
+        let schedule = localSchedule()
+        guard let displayDate = Date.fromUTC(hour: schedule.hour, minute: schedule.minute) else { return "-" }
 
         let formatter = DateFormatter()
         formatter.timeStyle = .short
         formatter.locale = .current
-        formatter.timeZone = .current // local time incl. DST
+        // The schedule is already converted to local wall-clock time.
+        formatter.timeZone = .utc
 
-        return formatter.string(from: utcDate)
+        return formatter.string(from: displayDate)
     }
 
     var utcTimeText: String {
@@ -70,7 +72,7 @@ extension VTTimer {
         VTTimerCellContentConfiguration(
             isEnabled: enabled,
             title: label,
-            activeWeekdays: weekdays,
+            activeWeekdays: localSchedule().weekdays,
             timeText: formattedTime,
             secondaryTimeText: utcTimeText,
             detailsText: detailsText

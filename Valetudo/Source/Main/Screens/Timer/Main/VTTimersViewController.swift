@@ -126,8 +126,8 @@ final class VTTimersViewController: VTCollectionViewController {
             config.onSelect = { weekday in
                 Task {
                     await self?.disableUserInteraction()
-                    let isActive = timer.isActiveWeekday(weekday)
-                    let updatedTimer = timer.update(weekday: weekday, enabled: !isActive)
+                    let isActive = timer.localSchedule().weekdays.contains(weekday)
+                    let updatedTimer = timer.updatingLocalWeekday(weekday, enabled: !isActive)
                     await self?.update(timer: timer, with: updatedTimer)
                     await self?.enableUserInteraction()
                 }
