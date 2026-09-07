@@ -34,6 +34,7 @@ final class VTTimerDetailViewController: VTCollectionViewController {
     private var mapSegmentationProperties: VTMapSegmentationProperties?
     private var supportedActions: [VTTimer.Action.ActionType] = [.fullCleanup]
     private var supportedPreActions: [VTTimer.PreAction.PreActionType] = []
+    private var preActionPresets: [VTTimer.PreAction.PreActionType: [VTPresetValue]] = [:]
 
     var onDone: ((VTTimer) -> Void)?
 
@@ -123,9 +124,9 @@ final class VTTimerDetailViewController: VTCollectionViewController {
         let filteredPreActions = timer.preActions.filter { $0.type != preActionType }
         if !enabled {
             timer = timer.copy(preActions: filteredPreActions)
-        } else {
-            // Create a fresh preaction with a dummy value, it will be replaced on applying the snapshot
-            let freshPreAction: VTTimer.PreAction = .init(type: preActionType, params: .init(value: nil))
+        } else if let preset = preActionPresets[preActionType]?.first {
+            // Store the displayed default synchronously so Done can save immediately after enabling.
+            let freshPreAction: VTTimer.PreAction = .init(type: preActionType, params: .init(value: preset))
             timer = timer.copy(preActions: filteredPreActions + [freshPreAction])
         }
 
@@ -458,18 +459,27 @@ final class VTTimerDetailViewController: VTCollectionViewController {
         }
 
         var possibleGroups: [VTTimersDetailSection] = [.preActions, freshGroup(), freshGroup()]
-        let preActionTypes: [(String, String, String, VTTimer.PreAction.PreActionType, VTPresetType)] = [
-            (kFan, kSetFan, "FAN_SPEED", .fanSpeedControl, .fanSpeed),
-            (kWater, kSetWater, "WATER_GRADE", .waterUsageControl, .waterGrade),
-            (kMode, kSetMode, "OPERATION_MODE", .operationModeControl, .operationMode),
+        let preActionTypes: [(String, String, String, VTTimer.PreAction.PreActionType)] = [
+            (kFan, kSetFan, "FAN_SPEED", .fanSpeedControl),
+            (kWater, kSetWater, "WATER_GRADE", .waterUsageControl),
+            (kMode, kSetMode, "OPERATION_MODE", .operationModeControl),
         ].filter { supportedPreActions.contains($0.3) }
 
-        for (toggleID, dropDownID, title, preActionTy, presetTy) in preActionTypes {
+        for (toggleID, dropDownID, title, preActionTy) in preActionTypes {
             let preAction = timer.preActions.first(where: { $0.type == preActionTy })
-            let presets = await (try? client.getPresets(forType: presetTy)) ?? []
+            let presets = preActionPresets[preActionTy] ?? []
             if let activePreset = preAction?.params.value ?? presets.first {
                 let section = possibleGroups.removeFirst()
                 let isEnabled = preAction != nil
+
+                if isEnabled, preAction?.params.value == nil {
+                    let normalized = timer.preActions.map { action in
+                        action.type == preActionTy
+                            ? VTTimer.PreAction(type: preActionTy, params: .init(value: activePreset))
+                            : action
+                    }
+                    timer = timer.copy(preActions: normalized)
+                }
 
                 // Add 'enable' toggle item
                 var items: [VTAnyItem] = [
@@ -560,6 +570,16 @@ final class VTTimerDetailViewController: VTCollectionViewController {
         let timerProperties = try? await client.getTimerProperties()
         supportedPreActions = timerProperties?.supportedPreActions ?? []
         supportedActions = timerProperties?.supportedActions ?? [.fullCleanup]
+        for preActionType in supportedPreActions {
+            let presetType: VTPresetType = switch preActionType {
+            case .fanSpeedControl: .fanSpeed
+            case .waterUsageControl: .waterGrade
+            case .operationModeControl: .operationMode
+            }
+            if let presets = try? await client.getPresets(forType: presetType) {
+                preActionPresets[preActionType] = presets
+            }
+        }
         mapSegmentationProperties = if supportedActions.contains(.segmentCleanup) {
             try? await client.getMapSegmentationProperties()
         } else {
