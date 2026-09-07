@@ -33,7 +33,6 @@ final actor VTSSESocket<E: Decodable & Equatable & Sendable, O: Sendable>: VTEve
     let endpoint: VTEventEndpoint<E, O>
     private let url: URL
     private let maxNumberOfRetries = 5
-    private var numberOfRetries = 0
 
     /// Creates an SSE socket for an event endpoint and its streaming URL.
     init(endpoint: VTEventEndpoint<E, O>, url: URL) {
@@ -170,7 +169,7 @@ final actor VTSSESocket<E: Decodable & Equatable & Sendable, O: Sendable>: VTEve
         return nil
     }
 
-    /// Starts the SSE byte stream against the socket URL and attempts reconnects after non-cancellation failures.
+    /// Starts the SSE byte stream and reconnects after failures or an unexpected end of the stream.
     private func startSSE() {
         let currentTaskID = UUID()
         taskID = currentTaskID
@@ -180,19 +179,27 @@ final actor VTSSESocket<E: Decodable & Equatable & Sendable, O: Sendable>: VTEve
                 if taskID == currentTaskID {
                     task = nil
                     taskID = nil
-                    numberOfRetries = 0
                 }
             }
 
-            var buffer = Data() // accumulate partial SSE data
+            var numberOfRetries = 0
 
-            repeat {
+            while !Task.isCancelled, !continuations.isEmpty {
                 do {
-                    let (bytes, _) = try await URLSession.shared.bytes(from: url)
+                    // Partial frames belong to one connection and must not survive a reconnect.
+                    var buffer = Data()
+                    let (bytes, response) = try await URLSession.shared.bytes(from: url)
+                    try Task.checkCancellation()
+                    guard let response = response as? HTTPURLResponse,
+                          (200 ..< 300).contains(response.statusCode)
+                    else {
+                        throw URLError(.badServerResponse)
+                    }
                     for c in continuations.values {
                         c.yield(.didConnect)
                     }
                     for try await byte in bytes {
+                        try Task.checkCancellation()
                         buffer.append(UInt8(byte))
 
                         while let boundary = nextEventBoundary(in: buffer) {
@@ -204,15 +211,13 @@ final actor VTSSESocket<E: Decodable & Equatable & Sendable, O: Sendable>: VTEve
                                 continue
                             }
 
+                            numberOfRetries = 0
                             process(eventPayload: eventPayload)
                         }
                     }
 
-                    // Connection closed normally
-                    for c in continuations.values {
-                        c.yield(.didDisconnect)
-                    }
-                    break
+                    // SSE is a continuous stream: a clean EOF still needs a new connection.
+                    throw URLError(.networkConnectionLost)
                 } catch is CancellationError {
                     break
                 } catch {
@@ -236,7 +241,7 @@ final actor VTSSESocket<E: Decodable & Equatable & Sendable, O: Sendable>: VTEve
                         break
                     }
                 }
-            } while true
+            }
         }
     }
 
