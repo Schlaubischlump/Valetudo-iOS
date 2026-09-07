@@ -105,6 +105,7 @@ class VTRobotControlViewController: VTViewController {
     private var supportsSegmentation: Bool = false
     private var supportsZoneCleaning: Bool = false
     private var supportsGoToLocation: Bool = false
+    private var supportsStatistics: Bool = false
     private var segmentIterationRange: ClosedRange<Int> = 1 ... 1
     private var zoneIterationRange: ClosedRange<Int> = 1 ... 1
     private var availableStatistics: Set<VTValetudoDataPointType> = []
@@ -289,52 +290,52 @@ class VTRobotControlViewController: VTViewController {
         sseTask = Task { [self] in
             do {
                 try await loadInitialData()
-                hasConnectedStateAttributesStream = false
+            } catch {
+                // Optional metadata failures must not prevent live control updates.
+                log(message: "Failed to update data: \(error.localizedDescription)", forSubsystem: .robotControl, level: .error)
+            }
 
-                let (token, stream) = await client.registerEventObserver(for: .stateAttributes)
-                observerToken = token
+            guard !Task.isCancelled else { return }
+            hasConnectedStateAttributesStream = false
 
-                for await event in stream {
-                    switch event {
-                    case .didConnect:
-                        // The first connect only confirms the stream is ready. Subsequent reconnects
-                        // trigger a full refresh so the UI catches up with anything missed offline.
-                        if hasConnectedStateAttributesStream {
-                            await serialTaskQueue.enqueue { [weak self] in
-                                guard let self else { return }
-                                guard let attrs = try? await client.getStateAttributes() else { return }
-                                await updateButtonStates(attrs)
-                                await updateAttachments(attrs)
-                                await updateDockComponents(attrs)
-                                try? await updateStatistics()
-                            }
-                        } else {
-                            hasConnectedStateAttributesStream = true
-                        }
-                    case let .didReceiveData(attrs):
+            let (token, stream) = await client.registerEventObserver(for: .stateAttributes)
+            guard !Task.isCancelled else {
+                await client.removeEventObserver(token: token, for: .stateAttributes)
+                return
+            }
+            observerToken = token
+
+            for await event in stream {
+                guard !Task.isCancelled else { break }
+                switch event {
+                case .didConnect:
+                    // The first connect only confirms the stream is ready. Subsequent reconnects
+                    // trigger a full refresh so the UI catches up with anything missed offline.
+                    if hasConnectedStateAttributesStream {
                         await serialTaskQueue.enqueue { [weak self] in
                             guard let self else { return }
+                            guard let attrs = try? await client.getStateAttributes() else { return }
                             await updateButtonStates(attrs)
                             await updateAttachments(attrs)
                             await updateDockComponents(attrs)
                             try? await updateStatistics()
                         }
-                    case let .didReceiveError(msg):
-                        log(message: msg, forSubsystem: .stateAttribute, level: .error)
-                    /* showRobotControlError(
-                         messageKey: "ROBOT_CONTROL_STATE_ATTRIBUTES_FAILED_MESSAGE",
-                         reason: msg
-                     ) */
-                    default:
-                        break
+                    } else {
+                        hasConnectedStateAttributesStream = true
                     }
+                case let .didReceiveData(attrs):
+                    await serialTaskQueue.enqueue { [weak self] in
+                        guard let self else { return }
+                        await updateButtonStates(attrs)
+                        await updateAttachments(attrs)
+                        await updateDockComponents(attrs)
+                        try? await updateStatistics()
+                    }
+                case let .didReceiveError(msg):
+                    log(message: msg, forSubsystem: .stateAttribute, level: .error)
+                default:
+                    break
                 }
-            } catch {
-                log(message: "Failed to update data: \(error.localizedDescription)", forSubsystem: .robotControl, level: .error)
-                /* showRobotControlError(
-                     messageKey: "ROBOT_CONTROL_INITIAL_LOAD_FAILED_MESSAGE",
-                     reason: error.localizedDescription
-                 ) */
             }
         }
     }
@@ -368,14 +369,16 @@ class VTRobotControlViewController: VTViewController {
     /// Loads capabilities, presets, statistics, and the initial robot state for the screen.
     @MainActor
     func loadInitialData() async throws {
+        let capabilities = Set(try await client.getCapabilities())
+        supportsStatistics = capabilities.contains(.currentStatistics)
+
         try await collecting { [weak self] run in
             guard let self else { return }
 
             await run {
-                let capibilities = await Set((try? client.getCapabilities()) ?? [])
-                self.supportsSegmentation = capibilities.contains(.mapSegmentation)
-                self.supportsZoneCleaning = capibilities.contains(.zoneCleaning)
-                self.supportsGoToLocation = capibilities.contains(.goToLocation)
+                self.supportsSegmentation = capabilities.contains(.mapSegmentation)
+                self.supportsZoneCleaning = capabilities.contains(.zoneCleaning)
+                self.supportsGoToLocation = capabilities.contains(.goToLocation)
                 if !self.supportsSegmentation, !self.supportsZoneCleaning, !self.supportsGoToLocation {
                     self.currentConfiguration = .full
                 }
@@ -390,7 +393,7 @@ class VTRobotControlViewController: VTViewController {
                 } else {
                     nil
                 }
-                let currentStatisticsProperties: VTStatisticsCapabilityProperties? = if capibilities.contains(.currentStatistics) {
+                let currentStatisticsProperties: VTStatisticsCapabilityProperties? = if self.supportsStatistics {
                     try? await self.client.getCurrentStatisticsCapabilityProperties()
                 } else {
                     nil
@@ -409,25 +412,38 @@ class VTRobotControlViewController: VTViewController {
                 self.availableStatistics = Set(currentStatisticsProperties?.availableStatistics ?? [])
                 self.updateIterations()
 
-                self.startPauseStopControl.isHidden = !capibilities.contains(.basicControl)
-                self.statisticsControls.isHidden = !capibilities.contains(.currentStatistics)
-                self.iterationsRow.isHidden = !(capibilities.contains(.mapSegmentation) || capibilities.contains(.zoneCleaning))
-                self.emptyButton?.isHidden = !capibilities.contains(.autoEmptyDockManualTrigger)
-                self.cleanButton?.isHidden = !capibilities.contains(.mopDockCleanManualTrigger)
-                self.dryButton?.isHidden = !capibilities.contains(.mopDockDryManualTrigger)
+                self.startPauseStopControl.isHidden = !capabilities.contains(.basicControl)
+                self.statisticsControls.isHidden = !self.supportsStatistics
+                self.iterationsRow.isHidden = !(capabilities.contains(.mapSegmentation) || capabilities.contains(.zoneCleaning))
+                self.emptyButton?.isHidden = !capabilities.contains(.autoEmptyDockManualTrigger)
+                self.cleanButton?.isHidden = !capabilities.contains(.mopDockCleanManualTrigger)
+                self.dryButton?.isHidden = !capabilities.contains(.mopDockDryManualTrigger)
                 // Hide controls that the current robot firmware does not expose.
-                self.fanRow.isHidden = !capibilities.contains(.fanSpeedControl)
-                self.waterRow.isHidden = !capibilities.contains(.waterUsageControl)
-                self.modeRow.isHidden = !capibilities.contains(.operationModeControl)
+                self.fanRow.isHidden = !capabilities.contains(.fanSpeedControl)
+                self.waterRow.isHidden = !capabilities.contains(.waterUsageControl)
+                self.modeRow.isHidden = !capabilities.contains(.operationModeControl)
             }
 
             await run {
-                self.fanRow.values = try await self.client.getPresets(forType: .fanSpeed)
-                    .map(VTFanItem.init)
-                self.waterRow.values = try await self.client.getPresets(forType: .waterGrade)
-                    .map(VTWaterGradeItem.init)
-                self.modeRow.values = try await self.client.getPresets(forType: .operationMode)
-                    .map(VTOperationModeItem.init)
+                self.fanRow.values = if capabilities.contains(.fanSpeedControl) {
+                    try await self.client.getPresets(forType: .fanSpeed).map(VTFanItem.init)
+                } else {
+                    []
+                }
+            }
+            await run {
+                self.waterRow.values = if capabilities.contains(.waterUsageControl) {
+                    try await self.client.getPresets(forType: .waterGrade).map(VTWaterGradeItem.init)
+                } else {
+                    []
+                }
+            }
+            await run {
+                self.modeRow.values = if capabilities.contains(.operationModeControl) {
+                    try await self.client.getPresets(forType: .operationMode).map(VTOperationModeItem.init)
+                } else {
+                    []
+                }
             }
             await run {
                 try await self.updateStatistics()
@@ -477,6 +493,7 @@ class VTRobotControlViewController: VTViewController {
     /// Fetches the latest statistics payload and applies it to the statistics row.
     @MainActor
     private func updateStatistics() async throws {
+        guard supportsStatistics else { return }
         let currentStatistics = try await client.getCurrentStatisticsCapability()
         await updateStatistics(currentStatistics)
     }
