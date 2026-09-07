@@ -164,7 +164,9 @@ final class VTSegmentManagementViewController: VTMapViewController {
             guard let self else { return }
             do {
                 guard let material = try await showMaterialSelectionAlert() else { return }
-                guard let segmentID = selectedSegments.first?.segmentId else {
+                guard let segment = selectedSegments.first,
+                      let segmentID = segment.segmentId
+                else {
                     log(message: "MapSegmentMaterialControlCapability properties failed: Missing segment selection", forSubsystem: .mapOptions, level: .error)
                     showError(
                         title: "ERROR".localized(),
@@ -172,6 +174,7 @@ final class VTSegmentManagementViewController: VTMapViewController {
                     )
                     return
                 }
+                guard material != segment.material else { return }
 
                 try await performAndWaitForMapUpdate { [weak self] in
                     try await self?.client.setMapSegmentMaterial(segmentID: segmentID, material: material)
