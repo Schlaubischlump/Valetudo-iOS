@@ -46,12 +46,13 @@ final class VTDropDownCellContentView<S: Describable & Hashable & Equatable>: VT
         // Build menu
         selectionButton.menu = UIMenu(children: options.map { sel in
             UIAction(title: sel.description, state: sel == selection ? .on : .off) { [weak self] _ in
+                guard let self, sel != selection else { return }
                 let isEnabled = !config.disableSelectionAfterAction
                 config.isEnabled = isEnabled
-                self?.selectionButton.isEnabled = isEnabled
-                self?.selection = sel
+                selectionButton.isEnabled = isEnabled
+                selection = sel
+                currentConfiguration = config
                 config.onChange?(sel)
-                self?.currentConfiguration = config
             }
         })
 
